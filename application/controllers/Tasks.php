@@ -757,6 +757,32 @@ class Tasks extends CI_Controller {
         // Close and output PDF document
         $pdf->Output('task_details.pdf', 'I');  // Output to browser
     }
+
+	public function deal_pdf2($id) {
+        // Validate API key
+        $headers = $this->input->request_headers();
+        $api_key = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : null;
+    
+        if (!$api_key || !$user_data = validate_api_key($api_key)) {
+            $this->output->set_status_header(401);
+            echo json_encode(['error' => 'Unauthorized access']);
+            return;
+        }
+    
+        // Get task data
+      	$data['task'] = $this->Task_model->get_task($id);
+      	ob_start();
+      	$this->load->view('deal_pdf_view',$data);
+		$html = ob_get_contents();
+		ob_end_clean();
+		$mpdf = new \Mpdf\Mpdf();
+		$backgroundImage= base_url().'assets/photos/logo/databg.png';
+      	$mpdf->SetDefaultBodyCSS('background', "url('{$backgroundImage}')");
+		$mpdf->SetDefaultBodyCSS('background-image-resize', 1);
+		$mpdf->WriteHTML($html);
+		$mpdf->Output();
+   
+    }
 	  
 }
 
