@@ -12,7 +12,9 @@
 <div style="color: #000; font-family: Arial, sans-serif;">
 
     <h6 style="text-align: center; font-size:16px; margin-top:-70px !important;font-weight:bold;">QUOTATION</h6>
-    <p style="text-align:center; margin:0 !important;font-size:11px;">Kind Attention: <?= htmlspecialchars($task['kind_attention']) ?></p>
+    <p style="text-align:center; margin:0 !important; font-size:11px;">
+      <b><u>Kind Attention: <?= htmlspecialchars($task['kind_attention']) ?></u></b>
+    </p>
 
     <table style="width: 100%;">
         <tr>
@@ -20,15 +22,15 @@
               <table style="width: 100%;">
                 <tr>
                   <td style="font-weight:bold;">Subject:</td>
-                  <td><?= htmlspecialchars($task['subject']) ?></td>
+                  <td><b><?= htmlspecialchars($task['subject']) ?></b></td>
                 </tr>
                 <tr>
                   <td style="font-weight:bold;">Project:</td>
-                  <td><?= htmlspecialchars($task['project_name']) ?></td>
+                  <td><b><?= htmlspecialchars($task['project_name']) ?></b></td>
                 </tr>
                 <tr>
                   <td style="font-weight:bold;">Sales Person:</td>
-                  <td>Marieswaran</td>
+                  <td><b>Marieswaran</b></td>
                 </tr>
               </table>
             </td>
@@ -36,15 +38,15 @@
                <table style="width: 100%;">
                 <tr>
                   <td style="font-weight:bold;">Quote Ref:</td>
-                  <td style="text-align:right;"><?= htmlspecialchars($task['quote_number']) ?></td>
+                  <td style="text-align:right;"><b><?= htmlspecialchars($task['quote_number']) ?></b></td>
                 </tr>
                 <tr>
                   <td style="font-weight:bold;">Date:</td>
-                  <td style="text-align:right;"><?= date('Y-m-d H:i:s') ?></td>
+                  <td style="text-align:right;"><b><?= date('M j, Y h:i A') ?></b></td>
                 </tr>
                 <tr>
                   <td style="font-weight:bold;">Valid Till:</td>
-                  <td style="text-align:right;"><?= htmlspecialchars($task['valid_until']) ?></td>
+                  <td style="text-align:right;"><b><?= htmlspecialchars(date('M j, Y', strtotime($task['valid_until']))) ?></b></td>
                 </tr>
               </table>
               
@@ -70,11 +72,11 @@
         <tbody>
             <tr>
                 <td style="border: 1px solid #e3dfcb; padding: 0px; width: 10%; text-align:center;">1</td>
-                <td style="border: 1px solid #e3dfcb; padding: 0px; width: 40%; text-align:center;"><b style="font-size:12px;"><?= htmlspecialchars($task['product_name']) ?></b> <br> <?= htmlspecialchars($task['product_description']) ?></td>
+                <td style="border: 1px solid #e3dfcb; padding: 0px; width: 40%; text-align:left;"><b style="font-size:12px;"><?= htmlspecialchars($task['product_name']) ?></b> <br> <?= htmlspecialchars($task['product_description']) ?></td>
                 <td style="border: 1px solid #e3dfcb; padding: 0px; width: 10%; text-align:center;"><?= htmlspecialchars($task['quantity']) ?></td>
                 <td style="border: 1px solid #e3dfcb; padding: 0px; width: 10%; text-align:center;"><?= htmlspecialchars($task['uom']) ?></td>
-                <td style="border: 1px solid #e3dfcb; padding: 0px; width: 15%; text-align:center;">AED <?= htmlspecialchars($task['service_charge']) ?></td>
-                <td style="border: 1px solid #e3dfcb; padding: 0px; width: 15%; text-align:center;">AED <?= htmlspecialchars((float)$task['quantity'] * (float)$task['service_charge']) ?></td>
+                <td style="border: 1px solid #e3dfcb; padding: 0px; width: 15%; text-align:center;">AED <?= number_format((float)$task['service_charge'], 2) ?></td>
+                <td style="border: 1px solid #e3dfcb; padding: 0px; width: 15%; text-align:center;">AED <?= number_format((float)$task['quantity'] * (float)$task['service_charge'], 2) ?></td>
             </tr>
         </tbody>
     </table>
@@ -82,13 +84,16 @@
 
     <span style="font-size: 12px; margin: 5 !important;"><b>2. PAYMENT TERMS: </b><?= htmlspecialchars($task['terms_of_payment']) ?></span><br>
     
-    <span style="font-size: 12px; margin: 5 !important;"><b>3. PRICE: </b>AED <?= htmlspecialchars((float)$task['quantity'] * (float)$task['service_charge']) ?> - Excl. VAT</span><br>
+    <span style="font-size: 12px; margin: 5 !important;"><b>3. PRICE: </b>AED <?= number_format((float)$task['quantity'] * (float)$task['service_charge'], 2) ?> - Excl. VAT</span><br>
+    <span style="font-size: 12px; margin: 5 !important;"><b>4. GENERAL EXCLUSION:  </b><br>
+        <span> <b>.</b> <?= htmlspecialchars($task['general_exclusion']) ?> </span>
+    </span><br>
     
-    <span style="font-size: 12px !important; margin: 5 !important;"><b>4. GENERAL EXCLUSION: </b><br>
-            <span>   <b>.</b> All kind of other authority approvals like DM/DCD/DDA/RTA/TARKHEES.</span><br>
-            <span>   <b>.</b> Any other items/area not prescribed in the above scope of work will be done with additional cost.</span><br>
-            <span>   <b>.</b> Any kind of authority fees like security deposit, estimation fees and connection charges.</span><br>
-    </span>
+    <!--<span style="font-size: 12px !important; margin: 5 !important;"><b>4. GENERAL EXCLUSION: </b><br>-->
+            <!--<span>   <b>.</b> All kind of other authority approvals like DM/DCD/DDA/RTA/TARKHEES.</span><br>-->
+            <!--<span>   <b>.</b> Any other items/area not prescribed in the above scope of work will be done with additional cost.</span><br>-->
+            <!--<span>   <b>.</b> Any kind of authority fees like security deposit, estimation fees and connection charges.</span><br>-->
+    <!--</span>-->
     
     <hr>
     <br>

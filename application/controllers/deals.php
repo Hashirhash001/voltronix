@@ -42,6 +42,286 @@ class deals extends CI_Controller {
         return $this->access_token;
     }
 
+	private function send_request($url, $headers, $payload) {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        $response = curl_exec($ch);
+        $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        log_message('error', "Zoho API Request - Status Code: $status_code, URL: $url, Response: $response");
+        return ['status_code' => $status_code, 'response' => json_decode($response, true)];
+    }
+
+    public function create_lead_in_zoho() {
+        // Detect Content-Type and retrieve data
+        $content_type = $this->input->server('CONTENT_TYPE');
+        $data = strpos($content_type, 'application/json') !== false ? json_decode($this->input->raw_input_stream, true) : $this->input->post();
+
+        if ($data === null) {
+            $this->output->set_status_header(400);
+            echo json_encode(['success' => false, 'error' => 'Invalid data format.']);
+            return;
+        }
+
+        // Validate required fields
+        $this->form_validation->set_rules('first_name', 'First Name', 'required');
+        $this->form_validation->set_rules('last_name', 'Last Name', 'required');
+        $this->form_validation->set_rules('VZ_app_user_id', 'VZ App user id', 'required');
+        if ($this->form_validation->run() == FALSE) {
+            $this->output->set_status_header(400);
+            echo json_encode(['errors' => $this->form_validation->error_array()]);
+            return;
+        }
+
+        $zoho_data = [
+            'First_Name' =>  $data['first_name'],
+            'Last_Name' => $data['last_name'],
+            'Account_Name' => $data['account_name'] ?? null,
+            'Description' => $data['complaint_info'] ?? null,
+            'Stage' => 'Qualification',
+            'Customer_Name' => $data['customer_name'] ?? null,
+            'Email' => $data['customer_email'] ?? null,
+            'Phone' => $data['phone'] ?? null,
+            'Mobile' => $data['mobile'] ?? null,
+            'Owner' => '5653678000000401001',
+            'Company' => $data['company_name'] ?? 'CompanyName',
+            "VZ_app_user" => ["id" => $data['VZ_app_user_id']],
+        ];
+
+        $access_token = $this->get_access_token();
+        $headers = ["Authorization: Bearer $access_token", "Content-Type: application/json"];
+        $payload = json_encode(['data' => [$zoho_data]]);
+        $url = "https://www.zohoapis.com/crm/v2/Leads";
+
+        $response = $this->send_request($url, $headers, $payload);
+
+        if ($response['status_code'] === 201 && isset($response['response']['data'][0]['details']['id'])) {
+            $zoho_lead_id = $response['response']['data'][0]['details']['id'];
+            $conversion_result = $this->convert_lead_to_deal($zoho_lead_id, $data);
+            echo json_encode($conversion_result);
+        } elseif ($response['status_code'] === 401) {
+            $access_token = $this->refresh_access_token();
+            if ($access_token) $this->create_lead_in_zoho();
+            else echo json_encode(['error' => 'Failed to retrieve or refresh access token']);
+        } else {
+            $this->output->set_status_header(500);
+            echo json_encode(['error' => 'Failed to create lead in Zoho CRM', 'details' => $response['response']]);
+        }
+    }
+
+    public function convert_lead_to_deal($lead_id, $data) {
+        $access_token = $this->get_access_token();
+        $headers = ["Authorization: Bearer $access_token", "Content-Type: application/json"];
+        $url = "https://www.zohoapis.com/crm/v2/Leads/{$lead_id}/actions/convert";
+        $payload_data = [
+            [
+                "Deals" => [
+                    "Deal_Name" => $data['first_name'] . " " . $data['last_name'],
+                    "Stage" => "Qualification",
+                    "Assign_Department1" => "VOLTRONIX CONTRACTING LLC",
+                    "VZ_app_user" => ["id" => $data['VZ_app_user_id']],
+                    "VZ_App_Status" => "Pending",
+                    'Description' => $data['complaint_info'] ?? null,
+                    'Email' => $data['customer_email'] ?? null,
+                    'Phone' => $data['phone'] ?? null,
+                    'Mobile' => $data['mobile'] ?? null,
+                    'Owner' => '5653678000000401001',
+                    'Company' => $data['company_name'] ?? 'CompanyName',
+                ],
+                "overwrite" => true
+            ]
+        ];
+        $payload = json_encode(['data' => $payload_data]);
+
+        $response = $this->send_request($url, $headers, $payload);
+
+        if ($response['status_code'] === 201) {
+            $zoho_crm_id = $response['response']['data'][0]['Deals'];
+            return $this->handle_post_conversion_tasks($zoho_crm_id, $data);
+        } elseif (isset($response['response']['data'][0]['code']) && $response['response']['data'][0]['code'] === 'DUPLICATE_DATA') {
+            $contact_id = $response['response']['data'][0]['details']['id'];
+            return $this->create_deal_for_existing_contact($contact_id, $data);
+        } elseif ($response['status_code'] === 401) {
+            return $this->retry_create_deal($data, $payload, $url);
+        } else {
+            return ['success' => false, 'error' => 'Failed to create deal in Zoho CRM', 'details' => $response['response']];
+        }
+    }
+
+    private function handle_post_conversion_tasks($zoho_crm_id, $data) {
+        if (isset($_FILES['photos'])) {
+            $upload_results = $this->process_file_uploads($zoho_crm_id, $_FILES['photos'], $data['VZ_app_user_id']);
+
+            if (isset($upload_results['error'])) {
+                $this->output->set_status_header(400);
+                return ['success' => false, 'error' => $upload_results['error']];
+            }
+
+            $remark = $data['remark'] ?? null;
+            $remark_update_result = $this->update_remark_in_zoho($zoho_crm_id, $remark, $upload_results['photos'] ?? []);
+
+            if (isset($remark_update_result['error'])) {
+                $this->output->set_status_header(500);
+                return ['success' => false, 'error' => $remark_update_result['error']];
+            }
+
+            return ['success' => true, 'message' => 'Deal created and remark/files updated successfully in Zoho CRM'];
+        }
+        return ['success' => true, 'message' => 'Deal created successfully in Zoho CRM'];
+    }
+
+    public function create_deal_for_existing_contact($contact_id, $data) {
+        $access_token = $this->get_access_token();
+        $url = "https://www.zohoapis.com/crm/v2/Deals";
+        $headers = ["Authorization: Bearer $access_token", "Content-Type: application/json"];
+        
+        $payload_data = [
+            [
+                "Contact_Name" => ["id" => $contact_id],
+                "Deal_Name" => $data['first_name'] . " " . $data['last_name'],
+                "Stage" => "Qualification",
+                "Assign_Department1" => "VOLTRONIX CONTRACTING LLC",
+                "VZ_app_user" => ["id" => $data['VZ_app_user_id']],
+                "VZ_App_Status" => "Pending",
+                'Description' => $data['complaint_info'] ?? null,
+                'Email' => $data['customer_email'] ?? null,
+                'Phone' => $data['phone'] ?? null,
+                'Mobile' => $data['mobile'] ?? null,
+                'Owner' => '5653678000000401001',
+                'Company' => $data['company_name'] ?? 'CompanyName',
+            ]
+        ];
+
+        $payload = json_encode(['data' => $payload_data]);
+        $response = $this->send_request($url, $headers, $payload);
+
+        return $this->handle_post_conversion_tasks($response['response']['data'][0]['details']['id'] ?? null, $data);
+    }
+
+	public function create_deal_in_zoho() {
+        // Detect Content-Type and retrieve data accordingly
+        $content_type = $this->input->server('CONTENT_TYPE');
+        $data = strpos($content_type, 'application/json') !== false ? json_decode($this->input->raw_input_stream, true) : $this->input->post();
+    
+        if ($data === null) {
+            $this->output->set_status_header(400);
+            echo json_encode(['success' => false, 'error' => 'Invalid data format.']);
+            return;
+        }
+    
+        // Set validation rules for required fields
+        $this->form_validation->set_rules('owner_id', 'Owner ID', 'required');
+        $this->form_validation->set_rules('deal_name', 'Deal Name', 'required');
+        $this->form_validation->set_rules('VZ_app_user_id', 'VZ App user id', 'required');
+    
+        // Optional fields (no 'required' rule, just validation if present)
+        $this->form_validation->set_rules('remark', 'Remark');
+        $this->form_validation->set_rules('service_charge', 'Amount');
+        $this->form_validation->set_rules('complaint_info', 'Description');
+        $this->form_validation->set_rules('account_name', 'Account Name');
+        $this->form_validation->set_rules('email', 'Email');
+        $this->form_validation->set_rules('status', 'Status');
+        $this->form_validation->set_rules('customer_name', 'Customer Name');
+        $this->form_validation->set_rules('customer_email', 'Email');
+        $this->form_validation->set_rules('phone', 'Phone');
+        $this->form_validation->set_rules('mobile', 'Mobile');
+    
+        if ($this->form_validation->run() == FALSE) {
+            $this->output->set_status_header(400);
+            echo json_encode(['errors' => $this->form_validation->error_array()]);
+        } else {
+            // Prepare the data to be sent to Zoho CRM
+            $zoho_data = [
+                'Deal_Name' => $data['deal_name'],
+                'Owner' => $data['owner_id'],
+                'Account_Name' => $data['account_name'] ?? null,
+                'Description' => $data['complaint_info'] ?? null,
+                'Stage' => 'Qualification',
+                'Customer_Name' => $data['customer_name'] ?? null,
+                'Email' => $data['customer_email'] ?? null,
+                'Phone' => $data['phone'] ?? null,
+                'Mobile' => $data['mobile'] ?? null,
+                'Address' => [
+                    'street' => $data['street'] ?? null,
+                    'city' => $data['city'] ?? null,
+                    'state' => $data['state'] ?? null,
+                    'country' => $data['country'] ?? null,
+                    'zip_code' => $data['zip_code'] ?? null
+                ],
+                "VZ_app_user" => [
+                    "id" => $data['VZ_app_user_id']
+                ],
+                "VZ_App_Status" => "Pending"
+            ];
+    
+            // Get or refresh access token
+            $access_token = $this->get_access_token();
+    
+            if (!$access_token) {
+                $this->output->set_status_header(500);
+                echo json_encode(['error' => 'Failed to retrieve access token']);
+                return;
+            }
+    
+            // Send the data to Zoho CRM
+            $url = "https://www.zohoapis.com/crm/v2/Deals";
+            $headers = [
+                "Authorization: Bearer $access_token",
+                "Content-Type: application/json"
+            ];
+            $payload = json_encode(['data' => [$zoho_data]]);
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+            $response = curl_exec($ch);
+            $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+    
+            // Check if the request was successful
+            if ($status_code === 201) {
+                // print_r($response);
+                // die();
+                $zoho_crm_id = json_decode($response, true)['data'][0]['details']['id'];
+    
+                // Handle file uploads if remark is present or files are uploaded
+                if (isset($_FILES['photos'])) {
+                    $upload_results = isset($_FILES['photos']) ? $this->process_file_uploads($zoho_crm_id, $_FILES['photos'], $data['VZ_app_user_id']) : [];
+    
+                    if (isset($upload_results['error'])) {
+                        $this->output->set_status_header(400);
+                        echo json_encode(['success' => false, 'error' => $upload_results['error']]);
+                        return;
+                    }
+    
+                    // Update remark in Zoho
+                    $remark_update_result = $this->update_remark_in_zoho($zoho_crm_id, $data['remark'] ?? null, $upload_results['photos'] ?? []);
+    
+                    if (isset($remark_update_result['error'])) {
+                        $this->output->set_status_header(500);
+                        echo json_encode(['success' => false, 'error' => $remark_update_result['error']]);
+                        return;
+                    }
+    
+                    echo json_encode(['success' => 'Deal created and remark/files updated successfully in Zoho CRM']);
+                } else {
+                    echo json_encode(['success' => 'Deal created successfully in Zoho CRM']);
+                }
+            } elseif ($status_code === 401) {
+                // Handle expired access token and retry
+                $this->retry_create_deal($data, $payload, $url);
+            } else {
+                $this->output->set_status_header(500);
+                echo json_encode(['error' => 'Failed to create deal in Zoho CRM', 'details' => json_decode($response, true)]);
+            }
+        }
+    }
+
 	// Method to validate API key
 	private function validate_api_key() {
 		$headers = $this->input->request_headers();
@@ -77,12 +357,14 @@ class deals extends CI_Controller {
         // Add validation for item details only when the status is "Proposal"
 		if (isset($data['status']) && $data['status'] === 'Proposal') {
 			$this->form_validation->set_rules('project_name', 'Project Name', 'required');
-			$this->form_validation->set_rules('subject', 'Subject');
+			$this->form_validation->set_rules('subject', 'Subject', 'required');
+			$this->form_validation->set_rules('kind_attention', 'Kind attention', 'required');
 			$this->form_validation->set_rules('terms_of_payment', 'Terms of Payment', 'required');
 			$this->form_validation->set_rules('product_id', 'product Id', 'required');
 			$this->form_validation->set_rules('product_name', 'product Name', 'required');
-			// $this->form_validation->set_rules('uom', 'U.O.M', 'required');
+			$this->form_validation->set_rules('uom', 'U.O.M', 'required');
 			$this->form_validation->set_rules('quantity', 'Quantity', 'required|numeric');
+			$this->form_validation->set_rules('general_exclusion', 'general exclusion');
 		}
     
         if ($this->form_validation->run() === FALSE) {
@@ -199,11 +481,13 @@ class deals extends CI_Controller {
 					'unit_price' => $data['service_charge'] ?? null,
 					'product_id' => $data['product_id'] ?? null,
 					'product_name' => $data['product_name'] ?? null,
-					'subject' => $data['project_name'] ?? 'Default Subject',
+					'uom' => $data['uom'] ?? null,
+					'kind_attention' => $data['kind_attention'] ?? null,
+					'subject' => $data['subject'] ?? 'Default Subject',
 					'project' => $data['project_name'] ?? 'na',                
 					'terms_of_payment' => $data['terms_of_payment'] ?? 'na', 
 					'specification' => 'na',    
-					'general_exclusion' => 'na', 
+					'general_exclusion' => $data['general_exclusion'] ?? 'na', 
 					'brand' => 'na',      
 					'warranty' => 'na',
 					'delivery' => 'na',
@@ -262,6 +546,120 @@ class deals extends CI_Controller {
 				return ['error' => 'Invalid date format for valid_until.'];
 			}
 		}
+		
+		// Step 1: Create a new contact in Zoho CRM
+        $contact_data = json_encode([
+            'data' => [
+                [
+                    'Last_Name' => $proposal_data['kind_attention'] ?? 'Default Last Name',
+                    'Email' => $proposal_data['email'] ?? 'example@example.com',
+                    'Phone' => $proposal_data['phone'] ?? '0000000000'
+                ]
+            ]
+        ]);
+    
+        $contact_response = $this->execute_curl_request(
+            "https://www.zohoapis.com/crm/v2.1/Contacts",
+            [
+                'Content-Type: application/json',
+                "Authorization: Zoho-oauthtoken " . $this->access_token
+            ],
+            $contact_data,
+            'POST'
+        );
+        
+        // Step 2: Decode the response
+        $contact_data_response = json_decode($contact_response['body'], true);
+        
+        // Step 3: Check if the response indicates an expired token (401 Unauthorized)
+        if ($contact_response['http_code'] == 401) {
+            // Attempt to refresh the token
+            if ($this->refresh_access_token()) {
+                // Update the token in the headers after refreshing
+                $this->access_token = $this->get_access_token();
+                $headers = [
+                    'Content-Type: application/json',
+                    "Authorization: Zoho-oauthtoken " . $this->access_token
+                ];
+        
+                // Retry the contact creation request with the refreshed token
+                $contact_response = $this->execute_curl_request(
+                    "https://www.zohoapis.com/crm/v2.1/Contacts",
+                    $headers,
+                    $contact_data,
+                    'POST'
+                );
+        
+                // Decode the response again after retry
+                $contact_data_response = json_decode($contact_response['body'], true);
+            } else {
+                // If the token refresh fails, log an error and return
+                log_message('error', 'Failed to refresh access token for contact creation.');
+                return ['error' => 'Failed to refresh access token.'];
+            }
+        }
+    
+        $contact_response_body = json_decode($contact_response['body'], true);
+        if (isset($contact_response_body['data'][0]['details']['id'])) {
+            $contact_id = $contact_response_body['data'][0]['details']['id'];
+            $contact_name = $proposal_data['kind_attention'];
+        } else {
+            log_message('error', 'Failed to create contact in Zoho CRM: ' . print_r($contact_response_body, true));
+            print_r($contact_response_body);
+            return ['error' => 'Failed to create contact.'];
+        }
+		
+		// Step 1: Fetch product details from Zoho CRM using product_id
+        if (!empty($proposal_data['product_id'])) {
+            $product_response = $this->execute_curl_request(
+                "https://www.zohoapis.com/crm/v2.1/Products/{$proposal_data['product_id']}",
+                [
+                    'Content-Type: application/json',
+                    "Authorization: Zoho-oauthtoken " . $this->access_token
+                ],
+                null,
+                'GET'
+            );
+        
+            // Decode the response
+            $product_data = json_decode($product_response['body'], true);
+        
+            // Handle 401 Unauthorized error by refreshing the token
+            if ($product_response['http_code'] == 401) {
+                if ($this->refresh_access_token()) {
+                    // Update the token in the headers after refreshing
+                    $this->access_token = $this->get_access_token();
+                    $headers = [
+                        'Content-Type: application/json',
+                        "Authorization: Zoho-oauthtoken " . $this->access_token
+                    ];
+        
+                    // Retry the product details request with the refreshed token
+                    $product_response = $this->execute_curl_request(
+                        "https://www.zohoapis.com/crm/v2.1/Products/{$proposal_data['product_id']}",
+                        $headers,
+                        null,
+                        'GET'
+                    );
+        
+                    // Decode the response again after retry
+                    $product_data = json_decode($product_response['body'], true);
+                } else {
+                    // If the token refresh fails, log an error and return
+                    log_message('error', 'Failed to refresh access token for product details.');
+                    return ['error' => 'Failed to refresh access token.'];
+                }
+            }
+        
+            if (isset($product_data['data'][0])) {
+                $product_description = $product_data['data']['0']['Description'] ?? '';
+            } else {
+                log_message('error', 'Product not found or missing description for product ID: ' . $proposal_data['product_id']);
+                $product_description = '';
+            }
+        } else {
+            $product_description = '';
+        }
 	
 		$data = json_encode([
 			'data' => [
@@ -276,12 +674,17 @@ class deals extends CI_Controller {
 					'Warranty' => $proposal_data['warranty'] ?? 'na',
 					'Delivery' => $proposal_data['delivery'] ?? 'na',
 					'Valid_Till' => $valid_until_date ?? null,
-					'Product_Details' => [
+					'Contact_Name' => [
+                        'name' => $contact_name,
+                        'id' => $contact_id,
+                    ],
+					'Quoted_Items' => [
 						[
-							'product' => $proposal_data['product_id'],  // Use the Product_Id from Zoho CRM
-							'quantity' => (float) $proposal_data['quantity'],  // Ensure this is passed as a number
-							'list_price' => (float) $proposal_data['unit_price'],  // Use list_price instead of Unit_Price
-							'UOM' => $proposal_data['uom']  // Ensure UOM is a valid UOM option in Zoho CRM
+							'Product_Name' => $proposal_data['product_id'],  
+							'Quantity' => (float) $proposal_data['quantity'], 
+							'List_Price' => (float) $proposal_data['unit_price'], 
+							'U_O_M' => $proposal_data['uom'],
+							'Description' => $product_description 
 						]
 					]
 				]
@@ -307,7 +710,7 @@ class deals extends CI_Controller {
 	
 		// Make API request to Zoho CRM
 		$response = $this->execute_curl_request(
-			"https://www.zohoapis.com/crm/v2/Quotes",
+			"https://www.zohoapis.com/crm/v2.1/Quotes",
 			$headers,
 			$data,
 			'POST'
@@ -327,7 +730,7 @@ class deals extends CI_Controller {
 				$this->access_token = $this->get_access_token();
 				$headers[1] = "Authorization: Zoho-oauthtoken " . $this->access_token;
 				$response = $this->execute_curl_request(
-					"https://www.zohoapis.com/crm/v2/Quotes",
+					"https://www.zohoapis.com/crm/v2.1/Quotes",
 					$headers,
 					$data,
 					'POST'
@@ -366,12 +769,17 @@ class deals extends CI_Controller {
 				// 'id' => $id,
 				'quote_id' => $quote_id,
 				'quote_number' => $quote_number,
+				'subject' => $proposal_data['subject'],
 				'project_name' => $proposal_data['project'],
+				'kind_attention' => $proposal_data['kind_attention'],
 				'terms_of_payment' => $proposal_data['terms_of_payment'],
 				'product_id' => $proposal_data['product_id'],
 				'product_name' => $proposal_data['product_name'],
+				'product_description' => $product_description,
+				'uom' => $proposal_data['uom'],
 				'quantity' => $proposal_data['quantity'],
 				'valid_until' => $proposal_data['valid_until'],
+				'general_exclusion' => $proposal_data['general_exclusion'],
 			];
 	
 			// Assuming you want to insert into 'task_quotes' table
@@ -541,8 +949,7 @@ class deals extends CI_Controller {
         }
     
         return ['error' => 'Failed to update deal in Zoho CRM. Response: ' . print_r($response, true)];
-    }
-			
+    }			
 	
 	private function process_file_uploads($task_id, $files, $zoho_crm_id) {
 		$upload_path = './assets/photos/';
@@ -676,8 +1083,7 @@ class deals extends CI_Controller {
         }
         
         return ['error' => 'Failed to update notes in Zoho CRM. Response: ' . print_r($response, true)];
-    }
-	
+    }	
 
 	private function execute_curl_request($url, $headers, $data = null, $method = 'POST') {
 		$ch = curl_init($url);
