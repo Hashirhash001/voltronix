@@ -552,8 +552,6 @@ class deals extends CI_Controller {
             'data' => [
                 [
                     'Last_Name' => $proposal_data['kind_attention'] ?? 'Default Last Name',
-                    'Email' => $proposal_data['email'] ?? 'example@example.com',
-                    'Phone' => $proposal_data['phone'] ?? '0000000000'
                 ]
             ]
         ]);

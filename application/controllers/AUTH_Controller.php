@@ -2,7 +2,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /**
- * Tasks Controller
+ * Auth Controller
  *
  * @property CI_Form_validation $form_validation
  * @property CI_Output $output

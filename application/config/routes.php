@@ -72,8 +72,12 @@ $route['login'] = 'AUTH_Controller/login';
 $route['logout'] = 'AUTH_Controller/logout';
 $route['delete/user'] = 'AUTH_Controller/delete_user';
 
-
 $route['templates'] = 'deals/fetch_templates';
 
 // Protected route
 $route['protected-route'] = 'AUTH_Controller/protected_route';
+
+//web
+$route['web/login'] = 'web/Login/index';
+$route['web/dashboard'] = 'web/Login/dashboard';
+$route['web/logout'] = 'web/Login/logout';
