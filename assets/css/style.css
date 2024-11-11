@@ -1,0 +1,195 @@
+/* Hide arrows for input type number on Chrome, Safari, Edge, and Opera */
+.no-arrows::-webkit-outer-spin-button,
+.no-arrows::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+/* Hide arrows on Firefox */
+.no-arrows[type=number] {
+	-moz-appearance: textfield;
+}
+
+.full-wrapper{
+	background-color: #EDF5F8;
+	min-height: 100vh;
+}
+
+/* Table styling */
+.table-bordered th,
+.table-bordered td {
+	border: 1px solid #ddd;
+	vertical-align: middle;
+	text-align: center;
+}
+
+.table th,
+.table td {
+	padding: 10px;
+	font-weight: normal;
+	font-size: 14px;
+}
+
+/* Align item name select and input elements */
+.table select,
+.table input {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+/* Style to wrap long text in Select2 */
+.wrap-text {
+	white-space: normal !important;
+	display: block;
+	line-height: 1.2;
+	/* Adjust line height for better readability */
+}
+
+.select2-container .select2-selection--single {
+	min-height: 60px;
+}
+
+/* Ensure dropdown width and styling */
+.select2-container .select2-selection--single .select2-selection__rendered {
+	text-align: left;
+	white-space: normal;
+	/* Allow text wrap in the selected option */
+	line-height: 1.2;
+	min-height: 60px;
+}
+
+.select2-dropdown {
+	word-wrap: break-word;
+	/* Wrap long text in dropdown */
+}
+
+.loader {
+	border: 2px solid #f3f3f3;
+	border-radius: 50%;
+	border-top: 2px solid #3498db;
+	width: 16px;
+	height: 16px;
+	animation: spin 1s linear infinite;
+	display: inline-block;
+	vertical-align: middle;
+	margin-left: 8px;
+}
+
+@keyframes spin {
+	0% {
+		transform: rotate(0deg);
+	}
+
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+.label-nowrap {
+	white-space: nowrap;
+	width: 150px;
+	/* Set a fixed width for the label to align uniformly */
+}
+
+.flex-input {
+	flex-grow: 1;
+	max-width: 200px;
+	/* Limit the width to keep a uniform look */
+	text-align: right;
+	height: 30px;
+	margin-left: 10px;
+	/* Add space between the label and input */
+}
+
+.form-group {
+	margin-bottom: 10px;
+	/* Space between each row */
+}
+
+.form-label {
+	font-weight: 600;
+}
+.form-control, .btn, .card-header {
+	border-radius: 8px;
+}
+.btn-primary {
+	background-color: #007bff;
+	border: none;
+}
+.btn-primary:hover {
+	background-color: #0056b3;
+}
+.card-header {
+	background: #007bff;
+	color: white;
+	padding: 15px;
+}
+
+.btn-check:focus+.btn, .btn:focus {
+	outline: none;
+	box-shadow: none !important;
+}
+
+.dashboard-title {
+    font-size: 2.5rem; /* Make the font size larger */
+    font-weight: 700; /* Increase the font weight for boldness */
+    color: #313949; /* Darker shade for the title color */
+    text-transform: uppercase; /* Convert text to uppercase for emphasis */
+    letter-spacing: 1px; /* Add spacing between letters for a modern look */
+    position: relative; /* For positioning the underline effect */
+    padding-bottom: 10px; /* Space between the title and the underline */
+}
+
+.dashboard-title::after {
+    content: ""; /* Empty content for the underline */
+    position: absolute;
+    width: 80px; /* Length of the underline */
+    height: 4px; /* Thickness of the underline */
+    background-color: #ff6f61; /* Accent color for the underline */
+    bottom: 0; /* Position it right under the title */
+    left: 0; /* Align to the left of the title */
+    border-radius: 2px; /* Round the edges for a smooth look */
+}
+
+
+.wrapper {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100vh;
+	background-color: #f5f7fa;
+	font-family: Arial, sans-serif;
+}
+.login-container {
+	width: 100%;
+	max-width: 400px;
+	padding: 2rem;
+	background: #ffffff;
+	border-radius: 8px;
+	box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+	text-align: center;
+}
+.login-logo img {
+	width: 80px;
+	margin-bottom: 1rem;
+}
+.login-container h2 {
+	font-size: 1.5rem;
+	margin-bottom: 1.5rem;
+	color: #313949;
+}
+.btn-primary {
+	width: 100%;
+	padding: 0.75rem;
+	font-size: 1rem;
+	border-radius: 20px;
+	background-color: #ff0100;
+	border: none;
+}
+.btn-primary:hover {
+	background-color: #ff4f41;
+}
+.form-group label {
+	float: left;
+	color: #666;
+}

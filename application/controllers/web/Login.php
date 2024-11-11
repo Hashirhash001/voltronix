@@ -63,7 +63,12 @@ class Login extends CI_Controller {
 				// Specific error: Account is inactive
 				$data['errors'] = 'Your account is inactive. Please contact support.';
 				$this->load->view('auth/login', $data);
-			} elseif (!password_verify($this->input->post('password'), $user['password'])) {
+			} elseif ($user['department'] != 'web_app') {
+				// unauthorized access
+				$data['errors'] = 'Unauthorized access.';
+				$this->load->view('auth/login', $data);
+			}
+			elseif (!password_verify($this->input->post('password'), $user['password'])) {
 				// Specific error: Incorrect password
 				$data['errors'] = 'Incorrect password. Please try again.';
 				$this->load->view('auth/login', $data);
