@@ -1,8 +1,22 @@
+body {
+	font-family: 'Poppins', sans-serif !important;
+	height: 100vh;
+	margin: 0;
+}
+
 /* Hide arrows for input type number on Chrome, Safari, Edge, and Opera */
 .no-arrows::-webkit-outer-spin-button,
 .no-arrows::-webkit-inner-spin-button {
 	-webkit-appearance: none;
 	margin: 0;
+}
+
+.dropdown-item.active, .dropdown-item:active {
+	background-color: none !important;
+}
+
+.dropdown-item.active, .dropdown-item:focus {
+	background-color: none !important;
 }
 
 /* Hide arrows on Firefox */
@@ -112,13 +126,15 @@
 .form-control, .btn, .card-header {
 	border-radius: 8px;
 }
-.btn-primary {
+/* .btn-primary2 {
 	background-color: #007bff;
+	color: #fff;
 	border: none;
 }
-.btn-primary:hover {
+.btn-primary2:hover {
 	background-color: #0056b3;
-}
+	color: #fff;
+} */
 .card-header {
 	background: #007bff;
 	color: white;
@@ -128,6 +144,11 @@
 .btn-check:focus+.btn, .btn:focus {
 	outline: none;
 	box-shadow: none !important;
+	background: #ff6f61;
+}
+
+.btn-check:focus+.btn, .btn:active {
+	background: #ff6f61;
 }
 
 .dashboard-title {
@@ -158,7 +179,6 @@
 	justify-content: center;
 	height: 100vh;
 	background-color: #f5f7fa;
-	font-family: Arial, sans-serif;
 }
 .login-container {
 	width: 100%;
@@ -178,15 +198,16 @@
 	margin-bottom: 1.5rem;
 	color: #313949;
 }
-.btn-primary {
+.btn-primary2 {
 	width: 100%;
 	padding: 0.75rem;
 	font-size: 1rem;
 	border-radius: 20px;
+	color: #fff;
 	background-color: #ff0100;
 	border: none;
 }
-.btn-primary:hover {
+.btn-primary2:hover {
 	background-color: #ff4f41;
 }
 .form-group label {

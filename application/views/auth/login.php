@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voltronix Login</title>
+	<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link href="<?php echo base_url('assets/css/style.css'); ?>" rel="stylesheet">
 </head>
@@ -29,7 +30,7 @@
 					<input type="password" name="password" class="form-control" required>
 					<?php echo form_error('password', '<div class="text-danger">', '</div>'); ?>
 				</div>
-				<button type="submit" class="btn btn-primary">Login</button>
+				<button type="submit" class="btn btn-primary2">Login</button>
 			</form>
 		</div>
 	</div>
