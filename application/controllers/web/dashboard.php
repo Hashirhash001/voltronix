@@ -111,57 +111,99 @@ class dashboard extends CI_Controller {
 		ini_set('display_errors', 0); // Hide errors from being directly output to the client
 		ini_set('log_errors', 1); // Enable error logging
 	
-		// Step 1: Create a new contact in Zoho CRM
-		$contact_data = json_encode([
-			'data' => [
-				[
-					'Last_Name' => $proposal_data['kind_attention'] ?? 'Default Last Name',
-				]
-			]
-		]);
-	
-		$contact_response = $this->execute_curl_request(
-			"https://www.zohoapis.com/crm/v2.1/Contacts",
-			[
-				'Content-Type: application/json',
-				"Authorization: Zoho-oauthtoken " . $this->access_token
-			],
-			$contact_data,
-			'POST'
-		);
-		
-		$contact_data_response = json_decode($contact_response['body'], true);
-		
-		if ($contact_response['http_code'] == 401) {
+		// Step 1: Check if contact already exists by querying with last name
+        $last_name = $proposal_data['kind_attention'] ?? 'Default Last Name';
+        $existing_contact_response = $this->execute_curl_request(
+            "https://www.zohoapis.com/crm/v2.1/Contacts/search?criteria=(Last_Name:equals:$last_name)",
+            [
+                'Content-Type: application/json',
+                "Authorization: Zoho-oauthtoken " . $this->access_token
+            ],
+            null,
+            'GET'
+        );
+
+		if ($existing_contact_response['http_code'] == 401) {
 			if ($this->refresh_access_token()) {
 				$this->access_token = $this->get_access_token();
 				$headers = [
 					'Content-Type: application/json',
 					"Authorization: Zoho-oauthtoken " . $this->access_token
 				];
-	
-				$contact_response = $this->execute_curl_request(
-					"https://www.zohoapis.com/crm/v2.1/Contacts",
+
+				$existing_contact_response = $this->execute_curl_request(
+					"https://www.zohoapis.com/crm/v2.1/Contacts/search?criteria=(Last_Name:equals:$last_name)",
 					$headers,
-					$contact_data,
-					'POST'
+					null,
+					'GET'
 				);
-	
-				$contact_data_response = json_decode($contact_response['body'], true);
+
+				$product_data = json_decode($existing_contact_response['body'], true);
 			} else {
-				log_message('error', 'Failed to refresh access token for contact creation.');
+				log_message('error', 'Failed to refresh access token for product details.');
 				return ['error' => 'Failed to refresh access token.'];
 			}
 		}
+    
+        $existing_contact_data = json_decode($existing_contact_response['body'], true);
+        // print_r($existing_contact_data);
+        // die();
+        if (!empty($existing_contact_data['data'][0]['Last_Name'])) {
+            // Contact exists, use existing contact ID
+            $contact_id = $existing_contact_data['data'][0]['id'];
+            $contact_name = $existing_contact_data['data'][0]['Last_Name'];
+        } else {
+            // Contact does not exist, proceed to create a new contact
+            $contact_data = json_encode([
+                'data' => [
+                    [
+                        'Last_Name' => $proposal_data['kind_attention'] ?? 'Default Last Name',
+                    ]
+                ]
+            ]);
+    
+            $contact_response = $this->execute_curl_request(
+                "https://www.zohoapis.com/crm/v2.1/Contacts",
+                [
+                    'Content-Type: application/json',
+                    "Authorization: Zoho-oauthtoken " . $this->access_token
+                ],
+                $contact_data,
+                'POST'
+            );
+
+			if ($contact_response['http_code'] == 401) {
+				if ($this->refresh_access_token()) {
+					$this->access_token = $this->get_access_token();
+					$headers = [
+						'Content-Type: application/json',
+						"Authorization: Zoho-oauthtoken " . $this->access_token
+					];
 	
-		$contact_response_body = json_decode($contact_response['body'], true);
-		if (isset($contact_response_body['data'][0]['details']['id'])) {
-			$contact_id = $contact_response_body['data'][0]['details']['id'];
-			// $contact_name = $proposal_data['kind_attention'];
-		} else {
-			log_message('error', 'Failed to create contact in Zoho CRM: ' . print_r($contact_response_body, true));
-			return ['error' => 'Failed to create contact.'];
-		}
+					$contact_response = $this->execute_curl_request(
+						"https://www.zohoapis.com/crm/v2.1/Contacts",
+						$headers,
+						null,
+						'GET'
+					);
+	
+					$product_data = json_decode($contact_response['body'], true);
+				} else {
+					log_message('error', 'Failed to refresh access token for product details.');
+					return ['error' => 'Failed to refresh access token.'];
+				}
+			}
+    
+            $contact_response_body = json_decode($contact_response['body'], true);
+    
+            if (isset($contact_response_body['data'][0]['id'])) {
+                $contact_id = $contact_response_body['data'][0]['id'];
+                $contact_name = $proposal_data['kind_attention'];
+            } else {
+                log_message('error', 'Failed to create contact in Zoho CRM: ' . print_r($contact_response_body, true));
+                return ['error' => 'Failed to create contact.'];
+            }
+        }
 		
 		// Fetch product details from Zoho CRM using product_id
 		if (!empty($proposal_data['product_id'])) {
@@ -326,6 +368,9 @@ class dashboard extends CI_Controller {
 				$this->output->set_status_header(500);
 				return json_encode(['success' => false, 'error' => 'Quote number not found in Zoho CRM response.']);
 			}
+
+			// Now update the deal status to 'Proposal'
+			$update_status_response = $this->update_deal_in_zoho($deal_id, 'Proposal/Price Quote');
 		
 			$id = $this->Task_model->get_id_by_deal_id($deal_id);
 		
@@ -367,6 +412,76 @@ class dashboard extends CI_Controller {
 			return json_encode(['error' => 'Quote ID not found in Zoho CRM response.']);
 		}
 		
+	}
+
+	// Function to update the deal status to 'Proposal' in Zoho CRM
+	public function update_deal_in_zoho($deal_id, $status)
+	{
+		// Prepare the request body to update the deal status
+		$data = [
+			"data" => [
+				[
+					"id" => $deal_id,
+					"Stage" => $status // Update the 'Stage' field to 'Proposal'
+				]
+			]
+		];
+
+		// Convert the data to JSON
+		$json_data = json_encode($data);
+
+		// Set headers for the Zoho CRM API request
+		$headers = [
+			'Authorization: Zoho-oauthtoken ' . $this->access_token, // Add your OAuth token here
+			'Content-Type: application/json'
+		];
+
+		// Send the API request to update the deal
+		$response = $this->execute_curl_request(
+			"https://www.zohoapis.com/crm/v2/Deals/{$deal_id}",
+			$headers,
+			$json_data,
+			'PUT'
+		);
+
+		// Check if the response code is 401 (Unauthorized)
+		if ($response['http_code'] == 401) {
+			// Attempt to refresh the access token
+			if ($this->refresh_access_token()) {
+				// Retrieve the new access token
+				$this->access_token = $this->get_access_token();
+
+				// Retry the request with the new access token
+				$headers = [
+					'Content-Type: application/json',
+					"Authorization: Zoho-oauthtoken " . $this->access_token
+				];
+
+				$response = $this->execute_curl_request(
+					"https://www.zohoapis.com/crm/v2/Deals/{$deal_id}",
+					$headers,
+					$json_data,
+					'PUT'
+				);
+			} else {
+				log_message('error', 'Failed to refresh access token while updating the deal status.');
+				return ['error' => 'Failed to refresh access token.'];
+			}
+		}
+
+		// Decode the response to check if the update was successful
+		$response_body = json_decode($response['body'], true);
+
+		// Check for success in the response body
+		if (isset($response_body['data'][0]['status']) && $response_body['data'][0]['status'] == 'success') {
+			// Successfully updated the deal
+			log_message('debug', 'Deal status updated successfully for Deal ID: ' . $deal_id);
+			return ['success' => true, 'message' => 'Deal status updated to Proposal.'];
+		} else {
+			// Log failure and return error
+			log_message('error', 'Failed to update deal status for Deal ID: ' . $deal_id . ' - ' . print_r($response_body, true));
+			return ['success' => false, 'error' => 'Failed to update deal status.'];
+		}
 	}
 	
 	private function execute_curl_request($url, $headers, $data = null, $method = 'POST') {

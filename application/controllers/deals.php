@@ -557,81 +557,74 @@ class deals extends CI_Controller {
     }
 
     private function add_proposal_to_zoho($deal_id, $proposal_data, $id) {
-		// Initialize valid_until_date
-		$valid_until_date = null;
-	
-		// Check if valid_until exists and is a valid date
-		if (!empty($proposal_data['valid_until'])) {
-			try {
-				$date = new DateTime($proposal_data['valid_until']);
-				$valid_until_date = $date->format('Y-m-d');  // Format the date as 'YYYY-MM-DD'
-			} catch (Exception $e) {
-				log_message('error', 'Invalid date format for valid_until: ' . $proposal_data['valid_until']);
-				return ['error' => 'Invalid date format for valid_until.'];
-			}
-		}
-		
-		// Step 1: Create a new contact in Zoho CRM
-        $contact_data = json_encode([
-            'data' => [
-                [
-                    'Last_Name' => $proposal_data['kind_attention'] ?? 'Default Last Name',
-                ]
-            ]
-        ]);
+        // Initialize valid_until_date
+        $valid_until_date = null;
     
-        $contact_response = $this->execute_curl_request(
-            "https://www.zohoapis.com/crm/v2.1/Contacts",
+        // Check if valid_until exists and is a valid date
+        if (!empty($proposal_data['valid_until'])) {
+            try {
+                $date = new DateTime($proposal_data['valid_until']);
+                $valid_until_date = $date->format('Y-m-d');  // Format the date as 'YYYY-MM-DD'
+            } catch (Exception $e) {
+                log_message('error', 'Invalid date format for valid_until: ' . $proposal_data['valid_until']);
+                return ['error' => 'Invalid date format for valid_until.'];
+            }
+        }
+    
+        // Step 1: Check if contact already exists by querying with last name
+        $last_name = $proposal_data['kind_attention'] ?? 'Default Last Name';
+        $existing_contact_response = $this->execute_curl_request(
+            "https://www.zohoapis.com/crm/v2.1/Contacts/search?criteria=(Last_Name:equals:$last_name)",
             [
                 'Content-Type: application/json',
                 "Authorization: Zoho-oauthtoken " . $this->access_token
             ],
-            $contact_data,
-            'POST'
+            null,
+            'GET'
         );
-        
-        // Step 2: Decode the response
-        $contact_data_response = json_decode($contact_response['body'], true);
-        
-        // Step 3: Check if the response indicates an expired token (401 Unauthorized)
-        if ($contact_response['http_code'] == 401) {
-            // Attempt to refresh the token
-            if ($this->refresh_access_token()) {
-                // Update the token in the headers after refreshing
-                $this->access_token = $this->get_access_token();
-                $headers = [
+    
+        $existing_contact_data = json_decode($existing_contact_response['body'], true);
+        // print_r($existing_contact_data);
+        // die();
+        if (!empty($existing_contact_data['data'][0]['Last_Name'])) {
+            // Contact exists, use existing contact ID
+            $contact_id = $existing_contact_data['data'][0]['id'];
+            $contact_name = $existing_contact_data['data'][0]['Last_Name'];
+        } else {
+            // Contact does not exist, proceed to create a new contact
+            $contact_data = json_encode([
+                'data' => [
+                    [
+                        'Last_Name' => $proposal_data['kind_attention'] ?? 'Default Last Name',
+                        // 'Email' => '',
+                        // 'Phone' => $proposal_data['phone'] ?? '0000000000'
+                    ]
+                ]
+            ]);
+    
+            $contact_response = $this->execute_curl_request(
+                "https://www.zohoapis.com/crm/v2.1/Contacts",
+                [
                     'Content-Type: application/json',
                     "Authorization: Zoho-oauthtoken " . $this->access_token
-                ];
-        
-                // Retry the contact creation request with the refreshed token
-                $contact_response = $this->execute_curl_request(
-                    "https://www.zohoapis.com/crm/v2.1/Contacts",
-                    $headers,
-                    $contact_data,
-                    'POST'
-                );
-        
-                // Decode the response again after retry
-                $contact_data_response = json_decode($contact_response['body'], true);
+                ],
+                $contact_data,
+                'POST'
+            );
+    
+            $contact_response_body = json_decode($contact_response['body'], true);
+    
+            if (isset($contact_response_body['data'][0]['details']['id'])) {
+                $contact_id = $contact_response_body['data'][0]['details']['id'];
+                $contact_name = $proposal_data['kind_attention'];
             } else {
-                // If the token refresh fails, log an error and return
-                log_message('error', 'Failed to refresh access token for contact creation.');
-                return ['error' => 'Failed to refresh access token.'];
+                log_message('error', 'Failed to create contact in Zoho CRM: ' . print_r($contact_response_body, true));
+                return ['error' => 'Failed to create contact.'];
             }
         }
     
-        $contact_response_body = json_decode($contact_response['body'], true);
-        if (isset($contact_response_body['data'][0]['details']['id'])) {
-            $contact_id = $contact_response_body['data'][0]['details']['id'];
-            $contact_name = $proposal_data['kind_attention'];
-        } else {
-            log_message('error', 'Failed to create contact in Zoho CRM: ' . print_r($contact_response_body, true));
-            print_r($contact_response_body);
-            return ['error' => 'Failed to create contact.'];
-        }
-		
-		// Step 1: Fetch product details from Zoho CRM using product_id
+        // Step 2: Fetch product details if available
+        $product_description = '';
         if (!empty($proposal_data['product_id'])) {
             $product_response = $this->execute_curl_request(
                 "https://www.zohoapis.com/crm/v2.1/Products/{$proposal_data['product_id']}",
@@ -642,187 +635,110 @@ class deals extends CI_Controller {
                 null,
                 'GET'
             );
-        
-            // Decode the response
+    
             $product_data = json_decode($product_response['body'], true);
-        
-            // Handle 401 Unauthorized error by refreshing the token
-            if ($product_response['http_code'] == 401) {
-                if ($this->refresh_access_token()) {
-                    // Update the token in the headers after refreshing
-                    $this->access_token = $this->get_access_token();
-                    $headers = [
-                        'Content-Type: application/json',
-                        "Authorization: Zoho-oauthtoken " . $this->access_token
-                    ];
-        
-                    // Retry the product details request with the refreshed token
-                    $product_response = $this->execute_curl_request(
-                        "https://www.zohoapis.com/crm/v2.1/Products/{$proposal_data['product_id']}",
-                        $headers,
-                        null,
-                        'GET'
-                    );
-        
-                    // Decode the response again after retry
-                    $product_data = json_decode($product_response['body'], true);
-                } else {
-                    // If the token refresh fails, log an error and return
-                    log_message('error', 'Failed to refresh access token for product details.');
-                    return ['error' => 'Failed to refresh access token.'];
-                }
-            }
-        
+    
             if (isset($product_data['data'][0])) {
                 $product_description = $product_data['data']['0']['Description'] ?? '';
             } else {
                 log_message('error', 'Product not found or missing description for product ID: ' . $proposal_data['product_id']);
-                $product_description = '';
             }
-        } else {
-            $product_description = '';
         }
-	
-		$data = json_encode([
-			'data' => [
-				[
-					'Deal_Name' => $deal_id,
-					'Subject' => $proposal_data['subject'] ?? 'Default Subject',
-					'Project' => $proposal_data['project'] ?? 'na',
-					'Terms_of_Payment' => $proposal_data['terms_of_payment'] ?? 'na',
-					'Specification' => $proposal_data['specification'] ?? 'na',
-					'General_Exclusion' => $proposal_data['general_exclusion'] ?? 'na',
-					'Brand' => $proposal_data['brand'] ?? 'na',
-					'Warranty' => $proposal_data['warranty'] ?? 'na',
-					'Delivery' => $proposal_data['delivery'] ?? 'na',
-					'Valid_Till' => $valid_until_date ?? null,
-					'Contact_Name' => [
+    
+        // Prepare data for creating a quote
+        $data = json_encode([
+            'data' => [
+                [
+                    'Deal_Name' => $deal_id,
+                    'Subject' => $proposal_data['subject'] ?? 'Default Subject',
+                    'Project' => $proposal_data['project'] ?? 'na',
+                    'Terms_of_Payment' => $proposal_data['terms_of_payment'] ?? 'na',
+                    'Specification' => $proposal_data['specification'] ?? 'na',
+                    'General_Exclusion' => $proposal_data['general_exclusion'] ?? 'na',
+                    'Brand' => $proposal_data['brand'] ?? 'na',
+                    'Warranty' => $proposal_data['warranty'] ?? 'na',
+                    'Delivery' => $proposal_data['delivery'] ?? 'na',
+                    'Valid_Till' => $valid_until_date,
+                    'Contact_Name' => [
                         'name' => $contact_name,
                         'id' => $contact_id,
                     ],
-					'Quoted_Items' => [
-						[
-							'Product_Name' => $proposal_data['product_id'],  
-							'Quantity' => (float) $proposal_data['quantity'], 
-							'List_Price' => (float) $proposal_data['unit_price'], 
-							'U_O_M' => $proposal_data['uom'],
-							'Description' => $product_description 
-						]
-					]
-				]
-			]
-		]);        
-	
-		// Fetch the access token from the model
-		$this->access_token = $this->get_access_token();
-	
-		if (!$this->access_token) {
-			return ['error' => 'Access token not found.'];
-		}
-	
-		// Set headers
-		$headers = [
-			'Content-Type: application/json',
-			"Authorization: Zoho-oauthtoken " . $this->access_token
-		];
-	
-		// Debugging
-		log_message('debug', 'Headers: ' . print_r($headers, true));
-		log_message('debug', 'Post Data: ' . $data);
-	
-		// Make API request to Zoho CRM
-		$response = $this->execute_curl_request(
-			"https://www.zohoapis.com/crm/v2.1/Quotes",
-			$headers,
-			$data,
-			'POST'
-		);
-	
-		// Decode the response body
-		$response_body = json_decode($response['body'], true);
-	
-		// Debugging: Log the full response for inspection
-		log_message('debug', 'Zoho CRM proposal Response: ' . print_r($response_body, true));
-		log_message('debug', 'HTTP Code: ' . $response['http_code']);
-	
-		// Handle 401 Unauthorized error by refreshing the token
-		if ($response['http_code'] == 401) {
-			if ($this->refresh_access_token()) {
-				// Update the token in the headers after refreshing
-				$this->access_token = $this->get_access_token();
-				$headers[1] = "Authorization: Zoho-oauthtoken " . $this->access_token;
-				$response = $this->execute_curl_request(
-					"https://www.zohoapis.com/crm/v2.1/Quotes",
-					$headers,
-					$data,
-					'POST'
-				);
-	
-				// Decode and log the response again after the retry
-				$response_body = json_decode($response['body'], true);
-				log_message('debug', 'Zoho CRM proposal Response after retry: ' . print_r($response_body, true));
-			}
-		}
-	
-		// Now handle the insertion of task quote
-		if (isset($response_body['data'][0]['details']['id'])) {
-			$quote_id = $response_body['data'][0]['details']['id'];
-			
-	        // Step 1: Fetch the created quote to get its Quote_No
-			$quote_details_response = $this->execute_curl_request(
-				"https://www.zohoapis.com/crm/v2/Quotes/$quote_id",
-				$headers,
-				null,
-				'GET'
-			);
-			
-			// Step 2: Extract Quote_No from the response
-			$quote_details = json_decode($quote_details_response['body'], true);
-			$quote_number = $quote_details['data'][0]['Quote_No'] ?? null;
-
-			if (!$quote_number) {
-				log_message('debug', 'Quote number missing from Zoho CRM response: ' . print_r($quote_details, true));
-				$this->output->set_status_header(500);
-				echo json_encode(['success' => false, 'error' => 'Quote number not found in Zoho CRM response.']);
-				return;
-			}
-			
-			$data = [
-				'id' => $id,
-				'quote_id' => $quote_id,
-				'quote_number' => $quote_number,
-				'subject' => $proposal_data['subject'],
-				'project_name' => $proposal_data['project'],
-				'kind_attention' => $proposal_data['kind_attention'],
-				'terms_of_payment' => $proposal_data['terms_of_payment'],
-				'product_id' => $proposal_data['product_id'],
-				'product_name' => $proposal_data['product_name'],
-				'product_description' => $product_description,
-				'uom' => $proposal_data['uom'],
-				'quantity' => $proposal_data['quantity'],
-				'valid_until' => $proposal_data['valid_until'],
-				'general_exclusion' => $proposal_data['general_exclusion'],
-			];
-	
-			// Assuming you want to insert into 'task_quotes' table
-			if (!$this->Task_model->save_proposal_data($data, $id)) {
-				$this->db->trans_rollback();
-				$this->output->set_status_header(500);
-				echo json_encode(['success' => false, 'error' => 'Failed to update Task_quote_model.']);
-				return;
-			}
-	
-			$response_body['task_quote'] = 'Task quote created successfully.';
-			$this->output->set_status_header(200);
-			// echo json_encode($response_body);
-		} else {
-			// Log additional debug information to understand why the id might be missing
-			log_message('debug', 'Full response for error handling: ' . print_r($response_body, true));
-	
-			$this->output->set_status_header(500);
-			echo json_encode(['success' => false, 'error' => 'Quote ID not found in Zoho CRM response.']);
-		}
-	}
+                    'Quoted_Items' => [
+                        [
+                            'Product_Name' => $proposal_data['product_id'],  
+                            'Quantity' => (float) $proposal_data['quantity'], 
+                            'List_Price' => (float) $proposal_data['unit_price'], 
+                            'U_O_M' => $proposal_data['uom'],
+                            'Description' => $product_description 
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+    
+        // Make API request to create a quote
+        $headers = [
+            'Content-Type: application/json',
+            "Authorization: Zoho-oauthtoken " . $this->access_token
+        ];
+    
+        $response = $this->execute_curl_request(
+            "https://www.zohoapis.com/crm/v2.1/Quotes",
+            $headers,
+            $data,
+            'POST'
+        );
+    
+        $response_body = json_decode($response['body'], true);
+    
+        if (isset($response_body['data'][0]['details']['id'])) {
+            $quote_id = $response_body['data'][0]['details']['id'];
+    
+            // Fetch Quote_No from the created quote
+            $quote_details_response = $this->execute_curl_request(
+                "https://www.zohoapis.com/crm/v2/Quotes/$quote_id",
+                $headers,
+                null,
+                'GET'
+            );
+    
+            $quote_details = json_decode($quote_details_response['body'], true);
+            $quote_number = $quote_details['data'][0]['Quote_No'] ?? null;
+            $modified_time = $quote_details['data'][0]['Modified_Time'] ?? null;
+    
+            if (!$quote_number) {
+                log_message('error', 'Quote number missing from Zoho CRM response: ' . print_r($quote_details, true));
+                return ['error' => 'Quote number not found in Zoho CRM response.'];
+            }
+    
+            // Save proposal data to database
+            $data = [
+                'quote_id' => $quote_id,
+                'quote_number' => $quote_number,
+                'subject' => $proposal_data['subject'],
+                'project_name' => $proposal_data['project'],
+                'kind_attention' => $proposal_data['kind_attention'],
+                'terms_of_payment' => $proposal_data['terms_of_payment'],
+                'product_id' => $proposal_data['product_id'],
+                'product_name' => $proposal_data['product_name'],
+                'product_description' => $product_description,
+                'uom' => $proposal_data['uom'],
+                'quantity' => $proposal_data['quantity'],
+                'valid_until' => $proposal_data['valid_until'],
+                'general_exclusion' => $proposal_data['general_exclusion'],
+                'updated_at' => $modified_time,
+            ];
+    
+            if (!$this->Task_model->save_proposal_data($data, $id)) {
+                return ['error' => 'Failed to update Task_quote_model.'];
+            }
+    
+            return ['success' => true, 'message' => 'Task quote created successfully.'];
+        } else {
+            log_message('error', 'Quote ID not found in Zoho CRM response: ' . print_r($response_body, true));
+            return ['error' => 'Quote ID not found in Zoho CRM response.'];
+        }
+    }
 	
 	public function fetch_all_products() {
 		// Fetch the access token
@@ -881,6 +797,7 @@ class deals extends CI_Controller {
 				$products[] = [
 					'id' => $product['id'],
 					'name' => $product['Product_Name'],
+					'description' => $product['Description'],
 					'qty_in_stock' => $product['Qty_in_Stock'],
 					'owner' => $product['Owner']['name'],
 					'modified_time' => $product['Modified_Time']

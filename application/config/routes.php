@@ -81,3 +81,7 @@ $route['protected-route'] = 'AUTH_Controller/protected_route';
 $route['web/login'] = 'web/Login/index';
 $route['web/dashboard'] = 'web/Login/dashboard';
 $route['web/logout'] = 'web/Login/logout';
+$route['web/deals'] = 'web/Login/fetch_tasks';
+$route['web/deal/details/(:num)'] = 'web/Login/view_task/$1';
+$route['web/deal/download-quote/(:num)'] = 'web/Login/download_deal_pdf/$1';
+
