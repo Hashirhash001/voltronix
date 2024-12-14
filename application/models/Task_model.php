@@ -99,6 +99,33 @@ class Task_model extends CI_Model {
 			return null; // Return null if no record is found
 		}
 	}
+
+	public function get_task_by_deal_id($deal_id) {
+        $this->db->select('*');
+        $this->db->from('tasks');
+        $this->db->where('zoho_crm_id', $deal_id);
+        $query = $this->db->get();
+    
+        if ($query->num_rows() > 0) {
+            return $query->row(); // Return the full row instead of just the `id`
+        } else {
+            return null; // Return null if no record is found
+        }
+    }
+
+	public function get_id_by_quote_id($quote_no) {
+		$this->db->select('id');
+		$this->db->from('tasks');
+		$this->db->where('quote_id', $quote_no);
+		$query = $this->db->get();
+	
+		if ($query->num_rows() > 0) {
+			$row = $query->row();
+			return $row->id;
+		} else {
+			return null; // Return null if no record is found
+		}
+	}
 	
 	public function save_proposal_data($proposal_data, $id) {
         // Check if the proposal data already exists for the given task_id

@@ -6,6 +6,7 @@
     <title>Job Details</title>
 	<link rel="icon" href="<?php echo base_url('assets/photos/logo/favicon.png'); ?>" type="image/x-icon">
     <link href="<?php echo base_url('assets/css/style.css'); ?>" rel="stylesheet">
+    <link href="<?php echo base_url('assets/css/style2.css'); ?>" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet">
     <!-- Bootstrap CSS -->
@@ -15,73 +16,65 @@
     <!-- Font Awesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 
-	
+	<script src="<?php echo base_url('assets/js/navbar.js'); ?>"></script>
 </head>
 <body>
     <div class="full-wrapper d-flex">
-        <!-- Sidebar -->
-        <nav class="sidebar text-dark" style="font-family: 'Poppins', sans-serif;
-                                                height: 100vh;
-                                                position: fixed;
-                                                top: 0;
-                                                left: 0;
-                                                overflow-y: auto;
-                                                padding-top: 20px;
-                                                width: 250px;
-                                                background-color: #fff;
-                                                box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1);">
-            <div class="text-center mb-4">
-                <!-- Sidebar Logo -->
+        <!-- Sidebar (Popup Style) -->
+        <nav class="sidebar text-dark" id="sidebar">
+            <!-- Sidebar Close Button -->
+            <button class="btn btn-outline-dark close-sidebar-button" id="closeSidebarButton" style="position: absolute; top: 20px; right: 20px;">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <!-- Sidebar Logo -->
+            <div class="text-center py-3 border-bottom">
                 <img src="<?php echo base_url('assets/photos/logo/voltronix_logo.png'); ?>" alt="Logo" style="height: 50px; width: auto;">
             </div>
-            <ul class="nav flex-column px-3">
+            <!-- Navigation Menu -->
+            <ul class="nav flex-column px-3 pt-3">
                 <li class="nav-item mb-2">
-                    <a href="<?php echo site_url('web/deals'); ?>" class="nav-link text-dark d-flex align-items-center gap-2">
-                        <i class="bi bi-list-task"></i>My Jobs
+                    <a href="<?php echo site_url('web/deals'); ?>" class="nav-link d-flex align-items-center gap-2">
+                        <i class="bi bi-list-task"></i> My Jobs
                     </a>
                 </li>
                 <li class="nav-item mb-2">
-                    <a href="<?php echo site_url('web/dashboard'); ?>" class="nav-link text-dark d-flex align-items-center gap-2">
-                        <i class="bi bi-plus-circle"></i>Deals and Proposal
+                    <a href="<?php echo site_url('web/dashboard'); ?>" class="nav-link d-flex align-items-center gap-2">
+                        <i class="bi bi-plus-circle"></i> Deals and Proposal
                     </a>
-
                 </li>
-                
             </ul>
         </nav>
     
-        <!-- Main Content -->
-        <div class="content flex-grow-1" style="margin-left: 250px;">
-            <div class="d-flex justify-content-between align-items-center mb-4" 
-                style="background-color: #fff; 
-                       height: 10vh; 
-                       padding: 40px 40px; 
-                       position: fixed; 
-                       top: 0; 
-                       right: 0; 
-                       z-index: 1000; 
-                       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
-                       width: calc(100% - 250px);">
-                <div class="d-flex align-items-center">
-                    <!-- Dashboard Title -->
-                    <h4 class="mb-0" id="userNameDisplay"></h4>
-                </div>
-                <div class="dropdown d-flex gap-2">
-                    <button type="button" class="btn btn-outline-light dropdown-toggle d-flex align-items-center" id="logoutDropdownButton" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 20px; padding: 8px 16px; color: #000;">
-                        <span class="me-2">
-                            <i class="bi bi-person-circle"></i>
-                        </span>
-                        <span><?php echo $this->session->userdata('username'); ?></span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="logoutDropdownButton" style="min-width: 150px;">
-                        <li>
-                            <a class="dropdown-item text-danger" href="#" id="logoutButton">
-                                <i class="bi bi-box-arrow-right me-2"></i>Logout
-                            </a>
-                        </li>
-                    </ul>
-                </div>
+        <!-- Header -->
+        <header class="d-flex justify-content-between align-items-center px-4 py-3 header-main">
+            <!-- Hamburger Button Inside Header (Visible on Mobile) -->
+            <button class="btn btn-outline-dark d-md-none" id="hamburgerButton" style="top: 20px; left: 20px; z-index: 1100;">
+            <i class="bi bi-list"></i>
+        </button>
+    
+            <!-- Dashboard Title -->
+            <h4 class="mb-0" id="userNameDisplay"></h4>
+    
+            <!-- User Dropdown -->
+            <div class="dropdown d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-outline-light dropdown-toggle d-flex align-items-center" id="logoutDropdownButton" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 20px; padding: 8px 16px; color: #000;">
+                    <span class="me-2">
+                        <i class="bi bi-person-circle"></i>
+                    </span>
+                    <span><?php echo $this->session->userdata('username'); ?></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="logoutDropdownButton" style="min-width: 150px;">
+                    <li>
+                        <a class="dropdown-item text-danger" href="#" id="logoutButton">
+                            <i class="bi bi-box-arrow-right me-2"></i> Logout
+                        </a>
+                    </li>
+                </ul>
             </div>
+        </header>
+    
+        <!-- Main Content -->
+        <div class="content flex-grow-1" id="mainContent">
     
             <div class="container p-5" style="margin-top: 70px;">
 				<h1>Job Details</h1>
@@ -91,6 +84,11 @@
 						<?= htmlspecialchars($task['deal_name']); ?>
 					</div>
 					<div class="card-body">
+					    <p class="card-text">
+						<i class="fas fa-tag"></i>
+							<span class="ms-2">Deal Number:</span>
+							<?= htmlspecialchars($task['deal_number'] ?? ''); ?>
+						</p>
 						<p class="card-text">
 							<i class="bi bi-info-circle"></i>
 							<span class="ms-2">Description:</span>
@@ -129,15 +127,23 @@
 								?>
 							</span>
 						</p>
+						<p class="card-text">
+							<i class="bi bi-file-earmark-check"></i>
+							<span class="ms-2">Quote Number:</span>
+							<?= htmlspecialchars($task['quote_number'] ?? ''); ?>
+						</p>
 
 						<?php if (!empty($task['quote_id'])): ?>
-							<div class="mt-3">
-								<a href="<?= site_url('web/deal/download-quote/' . $task['id']); ?>" 
-								class="btn btn-success btn-sm" 
-								title="Download Quote">
-									<i class="bi bi-download"></i> Download Quote
-								</a>
-							</div>
+							<?php if ($quote_access === 'enabled'): ?>
+                                <div class="mt-3">
+                                    <a href="<?= site_url('web/deal/download-quote/' . $task['id']); ?>" 
+                                       class="btn btn-success btn-sm" 
+                                       title="Download Quote">
+                                        <i class="bi bi-download"></i> Download Quote
+                                    </a>
+                                </div>
+                            <?php endif; ?>
+
 						<?php endif; ?>
 					</div>
 				</div>
@@ -169,7 +175,7 @@
 
 						// AJAX request to logout the user
 						$.ajax({
-							url: 'Login/logout', // This should be the route for logging out
+							url: '<?= base_url('web/Login/logout') ?>', // This should be the route for logging out
 							type: 'POST',
 							dataType: 'json',
 							success: function(response) {
@@ -181,7 +187,7 @@
 										showConfirmButton: false,
 										timer: 1500
 									}).then(() => {
-										window.location.href = 'Login/index';
+										window.location.href = '<?= base_url('web/Login/index') ?>';
 									});
 								} else {
 									// Handle any errors returned from the logout

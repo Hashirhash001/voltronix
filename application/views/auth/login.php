@@ -23,12 +23,12 @@
 			<form method="POST" action="<?php echo site_url('web/Login/authenticate'); ?>">
 				<div class="form-group">
 					<label for="username">Username:</label>
-					<input type="text" name="username" class="form-control" value="<?php echo set_value('username'); ?>" required>
+					<input type="text" name="username" class="form-control" placeholder="Username" value="<?php echo set_value('username'); ?>" required>
 					<?php echo form_error('username', '<div class="text-danger">', '</div>'); ?>
 				</div>
 				<div class="form-group">
 					<label for="password">Password:</label>
-					<input type="password" name="password" class="form-control" required>
+					<input type="password" name="password" placeholder="Password" class="form-control" required>
 					<?php echo form_error('password', '<div class="text-danger">', '</div>'); ?>
 				</div>
 				<button type="submit" class="btn btn-primary2">Login</button>

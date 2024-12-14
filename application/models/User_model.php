@@ -53,6 +53,7 @@
 			$this->db->select('*');
 			$this->db->from('tasks');
 			$this->db->where('assigned_to', $user_id);
+			$this->db->order_by('created_at', 'DESC');
 			$query = $this->db->get();
 	
 			return $query->result_array(); // Return the result as an array
@@ -82,8 +83,21 @@
 		public function get_tasks_by_owner($owner_id) {
 			$this->db->from('tasks');
 			$this->db->where('assigned_to', $owner_id);
+			$this->db->order_by('created_at', 'DESC');
 			$query = $this->db->get();
 			return $query->result_array();
+		}
+
+		public function get_quote_access($user_id)
+		{
+			$this->db->select('quote_access');
+			$this->db->where('id', $user_id);
+			$query = $this->db->get('users'); // Adjust table name as necessary
+		
+			if ($query->num_rows() > 0) {
+				return $query->row()->quote_access;
+			}
+			return null; // Return null if no user is found
 		}
 		
 	}

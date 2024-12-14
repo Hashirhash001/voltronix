@@ -123,6 +123,7 @@ class deals extends CI_Controller {
                 "Deals" => [
                     "Deal_Name" => $data['first_name'] . " " . $data['last_name'],
                     "Stage" => "Qualification",
+					'Account_Name' => $data['account_name'] ?? null,
                     "Assign_Department1" => "VOLTRONIX CONTRACTING LLC",
                     "VZ_app_user" => ["id" => $data['VZ_app_user_id']],
                     "VZ_App_Status" => "Pending",
