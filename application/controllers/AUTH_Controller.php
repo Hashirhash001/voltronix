@@ -32,6 +32,7 @@ class AUTH_Controller extends CI_Controller {
 		$this->form_validation->set_rules('email', 'Email', 'required|valid_email');
 		$this->form_validation->set_rules('user_id', 'User Id', 'required');
 		$this->form_validation->set_rules('status', 'Status');
+		$this->form_validation->set_rules('department', 'Status');
 	
 		if ($this->form_validation->run() === FALSE) {
 			echo json_encode(array("status" => "error", "message" => validation_errors()));
@@ -45,7 +46,9 @@ class AUTH_Controller extends CI_Controller {
 				'password' => $password_hash,
 				'email' => $data['email'],
 				'user_id' => $data['user_id'],
-				'status' => $data['status']
+				'status' => $data['status'],
+				'department' => $data['department'],
+				'quote_access' => $data['quote_access'],
 			);
 	
 			// Check if the user already exists by email or user_id
@@ -82,35 +85,50 @@ class AUTH_Controller extends CI_Controller {
             // Get user from model
             $user = $this->User_model->get_user($this->input->post('username'));
     
-            if($user['status'] == 'active'){
-				 // Verify user password
-				 if ($user && password_verify($this->input->post('password'), $user['password'])) {
-					if (empty($user['api_key'])) {
-						$api_key = $this->User_model->generate_api_key($user['id']);
-					} else {
-						$api_key = $user['api_key'];
-					}
-					
-					$this->output
-						->set_status_header(200)
-						->set_output(json_encode(array(
-							"status" => "success",
-							"message" => "Login successful",
-							"user_id" => $user['id'],
-							"api_key" => $api_key
-						)));
-				} else {
-					$this->output
-						->set_status_header(401)
-						->set_output(json_encode(array("status" => "error", "message" => "Invalid username or password")));
-				}
-			} else {
-				$this->output
-					->set_status_header(401)
-					->set_output(json_encode(array("status" => "error", "message" => "User is not active")));
-			}
+            if ($user['status'] == 'active') {
+                // Verify user password
+                if ($user && password_verify($this->input->post('password'), $user['password'])) {
+                    // Check if user's department is not 'mobile_app'
+                    if (!in_array($user['department'], ['mobile_app', 'web_and_mobile'])) {
+                        $this->output
+                            ->set_status_header(403)
+                            ->set_output(json_encode(array(
+                                "status" => "error",
+                                "message" => "You do not have access."
+                            )));
+                    } else {
+                        // Generate or retrieve the API key
+                        if (empty($user['api_key'])) {
+                            $api_key = $this->User_model->generate_api_key($user['id']);
+                        } else {
+                            $api_key = $user['api_key'];
+                        }
+    
+                        $this->output
+                            ->set_status_header(200)
+                            ->set_output(json_encode(array(
+                                "status" => "success",
+                                "message" => "Login successful",
+                                "user_id" => $user['id'],
+                                "app_user_id" => $user['user_id'],
+                                "api_key" => $api_key,
+                                "department" => $user['department'],
+                                "quote_access" => $user['quote_access'],
+                            )));
+                    }
+                } else {
+                    $this->output
+                        ->set_status_header(401)
+                        ->set_output(json_encode(array("status" => "error", "message" => "Invalid username or password")));
+                }
+            } else {
+                $this->output
+                    ->set_status_header(401)
+                    ->set_output(json_encode(array("status" => "error", "message" => "User is not active")));
+            }
         }
     }
+
 
 	public function logout() {
 		// Get the Authorization header
@@ -167,6 +185,4 @@ class AUTH_Controller extends CI_Controller {
                 ->set_output(json_encode(['status' => 'error', 'message' => 'Invalid or expired token']));
         }
     }
-	
 }
-?>

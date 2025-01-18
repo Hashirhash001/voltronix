@@ -182,60 +182,160 @@ class Login extends CI_Controller {
     }
 
 	public function search() {
-        $this->check_logged_in();
+		$this->check_logged_in();
+	
+		// Debug session
+		log_message('debug', 'Session data: ' . json_encode($this->session->userdata()));
+	
+		// Get the user ID from the session
+		$id = $this->session->userdata('id');
+		if (!$id) {
+			log_message('error', 'User ID not found in session.');
+			$this->output->set_status_header(404);
+			echo json_encode(['error' => 'User ID not found in session.']);
+			return;
+		}
+	
+		// Retrieve user information by ID
+		$user_id = $this->User_model->get_user_id_by_id($id);
+		log_message('debug', 'Fetched User ID: ' . $user_id);
+	
+		if (!$user_id) {
+			log_message('error', 'User not found for ID: ' . $id);
+			$this->output->set_status_header(404);
+			echo json_encode(['error' => 'User not found for this ID.']);
+			return;
+		}
+	
+		// Get the search query
+		$query = $this->input->post('query', true);
+		log_message('debug', 'Search Query: ' . $query);
+	
+		// Build the query for tasks specific to the user
+		$this->db->select('id, deal_name, deal_number, complaint_info, status');
+		$this->db->from('tasks');
+		$this->db->where('assigned_to', $user_id); // Fetch only tasks assigned to this user
+		$this->db->order_by('created_at', 'DESC');
+	
+		if (!empty($query)) {
+			// If query is provided, search in deal_name and deal_number
+			$this->db->group_start();
+			$this->db->like('deal_name', $query);
+			$this->db->or_like('deal_number', $query);
+			$this->db->group_end();
+		}
+	
+		$result = $this->db->get()->result_array();
+		log_message('debug', 'SQL Query: ' . $this->db->last_query());
+	
+		if (empty($result)) {
+			log_message('info', 'No Jobs found for query: ' . $query);
+			echo json_encode([
+				'success' => false,
+				'message' => 'No Jobs found.'
+			]);
+			return;
+		}
+	
+		log_message('debug', 'Search Results: ' . json_encode($result));
+	
+		// Return all tasks or filtered results
+		echo json_encode([
+			'success' => true,
+			'data' => $result
+		]);
+	}
+
+	private function validate_api_key() {
+		$headers = $this->input->request_headers();
+		$api_key = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : null;
+
+		return $api_key ? validate_api_key($api_key) : false;
+	}
     
-        // Debug session
-        log_message('debug', 'Session in fetch_tasks: ' . json_encode($this->session->userdata()));
+    private function _send_response($data, $status_code = 200)
+    {
+        return $this->output
+            ->set_content_type('application/json')
+            ->set_status_header($status_code)
+            ->set_output(json_encode($data));
+    }
     
-        // Get the user ID from the session
-        $id = $this->session->userdata('id');
+    public function search2()
+    {
+        // Validate API key and retrieve user data
+		$api_key = $this->validate_api_key();
+
+		if (!$api_key) {
+			return $this->_send_response(['success' => false, 'error' => 'Unauthorized access'], 401);
+		}
+        
+        // Detect Content-Type and retrieve data
+        $content_type = $this->input->server('CONTENT_TYPE');
+        $data = strpos($content_type, 'application/json') !== false 
+            ? json_decode($this->input->raw_input_stream, true) 
+            : $this->input->post();
     
-        if (!$id) {
-            $this->output->set_status_header(404);
-            echo json_encode(['error' => 'User ID not found in session.']);
-            return;
+        // Handle invalid JSON or empty data
+        if ($data === null) {
+            return $this->_send_response(['success' => false, 'error' => 'Invalid data format.'], 400);
         }
+    
+        // Validate input data
+        $this->form_validation->set_data($data);
+        $this->form_validation->set_rules('query', 'Query', 'trim|required');
+    
+        if ($this->form_validation->run() === false) {
+            return $this->_send_response([
+                'success' => false,
+                'error' => 'Validation failed.',
+                'details' => $this->form_validation->error_array(),
+            ], 422);
+        }
+    
+        // Debug session for development purposes
+        log_message('debug', 'Session in search2: ' . json_encode($this->session->userdata()));
     
         // Retrieve user information by ID
         $user_id = $this->User_model->get_user_id_by_id($id);
     
         if (!$user_id) {
-            $this->output->set_status_header(404);
-            echo json_encode(['error' => 'User not found for this ID.']);
-            return;
+            return $this->_send_response(['success' => false, 'error' => 'User not found for this ID.'], 404);
         }
     
-        // Get the search query
-        $query = $this->input->post('query', true);
+        // Extract query from input data
+        $query = $data['query'];
     
         // Build the query for tasks specific to the user
         $this->db->select('id, deal_name, deal_number, complaint_info');
         $this->db->from('tasks');
         $this->db->where('assigned_to', $user_id); // Fetch only tasks assigned to this user
+        $this->db->order_by('created_at', 'DESC');
     
         if (!empty($query)) {
             // If query is provided, search in deal_name and deal_number
-            $this->db->group_start(); // Start grouping WHERE conditions
+            $this->db->group_start();
             $this->db->like('deal_name', $query);
             $this->db->or_like('deal_number', $query);
-            $this->db->group_end(); // End grouping
+            $this->db->group_end();
         }
     
         $result = $this->db->get()->result_array();
     
         if (empty($result)) {
             // If no results are found
-            echo json_encode([
-                'success' => false,
-                'message' => 'No Jobs found.'
+            return $this->_send_response([
+                'success' => true,
+                'message' => 'No tasks found.',
+                'data' => []
             ]);
-            return;
         }
     
-        // Return all tasks or filtered results
-        echo json_encode([
+        // Return the results in JSON format
+        return $this->_send_response([
             'success' => true,
             'data' => $result
         ]);
     }
+
 }

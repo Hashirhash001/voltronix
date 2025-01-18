@@ -48,7 +48,7 @@
 #mainContent {
 	transition: margin-left 0.3s ease-in-out;
 	width: 100%;
-	margin-left: 250px; /* Default when sidebar is visible */
+	padding-left: 250px; /* Default when sidebar is visible */
 }
 
 /* Hamburger button inside header */
@@ -61,7 +61,7 @@
 
 /* Close button styling */
 .close-sidebar-button {
-	display: none;
+	display: none !important;
 }
 
 /* Mobile view - Hamburger button appears */
@@ -81,6 +81,7 @@
 	/* When sidebar is closed, make the header full width */
 	#mainContent {
 		margin-left: 0; /* Make content full-width */
+		padding-left: 0;
 	}
 
 	/* Sidebar hidden state */
@@ -109,7 +110,7 @@
 	
 	/* Close button styling */
 	.close-sidebar-button {
-		display: block;
+		display: block !important;
 		font-size: 1.5rem;
 		border: none;
 		background: none;
@@ -117,6 +118,31 @@
 		z-index: 1100;
 	}
 }
+
+.card-body-wrapper::-webkit-scrollbar-thumb {
+	background-color: #888;
+	border-radius: 10px;
+}
+
+.card-body-wrapper::-webkit-scrollbar-thumb:hover {
+	background-color: #555;
+}
+
+.card-body-wrapper{
+	scrollbar-width: thin; /* For modern browsers (Firefox) */
+	scrollbar-color: #ccc #f5f5f5;
+}
+
+/* .card-header::before{
+	content: "";
+    position: absolute;
+    height: 4px;
+    background: #99d1d3;
+    border-radius: 3px 3px 0 0;
+    top: -1px;
+    left: 0px;
+    right: 0px;
+} */
 
 /* Large screens - Hide hamburger and adjust layout */
 @media (min-width: 768px) {

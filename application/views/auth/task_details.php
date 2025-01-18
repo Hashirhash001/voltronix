@@ -138,7 +138,8 @@
                                 <div class="mt-3">
                                     <a href="<?= site_url('web/deal/download-quote/' . $task['id']); ?>" 
                                        class="btn btn-success btn-sm" 
-                                       title="Download Quote">
+                                       title="Download Quote" target="_blank" 
+                                        rel="noopener noreferrer">
                                         <i class="bi bi-download"></i> Download Quote
                                     </a>
                                 </div>

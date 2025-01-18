@@ -378,6 +378,10 @@ class Dashboard extends CI_Controller {
 				'uom' => $proposal_data['uom'],
 				'service_charge' => $proposal_data['unitPrice'],
 				'kind_attention' => $proposal_data['kind_attention'],
+				'specification' => $proposal_data['specification'],
+				'brand' => $proposal_data['brand'],
+				'warranty' => $proposal_data['warranty'],
+				'delivery' => $proposal_data['delivery'],
 				'quantity' => $proposal_data['quantity'],
 				'valid_until' => $proposal_data['validUntil'],
 				'general_exclusion' => $proposal_data['generalExclusion'],
@@ -494,7 +498,7 @@ class Dashboard extends CI_Controller {
 		$this->form_validation->set_rules('subject', 'subject', 'required');
 		// $this->form_validation->set_rules('accountName', 'Account Name', 'required');
 		$this->form_validation->set_rules('itemName2', 'Item Name', 'required');
-// 		$this->form_validation->set_rules('itemDescription', 'Item description', 'required');
+		// $this->form_validation->set_rules('itemDescription', 'Item description', 'required');
 		$this->form_validation->set_rules('quantity', 'Quantity', 'required');
 		$this->form_validation->set_rules('unitPrice', 'Unit Price', 'required');
 		$this->form_validation->set_rules('total', 'Total', 'required');
@@ -538,7 +542,7 @@ class Dashboard extends CI_Controller {
 		// Log successful addition
 		log_message('info', 'Proposal successfully edited in Zoho for Quote ID: ' . $data['QuoteNumber']);
 	
-// 		return $this->response(['success' => true, 'message' => 'Proposal edited successfully.'], 201);
+		// return $this->response(['success' => true, 'message' => 'Proposal edited successfully.'], 201);
 	}
 
 	private function update_quote_in_zoho($quote_number, $proposal_data) {
@@ -802,6 +806,10 @@ class Dashboard extends CI_Controller {
 					'uom' => $proposal_data['uom'],
 					'service_charge' => $proposal_data['unitPrice'],
 					'kind_attention' => $proposal_data['kind_attention'],
+					'specification' => $proposal_data['specification'],
+					'brand' => $proposal_data['brand'],
+					'warranty' => $proposal_data['warranty'],
+					'delivery' => $proposal_data['delivery'],
 					'quantity' => $proposal_data['quantity'],
 					'valid_until' => $proposal_data['validUntil'],
 					'general_exclusion' => $proposal_data['generalExclusion'],
@@ -823,6 +831,32 @@ class Dashboard extends CI_Controller {
 			return ['error' => 'Failed to update quote.'];
 		}
 	}
+
+	public function get_quote_details() {
+		// Get the JSON data from the POST request
+		$data = json_decode($this->input->raw_input_stream, true);
+		
+		// Check if QuoteNumber is provided
+		if (isset($data['QuoteNumber']) && count($data) === 1) {
+			// Fetch quote details from the database
+			$quote_number = $data['QuoteNumber'];
+			$quote_data = $this->Task_model->get_quote_by_number($quote_number);
+	
+			// If quote is not found, return error
+			if (empty($quote_data)) {
+				log_message('error', 'Quote not found for Quote Number: ' . $quote_number);
+				$this->output->set_status_header(404);
+				echo json_encode(['success' => false, 'error' => 'Quote not found.']);
+				return;
+			}
+	
+			// Return the fetched quote data
+			echo json_encode(['success' => true, 'data' => $quote_data]);
+		} else {
+			// Handle the case where QuoteNumber is not provided or invalid
+			echo json_encode(['success' => false, 'error' => 'Invalid or missing QuoteNumber.']);
+		}
+	}			
 	
 	private function execute_curl_request($url, $headers, $data = null, $method = 'POST') {
 		$ch = curl_init($url);

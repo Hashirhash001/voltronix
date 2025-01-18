@@ -141,6 +141,15 @@ class Task_model extends CI_Model {
             return $this->db->insert('tasks', $proposal_data);
         }
     }
+
+	public function get_quote_by_number($quote_number) {
+        $this->db->select('*');
+        $this->db->from('tasks'); // Replace 'quotes' with your actual table name
+        $this->db->where('quote_number', $quote_number);
+        $query = $this->db->get();
+
+        return $query->row_array(); // Return the first matching row as an associative array
+    }
 	
 
 }

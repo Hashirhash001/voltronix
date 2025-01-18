@@ -191,11 +191,11 @@
 										<input type="text" class="form-control" name="subject" id="subject" placeholder="Enter Subject" required>
 										<div class="error-message"></div>
 									</div>
-									<div class="form-group">
-										<label class="form-label" style="color: #000;" for="account-name">Account Name:</label>
-										<input type="text" class="form-control" name="accountName" id="account-name" placeholder="Enter Account Name" required>
-										<div class="error-message"></div>
-									</div>
+									<!--<div class="form-group">-->
+									<!--	<label class="form-label" style="color: #000;" for="account-name">Account Name:</label>-->
+									<!--	<input type="text" class="form-control" name="accountName" id="account-name" placeholder="Enter Account Name" required>-->
+									<!--	<div class="error-message"></div>-->
+									<!--</div>-->
 
 									<!-- Quoted Items Table -->
 									<h6>Quoted Items</h6>
@@ -392,13 +392,13 @@
 									<div class="form-row">
 										<div class="col-md-3 mb-3">
 											<label class="form-label" style="color: #000;" for="deal-number">Quote Number:</label>
-											<input type="text" class="form-control" name="QuoteNumber" id="deal-number" placeholder="Enter Quote Number" required>
+											<input type="text" class="form-control" name="QuoteNumber" id="QuoteNumber" placeholder="Enter Quote Number" required>
 											<div class="error-message"></div>
 										</div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="subject">Subject:</label>
-										<input type="text" class="form-control" name="subject" id="subject" placeholder="Enter Subject" required>
+										<input type="text" class="form-control" name="subject" id="subject2" placeholder="Enter Subject" required>
 										<div class="error-message"></div>
 									</div>
 									<!-- <div class="form-group">
@@ -434,7 +434,7 @@
 														<div class="error-message"></div>
 													</td>
 													<td style="min-width: 130px;">
-														<select class="form-control" name="uom" id="uom" required>
+														<select class="form-control" name="uom" id="uom2" required>
 															<option value="">-None-</option>
 															<option value="NOS">NOS</option>
 															<option value="PCS">PCS</option>
@@ -530,42 +530,42 @@
 									<!-- Additional Details -->
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="kind_attention">Kind Attention:</label>
-										<input type="text" name="kind_attention" class="form-control" id="kind_attention" placeholder="Enter Kind Attention" required>
+										<input type="text" name="kind_attention" class="form-control" id="kind_attention2" placeholder="Enter Kind Attention" required>
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="project">Project:</label>
-										<input type="text" name="project" class="form-control" id="project" placeholder="Enter Project Name" required>
+										<input type="text" name="project" class="form-control" id="project2" placeholder="Enter Project Name" required>
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="terms-of-payment">Terms of Payment:</label>
-										<input type="text" name="termsOfPayment" class="form-control" id="terms-of-payment" placeholder="Enter Payment Terms" required>
+										<input type="text" name="termsOfPayment" class="form-control" id="terms-of-payment2" placeholder="Enter Payment Terms" required>
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="specification">Specification:</label>
-										<textarea class="form-control" name="specification" id="specification" rows="3" placeholder="Enter Specifications" required></textarea>
+										<textarea class="form-control" name="specification" id="specification2" rows="3" placeholder="Enter Specifications" required></textarea>
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="general-exclusion">General Exclusion:</label>
-										<textarea class="form-control" name="generalExclusion" id="general-exclusion" rows="3" placeholder="Enter General Exclusion" required></textarea>
+										<textarea class="form-control" name="generalExclusion" id="general-exclusion2" rows="3" placeholder="Enter General Exclusion" required></textarea>
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="brand">Brand:</label>
-										<input type="text" class="form-control" name="brand" id="brand" placeholder="Enter brand" required>
+										<input type="text" class="form-control" name="brand" id="brand2" placeholder="Enter brand" required>
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="warranty">Warranty:</label>
-										<input type="text" class="form-control" name="warranty" id="warranty" placeholder="Enter Warranty" required>
+										<input type="text" class="form-control" name="warranty" id="warranty2" placeholder="Enter Warranty" required>
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="delivery">Delivery:</label>
-										<input type="text" class="form-control" name="delivery" id="delivery" placeholder="Enter Delivery" required>
+										<input type="text" class="form-control" name="delivery" id="delivery2" placeholder="Enter Delivery" required>
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
@@ -686,7 +686,7 @@
 					if (data.success && Array.isArray(data.products)) {
 						data.products.forEach((product) => {
 							// Store product details in a map for quick access
-							productDetails[product.id] = product.description || ';
+							productDetails[product.id] = product.description || '';
 							// Add product to the dropdown
 							$('#itemName').append(new Option(product.name, product.id));
 						});
@@ -718,14 +718,15 @@
 				const selectedDescription = productDetails[selectedItemId];
 				$('#itemDescription').val(selectedDescription || '');
 			});
+
 		});
 
-		// Fetch item names2 from the API
+		// Fetch item names2 from the API and quote details for editing a quote
 		$(document).ready(function () {
-			// Object to store product details by ID
-			const productDetails = {};
+			 // Object to store product details by ID
+			 const productDetails = {};
 
-			// Initialize Select2 with placeholder and clearing options
+			// Initialize Select2 once, keeping options dynamic
 			$('#itemName2').select2({
 				placeholder: 'Search for an item...',
 				allowClear: true,
@@ -734,24 +735,42 @@
 				templateSelection: formatOption,
 			});
 
-			// Fetch item names from the API
-			fetch('https://app.voltronix.ae/voltronix/deal/products')
-				.then((response) => response.json())
-				.then((data) => {
-					if (data.success && Array.isArray(data.products)) {
-						data.products.forEach((product) => {
-							// Store product details in a map for quick access
-							productDetails[product.id] = product.description || ';
-							// Add product to the dropdown
-							$('#itemName2').append(new Option(product.name, product.id));
-						});
-					} else {
-						console.error('Unexpected response format or no products found.');
-					}
-				})
-				.catch((error) => {
-					console.error('Error fetching item names:', error);
-				});
+			// Function to fetch and populate products
+			function fetchProducts(selectedProductId = null, selectedProductName = null) {
+				fetch('https://app.voltronix.ae/voltronix/deal/products')
+					.then((response) => response.json())
+					.then((data) => {
+						if (data.success && Array.isArray(data.products)) {
+							// Clear existing options
+							$('#itemName2').empty().append('<option value="">-None-</option>');
+
+							// Store product details and add options
+							data.products.forEach((product) => {
+								productDetails[product.id] = product.description || '';
+								$('#itemName2').append(new Option(product.name, product.id));
+							});
+
+							// If editing, include the selected product if not already in the list
+							if (selectedProductId && !productDetails[selectedProductId]) {
+								productDetails[selectedProductId] = '';
+								$('#itemName2').append(new Option(selectedProductName, selectedProductId));
+							}
+
+							// Set the selected value for editing
+							if (selectedProductId) {
+								$('#itemName2').val(selectedProductId).trigger('change');
+							}
+						} else {
+							console.error('Unexpected response format or no products found.');
+						}
+					})
+					.catch((error) => {
+						console.error('Error fetching item names:', error);
+					});
+			}
+
+			// Fetch initial product list
+			fetchProducts();
 
 			// Format long text in dropdown and selection
 			function formatOption(option) {
@@ -762,17 +781,83 @@
 			// Fetch and display product description when an item is selected
 			$('#itemName2').on('change', function () {
 				const selectedItemId = $(this).val();
-
-				// Clear the description if no item is selected
 				if (!selectedItemId) {
 					$('#itemDescription2').val('');
 					return;
 				}
-
-				// Get the description for the selected product from the stored details
 				const selectedDescription = productDetails[selectedItemId];
 				$('#itemDescription2').val(selectedDescription || '');
 			});
+
+			// Handle QuoteNumber blur event
+			$(document).on('blur', '#QuoteNumber', function () {
+				const quoteNumber = $(this).val();
+				if (quoteNumber.trim() === '') return;
+
+				$.ajax({
+					url: '<?php echo site_url('web/dashboard/get_quote_details'); ?>',
+					type: 'POST',
+					dataType: 'json',
+					contentType: 'application/json',
+					data: JSON.stringify({ QuoteNumber: quoteNumber }),
+					success: function (response) {
+						if (response.success) {
+							const data = response.data;
+
+							// Populate fields with data from the response
+							$('#subject2').val(data.subject || '');
+							$('#kind_attention2').val(data.kind_attention || '');
+							$('#project2').val(data.project_name || '');
+							$('#specification2').val(data.specification || '');
+							$('#general-exclusion2').val(data.general_exclusion || '');
+							$('#brand2').val(data.brand || '');
+							$('#warranty2').val(data.warranty || '');
+							$('#delivery2').val(data.delivery || '');
+							$('#terms-of-payment2').val(data.terms_of_payment || '');
+							$('#uom2').val(data.uom || '');
+							$('#quantity2').val(data.quantity || '');
+							$('#unitPrice2').val(data.service_charge || '');
+							$('#valid-until2').val(data.valid_until || '');
+
+							// Fetch products and include the current selected product
+							fetchProducts(data.product_id, data.product_name);
+
+							// Populate description field
+							$('#itemDescription2').val(data.product_description || '');
+
+							// Trigger the calculation function immediately
+							calculateTotals();
+						} else {
+							console.error('API Error:', response.error || 'Failed to fetch quote details.');
+							alert(response.error || 'Failed to fetch quote details.');
+						}
+					},
+					error: function () {
+						console.error('AJAX Error: Error fetching quote details.');
+						alert('Error fetching quote details.');
+					}
+				});
+			});
+
+			function calculateTotals() {
+				let quantity = parseFloat($('#quantity2').val()) || 0;
+				let unitPrice = parseFloat($('#unitPrice2').val()) || 0;
+				let total = quantity * unitPrice;
+				$('#total2').val(total.toFixed(2));
+
+				// Calculate Sub Total (only one item row is present in this example)
+				let subTotal = total;
+				$('#sub-total2').val(subTotal.toFixed(2));
+
+				// Get other values for Grand Total calculation
+				let discountPercentage = parseFloat($('#discount2').val()) || 0;
+				let discount = (discountPercentage / 100) * subTotal;
+				let vat = parseFloat($('#vat2').val()) || 0;
+				let adjustment = parseFloat($('#adjustment2').val()) || 0;
+
+				let grandTotal = subTotal - discount + vat + adjustment;
+				$('#grand-total2').val(grandTotal.toFixed(2));
+			}
 		});
 
 		// Handle logout
@@ -901,7 +986,7 @@
 							$('#reProposalForm')[0].reset();
 
 							// Optionally, call fetchData if needed
-							fetchData(1, $('#searchInput').val(), sort_by, sort_direction);
+							// fetchData(1, $('#searchInput').val(), sort_by, sort_direction);
 						}
 					},
 					error: function(xhr) {
@@ -1096,6 +1181,14 @@
 				});
 			});
 		});
+
+		
+
+		// Attach event listeners to calculate totals when Quantity or Unit Price changes
+		$('#quantity2, #unitPrice2').on('input', calculateTotals);
+
+		// Attach event listeners for discount, VAT, and adjustment fields to update Grand Total
+		$('#discount2, #vat2, #adjustment2').on('input', calculateTotals);
 
 		// Copy Deal Number function
 		function copyDealNumber() {

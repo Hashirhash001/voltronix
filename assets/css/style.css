@@ -289,4 +289,20 @@ body {
     background-color: #f8f9fa; /* Light grey */
 }
 
+#searchInput {
+    border-radius: 20px 0 0 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#searchButton {
+    border-radius: 0 20px 20px 0;
+    background-color: #FF0100;
+    color: #fff;
+}
+
+#errorMessage {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #ff0000;
+}
 
