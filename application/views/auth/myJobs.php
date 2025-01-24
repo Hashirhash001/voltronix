@@ -84,15 +84,23 @@
 		<!-- Main Content -->
 		<div class="content flex-grow-1" id="mainContent">
 			<div class="container p-5" style="margin-top: 40px; padding-left: 32px !important; padding-right: 32px !important;">
-				<h1 class="mb-4">My Jobs</h1>
-
+				
 				<!-- Search Box -->
-				<div class="input-group mb-4">
-					<input type="text" id="searchInput" class="form-control" placeholder="Search by Deal Number or Deal Name">
-					<button class="btn btn-danger" type="button" id="searchButton">
-						<i class="fas fa-search"></i>
-					</button>
+				<div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+					<h1 class="mb-3 mb-md-0">My Jobs</h1>
+					<div class="input-group" style="max-width: 400px;">
+						<input 
+							type="text" 
+							id="searchInput" 
+							class="form-control" 
+							placeholder="Search by Deal Number or Deal Name"
+							aria-label="Search Input">
+						<button class="btn btn-danger" type="button" id="searchButton" aria-label="Search Button">
+							<i class="fas fa-search"></i>
+						</button>
+					</div>
 				</div>
+
 
 				<!-- Error Message -->
 				<div id="errorMessage" class="alert alert-warning d-none"></div>
@@ -111,7 +119,7 @@
 							'Site Visit' => ['Site Visit'],
 							'Proposal/Price Quote' => ['Proposal'],
 							'Closed Won' => ['Close to Won'],
-							'Closed Lost' => ['Close to Lost'], // Added this line
+							'Closed Lost' => ['Close to Lost', 'Proposal-Omitted', 'Omitted'], // Added this line
 						];
 
 						// Define header colors and before element colors for each category
@@ -157,7 +165,7 @@
 										"></div>
 									</div>
 									<!-- Scrollable wrapper for card-body only -->
-									<div class="card-body-wrapper" style="position: relative; height: 500px; overflow-y: auto; overflow-x: hidden; padding-right: 0px; box-sizing: content-box;">
+									<div class="card-body-wrapper" style="position: relative; height: 72vh; overflow-y: auto; overflow-x: hidden; padding-right: 0px; box-sizing: content-box;">
 										<div class="card-body" style="padding: 0; margin: 0;">
 											<?php if (isset($groupedTasks[$key])): ?>
 												<?php foreach ($groupedTasks[$key] as $task): ?>
@@ -324,7 +332,7 @@
 					'Site Visit': ['Site Visit'],
 					'Proposal/Price Quote': ['Proposal'],
 					'Closed Won': ['Close to Won'],
-					'Closed Lost': ['Close to Lost']
+					'Closed Lost': ['Close to Lost', 'Proposal-Omitted', 'Omitted'],
 				};
 
 				const headerColors = {
@@ -411,7 +419,7 @@
 											right: 0;
 										"></div>
 									</div>
-									<div class="card-body-wrapper" style="position: relative; height: 500px; overflow-y: auto; overflow-x: hidden; padding-right: 0px; box-sizing: content-box;">
+									<div class="card-body-wrapper" style="position: relative; height: 72vh; overflow-y: auto; overflow-x: hidden; padding-right: 0px; box-sizing: content-box;">
 										<div class="card-body" style="padding: 0; margin: 0;">
 											${tasksHtml || `
 												<div class="d-flex justify-content-center align-items-center">

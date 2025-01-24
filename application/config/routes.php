@@ -53,36 +53,37 @@ $route['default_controller'] = 'welcome';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
 
-$route['deal/create'] = 'Tasks/create';
-$route['deal/update/(:num)'] = 'deals/update/$1';
-$route['deal/pdf/(:num)'] = 'tasks/deal_pdf/$1';
-$route['deal/products'] = 'deals/fetch_all_products';
-$route['deal/qoute/(:num)'] = 'deals/download_quote_pdf/$1';
-$route['deal/zoho/update'] = 'Tasks/update_all_leads_and_files';
-$route['deal/background/process'] = 'deals/background_task_processor';
+$route['register'] = 'auth/register';
+$route['login'] = 'auth/login';
+$route['logout'] = 'auth/logout';
+$route['delete/user'] = 'auth/delete_user';
+$route['validate'] = 'auth/validate_token';
 
-$route['deal/user/(:num)'] = 'Tasks/list_tasks_per_user';
+$route['tasks'] = 'tasks/create';
+$route['tasks/(:num)'] = 'tasks/view/$1';
+$route['deal/pdf/(:num)'] = 'Tasks/deal_pdf/$1';
+// $route['deal/pdfs/(:num)'] = 'Tasks/deal_pdfs/$1';
+$route['tasks/update/(:num)'] = 'Deals/update/$1';
+$route['tasks/user/(:num)'] = 'tasks/list_tasks_per_user/$1';
+// $route['tasks/pdf/(:num)'] = 'tasks/view_deal/$1';
 
-$route['payments/user/(:num)'] = 'Tasks/get_payments_by_user/$1';
+$route['payments/user/(:num)'] = 'payments/get_payments_by_user/$1';
 $route['tasks/big-project/(:num)'] = 'Tasks/get_big_projects/$1';
 
-// Login route
-$route['register'] = 'AUTH_Controller/register';
-$route['login'] = 'AUTH_Controller/login';
-$route['logout'] = 'AUTH_Controller/logout';
-$route['delete/user'] = 'AUTH_Controller/delete_user';
-
-$route['templates'] = 'deals/fetch_templates';
-
-// Protected route
-$route['protected-route'] = 'AUTH_Controller/protected_route';
+$route['deal/create'] = 'Deals/create';
+$route['zoho/deal/create'] = 'Deals/create_lead_in_zoho';
+$route['deal/delete'] = 'Deals/delete';
+$route['deal/update/(:num)'] = 'Deals/update/$1';
+$route['deal/products'] = 'deals/fetch_all_products';
+$route['deal/qoute/(:num)'] = 'deals/download_quote_pdf/$1';
 
 //web
-$route['web/login'] = 'web/Login/index';
+$route['signin'] = 'web/Login/index';
 $route['web/dashboard'] = 'web/Login/dashboard';
 $route['web/logout'] = 'web/Login/logout';
 $route['web/deals'] = 'web/Login/fetch_tasks';
 $route['web/deal/search'] = 'web/Login/search';
+$route['deal/search'] = 'web/Login/search2';
 $route['web/deal/details/(:num)'] = 'web/Login/view_task/$1';
 $route['web/deal/download-quote/(:num)'] = 'web/Login/download_deal_pdf/$1';
 

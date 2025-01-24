@@ -11,6 +11,8 @@
 	<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
 	<!-- Bootstrap CSS -->
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+	<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
 	<!-- Include Bootstrap Icons if not already included -->
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 	<link href="<?php echo base_url('assets/css/style.css'); ?>" rel="stylesheet">
@@ -65,8 +67,8 @@
         <header class="d-flex justify-content-between align-items-center px-4 py-3 header-main">
             <!-- Hamburger Button Inside Header (Visible on Mobile) -->
             <button class="btn btn-outline-dark d-md-none" id="hamburgerButton" style="top: 20px; left: 20px; z-index: 1100;">
-            <i class="bi bi-list"></i>
-        </button>
+				<i class="bi bi-list"></i>
+			</button>
     
             <!-- Dashboard Title -->
             <h4 class="mb-0" id="userNameDisplay"></h4>
@@ -299,8 +301,8 @@
 												<div class="error-message"></div>
 											</div>
 											<div class="form-group d-flex align-items-center justify-content-between">
-												<label style="color: #000; font-weight: 600;" for="vat" class="label-nowrap">VAT (AED)</label>
-												<input type="number" name="vat" class="form-control no-arrows flex-input" id="vat" placeholder="0" readonly>
+												<label style="color: #000; font-weight: 600;" for="vat" class="label-nowrap">VAT % (AED)</label>
+												<input type="number" name="vat" class="form-control no-arrows flex-input" id="vat" value="5" placeholder="0" readonly>
 												<div class="error-message"></div>
 											</div>
 											<div class="form-group d-flex align-items-center justify-content-between">
@@ -381,7 +383,7 @@
 						<div class="card-header text-white" id="headingTwo" style="background-color: #FF0100;">
 							<h2 class="mb-0">
 								<button class="btn btn-link text-white collapsed" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree" style="font-weight: bold; text-decoration: none;">
-								<i class="bi bi-plus-circle me-2"></i>Edit Quote
+									<i id="editQuoteIcon" class="bi bi-plus-circle me-2"></i>Edit Quote
 								</button>
 							</h2>
 						</div>
@@ -504,13 +506,13 @@
 												<div class="error-message"></div>
 											</div>
 											<div class="form-group d-flex align-items-center justify-content-between">
-												<label style="color: #000; font-weight: 600;" for="discount" class="label-nowrap">Discount % (AED)</label>
+												<label style="color: #000; font-weight: 600;" for="discount" class="label-nowrap">Discount (AED)</label>
 												<input type="number" name="discount" class="form-control no-arrows flex-input" id="discount2" placeholder="0">
 												<div class="error-message"></div>
 											</div>
 											<div class="form-group d-flex align-items-center justify-content-between">
-												<label style="color: #000; font-weight: 600;" for="vat" class="label-nowrap">VAT (AED)</label>
-												<input type="number" name="vat" class="form-control no-arrows flex-input" id="vat2" placeholder="0" readonly>
+												<label style="color: #000; font-weight: 600;" for="vat" class="label-nowrap">VAT % (AED)</label>
+												<input type="number" name="vat" class="form-control no-arrows flex-input" id="vat2" value="5" placeholder="0" readonly>
 												<div class="error-message"></div>
 											</div>
 											<div class="form-group d-flex align-items-center justify-content-between">
@@ -593,11 +595,37 @@
 	<!-- Include jQuery and Select2 JavaScript -->
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<!-- Optional: Include Bootstrap's JavaScript (jQuery and Popper.js) for accordion functionality -->
+	<!-- <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script> -->
 	<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
 	<script>
-		// calculate the total price of the item
+		document.addEventListener('DOMContentLoaded', function () {
+			const editQuoteIcon = document.getElementById('editQuoteIcon');
+			const editQuoteCollapse = document.getElementById('collapseThree');
+
+			console.log(editQuoteIcon, editQuoteCollapse); // Ensure both elements are found
+
+			if (editQuoteIcon && editQuoteCollapse) {
+				// When the collapse is shown
+				editQuoteCollapse.addEventListener('show.bs.collapse', function () {
+					console.log("The collapse is being shown!");
+					editQuoteIcon.classList.remove('bi-plus-circle');
+					editQuoteIcon.classList.add('bi-dash-circle');
+				});
+
+				// When the collapse is hidden
+				editQuoteCollapse.addEventListener('hide.bs.collapse', function () {
+					console.log("The collapse is being hidden!");
+
+					editQuoteIcon.classList.remove('bi-dash-circle');
+					editQuoteIcon.classList.add('bi-plus-circle');
+				});
+			} else {
+				console.error("Edit Quote button or collapse target not found!");
+			}
+		});
+
+		// Calculate and update totals of item1
 		$(document).ready(function() {
 			function calculateTotals() {
 				let quantity = parseFloat($('#quantity').val()) || 0;
@@ -609,24 +637,35 @@
 				let subTotal = total;
 				$('#sub-total').val(subTotal.toFixed(2));
 
+				// Get the fixed discount amount (instead of percentage)
+				let discountAmount = parseFloat($('#discount').val()) || 0;
+
+				// Subtract discount from Sub Total before VAT calculation
+				let subTotalAfterDiscount = subTotal - discountAmount;
+
+				// VAT Calculation (Fixed VAT percentage of 5%)
+				let vatPercentage = 5; // Fixed VAT percentage
+				let vat = (vatPercentage / 100) * subTotalAfterDiscount;
+
 				// Get other values for Grand Total calculation
-				let discountPercentage = parseFloat($('#discount').val()) || 0;
-				let discount = (discountPercentage / 100) * subTotal;
-				let vat = parseFloat($('#vat').val()) || 0;
 				let adjustment = parseFloat($('#adjustment').val()) || 0;
 
-				let grandTotal = subTotal - discount + vat + adjustment;
+				// Grand Total Calculation: Sub Total - Discount + VAT + Adjustment
+				let grandTotal = subTotal - discountAmount + vat + adjustment;
 				$('#grand-total').val(grandTotal.toFixed(2));
 			}
 
 			// Attach event listeners to calculate totals when Quantity or Unit Price changes
 			$('#quantity, #unitPrice').on('input', calculateTotals);
 
-			// Attach event listeners for discount, VAT, and adjustment fields to update Grand Total
-			$('#discount, #vat, #adjustment').on('input', calculateTotals);
+			// Attach event listeners for the discount and adjustment fields to update the Grand Total
+			$('#discount, #adjustment').on('input', calculateTotals);
+
+			// Initial calculation to ensure totals are correct on page load
+			calculateTotals();
 		});
-		
-		// calculate the total price of the item
+
+		// Calculate and update totals of item2
 		$(document).ready(function() {
 			function calculateTotals() {
 				let quantity = parseFloat($('#quantity2').val()) || 0;
@@ -638,22 +677,34 @@
 				let subTotal = total;
 				$('#sub-total2').val(subTotal.toFixed(2));
 
+				// Get the fixed discount amount (instead of percentage)
+				let discountAmount = parseFloat($('#discount2').val()) || 0;
+
+				// Subtract discount from Sub Total before VAT calculation
+				let subTotalAfterDiscount = subTotal - discountAmount;
+
+				// VAT Calculation (Fixed VAT percentage of 5%)
+				let vatPercentage = 5; // Fixed VAT percentage
+				let vat = (vatPercentage / 100) * subTotalAfterDiscount;
+
 				// Get other values for Grand Total calculation
-				let discountPercentage = parseFloat($('#discount2').val()) || 0;
-				let discount = (discountPercentage / 100) * subTotal;
-				let vat = parseFloat($('#vat2').val()) || 0;
 				let adjustment = parseFloat($('#adjustment2').val()) || 0;
 
-				let grandTotal = subTotal - discount + vat + adjustment;
+				// Grand Total Calculation: Sub Total - Discount + VAT + Adjustment
+				let grandTotal = subTotal - discountAmount + vat + adjustment;
 				$('#grand-total2').val(grandTotal.toFixed(2));
 			}
 
 			// Attach event listeners to calculate totals when Quantity or Unit Price changes
 			$('#quantity2, #unitPrice2').on('input', calculateTotals);
 
-			// Attach event listeners for discount, VAT, and adjustment fields to update Grand Total
-			$('#discount2, #vat2, #adjustment2').on('input', calculateTotals);
+			// Attach event listeners for the discount and adjustment fields to update the Grand Total
+			$('#discount2, #adjustment2').on('input', calculateTotals);
+
+			// Initial calculation to ensure totals are correct on page load
+			calculateTotals();
 		});
+
 
 		// Set today's date as the minimum date
 		const dateInput = document.getElementById('valid-until');
@@ -779,15 +830,15 @@
 			}
 
 			// Fetch and display product description when an item is selected
-			$('#itemName2').on('change', function () {
-				const selectedItemId = $(this).val();
-				if (!selectedItemId) {
-					$('#itemDescription2').val('');
-					return;
-				}
-				const selectedDescription = productDetails[selectedItemId];
-				$('#itemDescription2').val(selectedDescription || '');
-			});
+			// $('#itemName2').on('change', function () {
+			// 	const selectedItemId = $(this).val();
+			// 	if (!selectedItemId) {
+			// 		$('#itemDescription2').val('');
+			// 		return;
+			// 	}
+			// 	const selectedDescription = productDetails[selectedItemId];
+			// 	$('#itemDescription2').val(selectedDescription || '');
+			// });
 
 			// Handle QuoteNumber blur event
 			$(document).on('blur', '#QuoteNumber', function () {
@@ -829,12 +880,12 @@
 							calculateTotals();
 						} else {
 							console.error('API Error:', response.error || 'Failed to fetch quote details.');
-							alert(response.error || 'Failed to fetch quote details.');
+							// alert(response.error || 'Failed to fetch quote details.');
 						}
 					},
 					error: function () {
 						console.error('AJAX Error: Error fetching quote details.');
-						alert('Error fetching quote details.');
+						// alert('Error fetching quote details.');
 					}
 				});
 			});
@@ -849,13 +900,21 @@
 				let subTotal = total;
 				$('#sub-total2').val(subTotal.toFixed(2));
 
+				// Get the fixed discount amount (instead of percentage)
+				let discountAmount = parseFloat($('#discount2').val()) || 0;
+
+				// Subtract discount from Sub Total before VAT calculation
+				let subTotalAfterDiscount = subTotal - discountAmount;
+
+				// VAT Calculation (Fixed VAT percentage of 5%)
+				let vatPercentage = 5; // Fixed VAT percentage
+				let vat = (vatPercentage / 100) * subTotalAfterDiscount;
+
 				// Get other values for Grand Total calculation
-				let discountPercentage = parseFloat($('#discount2').val()) || 0;
-				let discount = (discountPercentage / 100) * subTotal;
-				let vat = parseFloat($('#vat2').val()) || 0;
 				let adjustment = parseFloat($('#adjustment2').val()) || 0;
 
-				let grandTotal = subTotal - discount + vat + adjustment;
+				// Grand Total Calculation: Sub Total - Discount + VAT + Adjustment
+				let grandTotal = subTotal - discountAmount + vat + adjustment;
 				$('#grand-total2').val(grandTotal.toFixed(2));
 			}
 		});
@@ -1182,13 +1241,11 @@
 			});
 		});
 
-		
+		// // Attach event listeners to calculate totals when Quantity or Unit Price changes
+		// $('#quantity2, #unitPrice2').on('input', calculateTotals);
 
-		// Attach event listeners to calculate totals when Quantity or Unit Price changes
-		$('#quantity2, #unitPrice2').on('input', calculateTotals);
-
-		// Attach event listeners for discount, VAT, and adjustment fields to update Grand Total
-		$('#discount2, #vat2, #adjustment2').on('input', calculateTotals);
+		// // Attach event listeners for discount, VAT, and adjustment fields to update Grand Total
+		// $('#discount2, #vat2, #adjustment2').on('input', calculateTotals);
 
 		// Copy Deal Number function
 		function copyDealNumber() {

@@ -53,7 +53,7 @@ class Dashboard extends CI_Controller {
 		// Set validation rules for required fields
 		$this->form_validation->set_rules('dealNumber', 'Deal Number', 'required');
 		$this->form_validation->set_rules('subject', 'subject', 'required');
-// 		$this->form_validation->set_rules('accountName', 'Account Name', 'required');
+		// $this->form_validation->set_rules('accountName', 'Account Name', 'required');
 		$this->form_validation->set_rules('itemName', 'Item Name', 'required');
 		$this->form_validation->set_rules('quantity', 'Quantity', 'required');
 		$this->form_validation->set_rules('unitPrice', 'Unit Price', 'required');
@@ -97,8 +97,7 @@ class Dashboard extends CI_Controller {
 	
 		// Log successful addition
 		log_message('info', 'Proposal successfully added to Zoho for Deal ID: ' . $data['dealNumber']);
-	
-// 		return $this->response(['success' => true, 'message' => 'Proposal added successfully.'], 201);
+		// return $this->response(['success' => true, 'message' => 'Proposal added successfully.'], 201);
 	}        
 	
 	private function add_proposal_to_zoho($deal_number, $proposal_data) {
@@ -267,6 +266,14 @@ class Dashboard extends CI_Controller {
 					'Valid_Till' => $proposal_data['validUntil'] ?? null,
 					'Sub_Total' => (float) ($proposal_data['subTotal'] ?? 0),
 					'Discount' => (float) ($proposal_data['discount'] ?? 0),
+					'line_tax' => [
+						[
+							'percentage' => 5, // VAT Percentage
+							'name' => 'Vat',
+							'id' => '5653678000000021003', // You can use the Zoho ID for the VAT line tax
+							'value' => (float) (($proposal_data['subTotal'] - $proposal_data['discount']) * 5 / 100), // VAT = (Sub_Total - Discount) * VAT Percentage
+						]
+					],
 					'Adjustment' => (float) ($proposal_data['adjustment'] ?? 0),
 					'Grand_Total' => (float) ($proposal_data['grandTotal'] ?? 0),
 					'Contact_Name' => [
@@ -279,7 +286,7 @@ class Dashboard extends CI_Controller {
 							'Quantity' => (float) $proposal_data['quantity'],
 							'List_Price' => (float) $proposal_data['unitPrice'],
 							'U_O_M' => $proposal_data['uom'],
-							'Description' => $product_description,
+							'Description' => $proposal_data['itemDescription'],
 						]
 					]
 				]
@@ -335,7 +342,7 @@ class Dashboard extends CI_Controller {
 			// Now update the deal status to 'Proposal'
 			$update_status_response = $this->update_deal_in_zoho($deal_id, 'Proposal/Price Quote', $proposal_data['unitPrice']);
 		
-// 			$id = $this->Task_model->get_id_by_deal_id($deal_id);
+			// $id = $this->Task_model->get_id_by_deal_id($deal_id);
 		
 			log_message('debug', 'Task ID: ' . $id);
 		
@@ -374,7 +381,7 @@ class Dashboard extends CI_Controller {
 				'terms_of_payment' => $proposal_data['termsOfPayment'],
 				'product_id' => $proposal_data['product_id'],
 				'product_name' => $proposal_data['product_name'],
-				'product_description' => $product_description,
+				'product_description' => $proposal_data['itemDescription'],
 				'uom' => $proposal_data['uom'],
 				'service_charge' => $proposal_data['unitPrice'],
 				'kind_attention' => $proposal_data['kind_attention'],
@@ -395,7 +402,7 @@ class Dashboard extends CI_Controller {
 				return json_encode(['error' => 'Failed to update Task_quote_model.']);
 			}
 		
-// 			return ['success' => true, 'message' => 'Task quote created successfully.'];
+			// return ['success' => true, 'message' => 'Task quote created successfully.'];
 			return $this->response(['success' => true, 'message' => 'Proposal added successfully.', 'id' => $id], 201);
 		} else {
 			log_message('debug', 'Full response for error handling: ' . print_r($response_body, true));
@@ -706,6 +713,14 @@ class Dashboard extends CI_Controller {
 					'Valid_Till' => $proposal_data['validUntil'] ?? null,
 					'Sub_Total' => (float) ($proposal_data['subTotal'] ?? 0),
 					'Discount' => (float) ($proposal_data['discount'] ?? 0),
+					'line_tax' => [
+						[
+							'percentage' => 5, // VAT Percentage
+							'name' => 'Vat',
+							'id' => '5653678000000021003', // You can use the Zoho ID for the VAT line tax
+							'value' => (float) (($proposal_data['subTotal'] - $proposal_data['discount']) * 5 / 100), // VAT = (Sub_Total - Discount) * VAT Percentage
+						]
+					],
 					'Adjustment' => (float) ($proposal_data['adjustment'] ?? 0),
 					'Grand_Total' => (float) ($proposal_data['grandTotal'] ?? 0),
 					'Contact_Name' => [
