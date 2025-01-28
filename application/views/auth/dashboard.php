@@ -11,8 +11,6 @@
 	<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
 	<!-- Bootstrap CSS -->
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-	<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-
 	<!-- Include Bootstrap Icons if not already included -->
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 	<link href="<?php echo base_url('assets/css/style.css'); ?>" rel="stylesheet">
@@ -29,6 +27,7 @@
             background-color: #FF0100 !important;
             color: #fff !important;
         }
+
 	</style>
 	
 	<script src="<?php echo base_url('assets/js/navbar.js'); ?>"></script>
@@ -67,8 +66,8 @@
         <header class="d-flex justify-content-between align-items-center px-4 py-3 header-main">
             <!-- Hamburger Button Inside Header (Visible on Mobile) -->
             <button class="btn btn-outline-dark d-md-none" id="hamburgerButton" style="top: 20px; left: 20px; z-index: 1100;">
-				<i class="bi bi-list"></i>
-			</button>
+            <i class="bi bi-list"></i>
+        </button>
     
             <!-- Dashboard Title -->
             <h4 class="mb-0" id="userNameDisplay"></h4>
@@ -101,14 +100,14 @@
 						<div class="card-header text-white" id="headingOne" style="background-color: #FF0100;">
 							<h2 class="mb-0">
 								<button class="btn btn-link text-white" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne" style="font-weight: bold; text-decoration: none;">
-									<i class="bi bi-plus-circle me-2"></i>Create New Deal
+									<i id="addDealIcon" class="bi bi-plus-circle me-2"></i>Create New Deal
 								</button>
 							</h2>
 						</div>
 
 						<div id="accordionExample">
-							<div class="card-body">
-								<div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordionExample">
+							<div class="card-body" style="padding-top: 8px;">
+								<div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordionExample" style="padding-top: 10px;">
 									<form id="DealForm">
 										<div class="form-row mb-3">
 											<div class="col-md-3">
@@ -173,7 +172,7 @@
 						<div class="card-header text-white" id="headingTwo" style="background-color: #FF0100;">
 							<h2 class="mb-0">
 								<button class="btn btn-link text-white collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo" style="font-weight: bold; text-decoration: none;">
-								<i class="bi bi-plus-circle me-2"></i>Create a Proposal for a Deal
+								<i id="addProposalIcon" class="bi bi-plus-circle me-2"></i>Create a Proposal for a Deal
 								</button>
 							</h2>
 						</div>
@@ -296,7 +295,7 @@
 												<div class="error-message"></div>
 											</div>
 											<div class="form-group d-flex align-items-center justify-content-between">
-												<label style="color: #000; font-weight: 600;" for="discount" class="label-nowrap">Discount % (AED)</label>
+												<label style="color: #000; font-weight: 600;" for="discount" class="label-nowrap">Discount (AED)</label>
 												<input type="number" name="discount" class="form-control no-arrows flex-input" id="discount" placeholder="0">
 												<div class="error-message"></div>
 											</div>
@@ -595,36 +594,47 @@
 	<!-- Include jQuery and Select2 JavaScript -->
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<!-- Optional: Include Bootstrap's JavaScript (jQuery and Popper.js) for accordion functionality -->
-	<!-- <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script> -->
 	<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
 	<script>
-		document.addEventListener('DOMContentLoaded', function () {
-			const editQuoteIcon = document.getElementById('editQuoteIcon');
-			const editQuoteCollapse = document.getElementById('collapseThree');
-
-			console.log(editQuoteIcon, editQuoteCollapse); // Ensure both elements are found
-
-			if (editQuoteIcon && editQuoteCollapse) {
-				// When the collapse is shown
-				editQuoteCollapse.addEventListener('show.bs.collapse', function () {
-					console.log("The collapse is being shown!");
-					editQuoteIcon.classList.remove('bi-plus-circle');
-					editQuoteIcon.classList.add('bi-dash-circle');
-				});
-
-				// When the collapse is hidden
-				editQuoteCollapse.addEventListener('hide.bs.collapse', function () {
-					console.log("The collapse is being hidden!");
-
-					editQuoteIcon.classList.remove('bi-dash-circle');
-					editQuoteIcon.classList.add('bi-plus-circle');
-				});
+	    // toggle icons
+		$(document).ready(function () {
+			// Initialize icons based on the initial state of collapses
+			if ($("#collapseOne").hasClass("show")) {
+				$("#addDealIcon").removeClass("bi-plus-circle").addClass("bi-dash-circle");
 			} else {
-				console.error("Edit Quote button or collapse target not found!");
+				$("#addDealIcon").removeClass("bi-dash-circle").addClass("bi-plus-circle");
 			}
-		});
 
+			// Collapse Three
+			$("#collapseThree").on("shown.bs.collapse", function () {
+				$("#editQuoteIcon").removeClass("bi-plus-circle").addClass("bi-dash-circle");
+			});
+
+			$("#collapseThree").on("hidden.bs.collapse", function () {
+				$("#editQuoteIcon").removeClass("bi-dash-circle").addClass("bi-plus-circle");
+			});
+
+			// Collapse Two
+			$("#collapseTwo").on("shown.bs.collapse", function () {
+				$("#addProposalIcon").removeClass("bi-plus-circle").addClass("bi-dash-circle");
+			});
+
+			$("#collapseTwo").on("hidden.bs.collapse", function () {
+				$("#addProposalIcon").removeClass("bi-dash-circle").addClass("bi-plus-circle");
+			});
+
+			// Collapse One
+			$("#collapseOne").on("shown.bs.collapse", function () {
+				$("#addDealIcon").removeClass("bi-plus-circle").addClass("bi-dash-circle");
+			});
+
+			$("#collapseOne").on("hidden.bs.collapse", function () {
+				$("#addDealIcon").removeClass("bi-dash-circle").addClass("bi-plus-circle");
+			});
+		});
+	
 		// Calculate and update totals of item1
 		$(document).ready(function() {
 			function calculateTotals() {
@@ -641,11 +651,11 @@
 				let discountAmount = parseFloat($('#discount').val()) || 0;
 
 				// Subtract discount from Sub Total before VAT calculation
-				let subTotalAfterDiscount = subTotal - discountAmount;
-
-				// VAT Calculation (Fixed VAT percentage of 5%)
-				let vatPercentage = 5; // Fixed VAT percentage
-				let vat = (vatPercentage / 100) * subTotalAfterDiscount;
+                let subTotalAfterDiscount = subTotal - discountAmount;
+        
+                // VAT Calculation (Fixed VAT percentage of 5%)
+                let vatPercentage = 5; // Fixed VAT percentage
+                let vat = (vatPercentage / 100) * subTotalAfterDiscount;
 
 				// Get other values for Grand Total calculation
 				let adjustment = parseFloat($('#adjustment').val()) || 0;
@@ -681,11 +691,11 @@
 				let discountAmount = parseFloat($('#discount2').val()) || 0;
 
 				// Subtract discount from Sub Total before VAT calculation
-				let subTotalAfterDiscount = subTotal - discountAmount;
-
-				// VAT Calculation (Fixed VAT percentage of 5%)
-				let vatPercentage = 5; // Fixed VAT percentage
-				let vat = (vatPercentage / 100) * subTotalAfterDiscount;
+                let subTotalAfterDiscount = subTotal - discountAmount;
+        
+                // VAT Calculation (Fixed VAT percentage of 5%)
+                let vatPercentage = 5; // Fixed VAT percentage
+                let vat = (vatPercentage / 100) * subTotalAfterDiscount;
 
 				// Get other values for Grand Total calculation
 				let adjustment = parseFloat($('#adjustment2').val()) || 0;
@@ -705,7 +715,6 @@
 			calculateTotals();
 		});
 
-
 		// Set today's date as the minimum date
 		const dateInput = document.getElementById('valid-until');
 		const today = new Date().toISOString().split('T')[0]; // Format the date as YYYY-MM-DD
@@ -718,129 +727,171 @@
 
 		// Fetch item names1 from the API
 		$(document).ready(function () {
-			// Object to store product details by ID
-			const productDetails = {};
-
-			// Initialize Select2 with placeholder and clearing options
-			$('#itemName').select2({
-				placeholder: 'Search for an item...',
-				allowClear: true,
-				width: '100%',
-				templateResult: formatOption,
-				templateSelection: formatOption,
-			});
-
-			// Fetch item names from the API
-			fetch('https://app.voltronix.ae/voltronix/deal/products')
-				.then((response) => response.json())
-				.then((data) => {
-					if (data.success && Array.isArray(data.products)) {
-						data.products.forEach((product) => {
-							// Store product details in a map for quick access
-							productDetails[product.id] = product.description || '';
-							// Add product to the dropdown
-							$('#itemName').append(new Option(product.name, product.id));
-						});
-					} else {
-						console.error('Unexpected response format or no products found.');
-					}
-				})
-				.catch((error) => {
-					console.error('Error fetching item names:', error);
-				});
-
-			// Format long text in dropdown and selection
-			function formatOption(option) {
-				if (!option.id) return option.text; // Show placeholder
-				return $('<span class="wrap-text"></span>').text(option.text); // Wrap long text
-			}
-
-			// Fetch and display product description when an item is selected
-			$('#itemName').on('change', function () {
-				const selectedItemId = $(this).val();
-
-				// Clear the description if no item is selected
-				if (!selectedItemId) {
-					$('#itemDescription').val('');
-					return;
-				}
-
-				// Get the description for the selected product from the stored details
-				const selectedDescription = productDetails[selectedItemId];
-				$('#itemDescription').val(selectedDescription || '');
-			});
-
-		});
+            const productDetails = {}; // Store product descriptions for quick access
+            let loading = false; // Prevent multiple concurrent requests
+            let hasMoreRecords = true; // Indicator for more records
+            let page = 1; // Current page for pagination
+            let lastQuery = ''; // To track the last search query
+        
+            // Initialize Select2 with placeholder, infinite scrolling, and custom templates
+            $('#itemName').select2({
+                placeholder: 'Search for an item...',
+                allowClear: true,
+                width: '100%',
+                ajax: {
+                    transport: function (params, success, failure) {
+                        const query = params.data.q || ''; // Capture the current search query
+        
+                        // Reset pagination and clear results if the query changes
+                        if (query !== lastQuery) {
+                            page = 1; // Reset to the first page
+                            hasMoreRecords = true; // Reset the flag for more records
+                            lastQuery = query; // Update the last query
+                            success({ results: [] }); // Clear previous results in the dropdown
+                        }
+        
+                        // Prevent multiple requests or if no more records
+                        if (loading || !hasMoreRecords) return;
+        
+                        loading = true; // Mark as loading
+        
+                        fetch(`https://app.voltronix.ae/voltronix/deal/products?page=${page}&per_page=20&q=${encodeURIComponent(query)}`)
+                            .then((response) => response.json())
+                            .then((data) => {
+                                const results = [];
+                                if (data.success && Array.isArray(data.products)) {
+                                    data.products.forEach((product) => {
+                                        productDetails[product.id] = product.description || ''; // Cache product descriptions
+                                        results.push({ id: product.id, text: product.name }); // Format for Select2
+                                    });
+        
+                                    hasMoreRecords = data.more_records; // Update the flag for more records
+                                    page++; // Increment page for the next request
+        
+                                    success({ results, pagination: { more: hasMoreRecords } }); // Send results to Select2
+                                } else {
+                                    hasMoreRecords = false; // No more records
+                                    success({ results: [], pagination: { more: false } });
+                                }
+                            })
+                            .catch((error) => {
+                                console.error('Error fetching products:', error);
+                                failure(error);
+                            })
+                            .finally(() => {
+                                loading = false; // Reset loading state
+                            });
+                    },
+                    processResults: function (data) {
+                        return data; // The transport already formats the response correctly
+                    },
+                    delay: 250, // Add delay to prevent excessive requests
+                },
+                templateResult: formatOption,
+                templateSelection: formatOption,
+            });
+        
+            // Format long text in dropdown and selection
+            function formatOption(option) {
+                if (!option.id) return option.text; // Show placeholder
+                return $('<span class="wrap-text"></span>').text(option.text); // Wrap long text
+            }
+        
+            // Handle description display when a product is selected
+            $('#itemName').on('change', function () {
+                const selectedItemId = $(this).val();
+        
+                // Clear the description if no item is selected
+                if (!selectedItemId) {
+                    $('#itemDescription').val('');
+                    return;
+                }
+        
+                // Fetch the product description from the stored details
+                const selectedDescription = productDetails[selectedItemId];
+                $('#itemDescription').val(selectedDescription || '');
+            });
+        });
 
 		// Fetch item names2 from the API and quote details for editing a quote
 		$(document).ready(function () {
-			 // Object to store product details by ID
-			 const productDetails = {};
+			const productDetails = {};
+			let loading = false; // Prevent multiple concurrent requests
+			let hasMoreRecords = true; // Indicator for more records
+			let page = 1; // Current page for pagination
+			let lastQuery = ''; // To track the last search query
+			let isPrePopulating = false; // Flag to handle pre-population vs user selection
 
-			// Initialize Select2 once, keeping options dynamic
+			// Initialize Select2 for #itemName2 with AJAX and infinite scrolling
 			$('#itemName2').select2({
 				placeholder: 'Search for an item...',
 				allowClear: true,
 				width: '100%',
-				templateResult: formatOption,
-				templateSelection: formatOption,
+				ajax: {
+					transport: function (params, success, failure) {
+						const query = params.data.q || ''; // Capture the current search query
+
+						// Reset pagination and clear results if the query changes
+						if (query !== lastQuery) {
+							page = 1; // Reset to the first page
+							hasMoreRecords = true; // Reset the flag for more records
+							lastQuery = query; // Update the last query
+							success({ results: [] }); // Clear previous results in the dropdown
+						}
+
+						// Prevent multiple requests or if no more records
+						if (loading || !hasMoreRecords) return;
+
+						loading = true; // Mark as loading
+
+						fetch(`https://app.voltronix.ae/voltronix/deal/products?page=${page}&per_page=20&q=${encodeURIComponent(query)}`)
+							.then((response) => response.json())
+							.then((data) => {
+								const results = [];
+								if (data.success && Array.isArray(data.products)) {
+									data.products.forEach((product) => {
+										productDetails[product.id] = product.description || ''; // Cache product descriptions
+										results.push({ id: product.id, text: product.name }); // Format for Select2
+									});
+
+									hasMoreRecords = data.more_records; // Update the flag for more records
+									page++; // Increment page for the next request
+
+									success({ results, pagination: { more: hasMoreRecords } }); // Send results to Select2
+								} else {
+									hasMoreRecords = false; // No more records
+									success({ results: [], pagination: { more: false } });
+								}
+							})
+							.catch((error) => {
+								console.error('Error fetching products:', error);
+								failure(error);
+							})
+							.finally(() => {
+								loading = false; // Reset loading state
+							});
+					},
+					processResults: function (data) {
+						return data; // The transport already formats the response correctly
+					},
+					delay: 250, // Add delay to prevent excessive requests
+				},
 			});
 
-			// Function to fetch and populate products
-			function fetchProducts(selectedProductId = null, selectedProductName = null) {
-				fetch('https://app.voltronix.ae/voltronix/deal/products')
-					.then((response) => response.json())
-					.then((data) => {
-						if (data.success && Array.isArray(data.products)) {
-							// Clear existing options
-							$('#itemName2').empty().append('<option value="">-None-</option>');
+			// Handle product selection to update the description
+			$('#itemName2').on('change', function () {
+				if (isPrePopulating) return; // Skip handling during pre-population
 
-							// Store product details and add options
-							data.products.forEach((product) => {
-								productDetails[product.id] = product.description || '';
-								$('#itemName2').append(new Option(product.name, product.id));
-							});
+				const selectedItemId = $(this).val();
+				if (!selectedItemId) {
+					$('#itemDescription2').val('');
+					return;
+				}
+				const selectedDescription = productDetails[selectedItemId];
+				$('#itemDescription2').val(selectedDescription || '');
+			});
 
-							// If editing, include the selected product if not already in the list
-							if (selectedProductId && !productDetails[selectedProductId]) {
-								productDetails[selectedProductId] = '';
-								$('#itemName2').append(new Option(selectedProductName, selectedProductId));
-							}
-
-							// Set the selected value for editing
-							if (selectedProductId) {
-								$('#itemName2').val(selectedProductId).trigger('change');
-							}
-						} else {
-							console.error('Unexpected response format or no products found.');
-						}
-					})
-					.catch((error) => {
-						console.error('Error fetching item names:', error);
-					});
-			}
-
-			// Fetch initial product list
-			fetchProducts();
-
-			// Format long text in dropdown and selection
-			function formatOption(option) {
-				if (!option.id) return option.text; // Show placeholder
-				return $('<span class="wrap-text"></span>').text(option.text); // Wrap long text
-			}
-
-			// Fetch and display product description when an item is selected
-			// $('#itemName2').on('change', function () {
-			// 	const selectedItemId = $(this).val();
-			// 	if (!selectedItemId) {
-			// 		$('#itemDescription2').val('');
-			// 		return;
-			// 	}
-			// 	const selectedDescription = productDetails[selectedItemId];
-			// 	$('#itemDescription2').val(selectedDescription || '');
-			// });
-
-			// Handle QuoteNumber blur event
+			// Fetch and pre-populate the product details when a quote number is provided
 			$(document).on('blur', '#QuoteNumber', function () {
 				const quoteNumber = $(this).val();
 				if (quoteNumber.trim() === '') return;
@@ -855,7 +906,7 @@
 						if (response.success) {
 							const data = response.data;
 
-							// Populate fields with data from the response
+							// Populate other fields
 							$('#subject2').val(data.subject || '');
 							$('#kind_attention2').val(data.kind_attention || '');
 							$('#project2').val(data.project_name || '');
@@ -870,54 +921,87 @@
 							$('#unitPrice2').val(data.service_charge || '');
 							$('#valid-until2').val(data.valid_until || '');
 
-							// Fetch products and include the current selected product
+							// Enable pre-population mode
+							isPrePopulating = true;
+
+							// Fetch products and include the selected product
 							fetchProducts(data.product_id, data.product_name);
 
-							// Populate description field
+							// Populate the description field
 							$('#itemDescription2').val(data.product_description || '');
 
-							// Trigger the calculation function immediately
+							// Disable pre-population mode after a short delay
+							setTimeout(() => {
+								isPrePopulating = false;
+							}, 2000);
+
+							// Trigger totals calculation
 							calculateTotals();
 						} else {
 							console.error('API Error:', response.error || 'Failed to fetch quote details.');
-							// alert(response.error || 'Failed to fetch quote details.');
 						}
 					},
 					error: function () {
 						console.error('AJAX Error: Error fetching quote details.');
-						// alert('Error fetching quote details.');
 					}
 				});
 			});
 
+			// Function to fetch product list and optionally pre-select a product
+			function fetchProducts(selectedProductId = null, selectedProductName = null) {
+				fetch('https://app.voltronix.ae/voltronix/deal/products')
+					.then(response => response.json())
+					.then(data => {
+						if (data.success && Array.isArray(data.products)) {
+							// Clear existing options
+							$('#itemName2').empty().append('<option value="">-None-</option>');
+
+							// Populate dropdown and product details
+							data.products.forEach(product => {
+								productDetails[product.id] = product.description || '';
+								$('#itemName2').append(new Option(product.name, product.id));
+							});
+
+							// Include and select the specified product
+							if (selectedProductId && !productDetails[selectedProductId]) {
+								productDetails[selectedProductId] = '';
+								$('#itemName2').append(new Option(selectedProductName, selectedProductId));
+							}
+
+							if (selectedProductId) {
+								$('#itemName2').val(selectedProductId).trigger('change');
+							}
+						} else {
+							console.error('Unexpected response format or no products found.');
+						}
+					})
+					.catch(error => {
+						console.error('Error fetching products:', error);
+					});
+			}
+
+			// Totals calculation
 			function calculateTotals() {
 				let quantity = parseFloat($('#quantity2').val()) || 0;
 				let unitPrice = parseFloat($('#unitPrice2').val()) || 0;
 				let total = quantity * unitPrice;
 				$('#total2').val(total.toFixed(2));
 
-				// Calculate Sub Total (only one item row is present in this example)
 				let subTotal = total;
 				$('#sub-total2').val(subTotal.toFixed(2));
 
-				// Get the fixed discount amount (instead of percentage)
 				let discountAmount = parseFloat($('#discount2').val()) || 0;
-
-				// Subtract discount from Sub Total before VAT calculation
 				let subTotalAfterDiscount = subTotal - discountAmount;
 
-				// VAT Calculation (Fixed VAT percentage of 5%)
-				let vatPercentage = 5; // Fixed VAT percentage
+				let vatPercentage = 5;
 				let vat = (vatPercentage / 100) * subTotalAfterDiscount;
 
-				// Get other values for Grand Total calculation
 				let adjustment = parseFloat($('#adjustment2').val()) || 0;
-
-				// Grand Total Calculation: Sub Total - Discount + VAT + Adjustment
 				let grandTotal = subTotal - discountAmount + vat + adjustment;
 				$('#grand-total2').val(grandTotal.toFixed(2));
 			}
 		});
+
 
 		// Handle logout
 		$(document).ready(function() {
@@ -1045,7 +1129,7 @@
 							$('#reProposalForm')[0].reset();
 
 							// Optionally, call fetchData if needed
-							// fetchData(1, $('#searchInput').val(), sort_by, sort_direction);
+							fetchData(1, $('#searchInput').val(), sort_by, sort_direction);
 						}
 					},
 					error: function(xhr) {
@@ -1240,12 +1324,6 @@
 				});
 			});
 		});
-
-		// // Attach event listeners to calculate totals when Quantity or Unit Price changes
-		// $('#quantity2, #unitPrice2').on('input', calculateTotals);
-
-		// // Attach event listeners for discount, VAT, and adjustment fields to update Grand Total
-		// $('#discount2, #vat2, #adjustment2').on('input', calculateTotals);
 
 		// Copy Deal Number function
 		function copyDealNumber() {

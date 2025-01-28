@@ -271,7 +271,7 @@ class Dashboard extends CI_Controller {
 							'percentage' => 5, // VAT Percentage
 							'name' => 'Vat',
 							'id' => '5653678000000021003', // You can use the Zoho ID for the VAT line tax
-							'value' => (float) (($proposal_data['subTotal'] - $proposal_data['discount']) * 5 / 100), // VAT = (Sub_Total - Discount) * VAT Percentage
+							'value' => (float) (((float) $proposal_data['subTotal'] - (float) $proposal_data['discount']) * 5 / 100), // Ensure numeric
 						]
 					],
 					'Adjustment' => (float) ($proposal_data['adjustment'] ?? 0),
@@ -714,13 +714,13 @@ class Dashboard extends CI_Controller {
 					'Sub_Total' => (float) ($proposal_data['subTotal'] ?? 0),
 					'Discount' => (float) ($proposal_data['discount'] ?? 0),
 					'line_tax' => [
-						[
-							'percentage' => 5, // VAT Percentage
-							'name' => 'Vat',
-							'id' => '5653678000000021003', // You can use the Zoho ID for the VAT line tax
-							'value' => (float) (($proposal_data['subTotal'] - $proposal_data['discount']) * 5 / 100), // VAT = (Sub_Total - Discount) * VAT Percentage
-						]
-					],
+                        [
+                            'percentage' => 5, // VAT Percentage
+                            'name' => 'Vat',
+                            'id' => '5653678000000021003', // You can use the Zoho ID for the VAT line tax
+                            'value' => (float) (((float) $proposal_data['subTotal'] - (float) $proposal_data['discount']) * 5 / 100), // Ensure numeric
+                        ]
+                    ],
 					'Adjustment' => (float) ($proposal_data['adjustment'] ?? 0),
 					'Grand_Total' => (float) ($proposal_data['grandTotal'] ?? 0),
 					'Contact_Name' => [

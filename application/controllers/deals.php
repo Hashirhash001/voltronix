@@ -755,82 +755,107 @@ class deals extends CI_Controller
 		}
 	}
 
-	public function fetch_all_products()
-	{
-		// Fetch the access token
-		$this->access_token = $this->get_access_token();
+	private function set_cors_headers() {
+        header("Access-Control-Allow-Origin: *"); // Allow all origins
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS"); // Allowed HTTP methods
+        header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+    }
 
-		if (!$this->access_token) {
-			return $this->output
-				->set_status_header(500)
-				->set_output(json_encode(['success' => false, 'error' => 'Access token not found.']));
-		}
+	public function fetch_all_products() {
+		$this->set_cors_headers();
 
-		// Set the API URL for fetching all products
-		$url = "https://www.zohoapis.com/crm/v2/Products";
+        $this->access_token = $this->get_access_token();
+    
+        if (!$this->access_token) {
+            return $this->output
+                ->set_status_header(500)
+                ->set_output(json_encode(['success' => false, 'error' => 'Access token not found.']));
+        }
+    
+        // Capture the search query
+        $query = $this->input->get('q');
+        $page = (int) $this->input->get('page') ?: 1;
+        $per_page = (int) $this->input->get('per_page') ?: 20;
+    
+        // Ensure $query is a string before checking its length
+        $query = isset($query) && $query !== null ? $query : ''; // If $query is null or not set, set it to an empty string
+        
+        // Validate query length
+        if (strlen($query) < 2) {
+            // If the query is too short, don't search and just fetch the products with pagination
+            $query = ''; // Clear the query for pagination
+        }
 
-		// Set the headers (removed Content-Type for GET)
-		$headers = [
-			"Authorization: Zoho-oauthtoken " . $this->access_token
-		];
-
-		// Log the request details
-		log_message('debug', 'Requesting Zoho CRM Products with headers: ' . print_r($headers, true));
-
-		// Make the request to Zoho CRM (no body for GET request)
-		$response = $this->execute_curl_request($url, $headers, null, 'GET');
-		$response_body = json_decode($response['body'], true);
-
-		// Log response for debugging
-		log_message('debug', 'Zoho CRM Products Response: ' . print_r($response_body, true));
-
-		// Handle 401 Unauthorized error by refreshing the token
-		if ($response['http_code'] == 401) {
-			if ($this->refresh_access_token()) {
-				// Update the token in the headers after refreshing
-				$this->access_token = $this->get_access_token();
-				$headers[0] = "Authorization: Zoho-oauthtoken " . $this->access_token;
-
-				// Retry the request after refreshing the token
-				$response = $this->execute_curl_request($url, $headers, null, 'GET');
-				$response_body = json_decode($response['body'], true);
-
-				// Log response after retry
-				log_message('debug', 'Zoho CRM Products Response after retry: ' . print_r($response_body, true));
-			} else {
-				return $this->output
-					->set_status_header(500)
-					->set_output(json_encode(['success' => false, 'error' => 'Failed to refresh access token.']));
-			}
-		}
-
-		// Check if we got products data
-		if (isset($response_body['data'])) {
-			$products = [];
-
-			// Extract specific product details
-			foreach ($response_body['data'] as $product) {
-				$products[] = [
-					'id' => $product['id'],
-					'name' => $product['Product_Name'],
-					'description' => $product['Description'],
-					'qty_in_stock' => $product['Qty_in_Stock'],
-					'owner' => $product['Owner']['name'],
-					'modified_time' => $product['Modified_Time']
-				];
-			}
-
-			// Return the formatted product data
-			return $this->output
-				->set_content_type('application/json')
-				->set_output(json_encode(['success' => true, 'products' => $products]));
-		} else {
-			// Handle error
-			return $this->output
-				->set_status_header(500)
-				->set_output(json_encode(['success' => false, 'error' => 'Failed to fetch products from Zoho CRM.']));
-		}
-	}
+    
+        // Base URL for fetching products
+        $url = "https://www.zohoapis.com/crm/v2.1/Products";
+    
+        // Log the incoming query for debugging
+        log_message('error', 'Query received: ' . print_r($query, true));
+    
+        // If there is a search query, add the word parameter for searching
+        if (!empty($query)) {
+            // Ensure the query is properly encoded
+            $url = "https://www.zohoapis.com/crm/v2.1/Products/search?word=" . rawurlencode($query);
+        } else {
+            // If no query, just fetch the list of products with pagination
+            $url .= "?page={$page}&per_page={$per_page}";
+        }
+    
+        // Log the constructed URL
+        log_message('error', 'Constructed URL: ' . $url);
+    
+        $headers = [
+            "Authorization: Zoho-oauthtoken " . $this->access_token
+        ];
+    
+        // Make the request to Zoho CRM
+        $response = $this->execute_curl_request($url, $headers, null, 'GET');
+        log_message('error', 'Zoho API Response: ' . print_r($response, true)); // Log the raw response
+    
+        $response_body = json_decode($response['body'], true);
+    
+        // Handle 401 Unauthorized error by refreshing the token
+        if ($response['http_code'] == 401) {
+            if ($this->refresh_access_token()) {
+                // Update the token in the headers after refreshing
+                $this->access_token = $this->get_access_token();
+                $headers[0] = "Authorization: Zoho-oauthtoken " . $this->access_token;
+    
+                // Retry the request after refreshing the token
+                $response = $this->execute_curl_request($url, $headers, null, 'GET');
+                $response_body = json_decode($response['body'], true);
+            } else {
+                return $this->output
+                    ->set_status_header(500)
+                    ->set_output(json_encode(['success' => false, 'error' => 'Failed to refresh access token.']));
+            }
+        }
+    
+        if (isset($response_body['data']) && is_array($response_body['data'])) {
+            // Map the response to the required structure
+            $products = array_map(function ($product) {
+                return [
+                    'id' => $product['id'],
+                    'name' => $product['Product_Name'],
+                    'description' => $product['Description']
+                ];
+            }, $response_body['data']);
+    
+            // Check for more records for pagination
+            $has_more_records = $response_body['info']['more_records'] ?? false;
+    
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['success' => true, 'products' => $products, 'more_records' => $has_more_records]));
+        }
+    
+        log_message('error', 'Error fetching products: ' . print_r($response, true)); // Log error responses
+    
+        return $this->output
+            ->set_status_header(500)
+            ->set_output(json_encode(['success' => false, 'error' => 'Failed to fetch products.']));
+    }
 
 	private function update_deal_in_zoho($deal_id, $status = null, $service_charge = null)
 	{
