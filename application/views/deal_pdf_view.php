@@ -127,12 +127,13 @@
                         $line = trim($line);
     
                         // Check if the line starts with "Note:"
-                        if (stripos($line, 'Note:') === 0) {
+                        if (stripos($line, 'Note:') === 0 || stripos($line, 'Note-') === 0 || stripos($line, 'Notes-') === 0) {
                             // Render the note as a separate paragraph with <br> after it
-                            echo "<p style='font-size: 12px; margin: 0; padding-left: 20px;'>" . htmlspecialchars($line) . "</p><br>";
+                            $noteContent = substr($line, strpos($line, ':') + 1); // Extract content after 'Note:' or 'Note-'
+                            echo "<p style='font-size: 12px; margin: 0; padding-left: 20px; font-style: italic;'>Note: " . htmlspecialchars($noteContent) . "</p><br>";
                         } elseif (!empty($line)) {
                             // Render other lines as bullet points
-                            echo "<p style='font-size: 12px; margin: 0; padding-left: 20px;'>- " . htmlspecialchars($line) . "</p>";
+                            echo "<p style='font-size: 12px; margin: 0; padding-left: 20px;'>" . htmlspecialchars($line) . "</p>";
                         }
                     }
                 } else {

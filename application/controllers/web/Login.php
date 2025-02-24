@@ -20,12 +20,18 @@ class Login extends CI_Controller {
         $this->load->library(['form_validation', 'session']);
         $this->load->helper(['url', 'form']);
         $this->load->library('Pdf');
+        $this->load->helper('token_validate');
     }
 
 	public function check_logged_in() {
 		if (!$this->session->userdata('logged_in')) {
 			// If not logged in, redirect to login page
-			redirect('web/login');
+            	redirect('signin');
+            // log_message('error', 'Unauthorized access - User not logged in');
+            // $this->output->set_status_header(401);
+            // echo 'Unauthorized access. Please log in.';
+            // exit;
+
 		}
 	}
 
@@ -34,11 +40,13 @@ class Login extends CI_Controller {
         $this->load->view('auth/login');
     }
 
-	public function dashboard() {
+	public function dealsAndProposals() {
         // Check if the user is logged in
         $this->check_logged_in();
     
-        $this->load->view('auth/dashboard');
+		$this->load->view('auth/layout/header');
+		$this->load->view('auth/layout/sidebar');
+        $this->load->view('auth/deals-proposals');
     }
 
     // Handle the login form submission
@@ -82,9 +90,11 @@ class Login extends CI_Controller {
 					'user_id' => $user['user_id'],
 					'logged_in' => TRUE
 				]);
+				
+				log_message('debug', 'Session after login: ' . json_encode($this->session->userdata()));
 
 				// Redirect to dashboard
-				redirect('web/deals'); 
+				redirect('web/dashboard'); 
 			}
 		}
 	}
@@ -99,7 +109,11 @@ class Login extends CI_Controller {
     }
     
     public function fetch_tasks(){
-		$this->check_logged_in();
+        $this->check_logged_in();
+        
+        // Debug session
+        log_message('debug', 'Session in fetch_tasks: ' . json_encode($this->session->userdata()));
+        
 	    // Get the user ID from the session
         $id = $this->session->userdata('id'); 
     
@@ -135,6 +149,8 @@ class Login extends CI_Controller {
             'tasks' => $tasks
         ];
         
+		$this->load->view('auth/layout/header');
+		$this->load->view('auth/layout/sidebar');
         $this->load->view('auth/myJobs', $data);
 	}
 	
@@ -150,103 +166,112 @@ class Login extends CI_Controller {
         if ($task) {
             $data['task'] = $task;
             $data['quote_access'] = $quote_access;
-            $this->load->view('auth/task_details', $data); // Load the view and pass the task data
+			$this->load->view('auth/layout/header');
+			$this->load->view('auth/layout/sidebar');
+            $this->load->view('auth/job_details', $data); // Load the view and pass the task data
         } else {
             show_404(); // Show a 404 error if the task is not found
         }
     }
     
     public function download_deal_pdf($id) {
-		$this->check_logged_in();
+        $this->check_logged_in();
     
         // Get task data
-      	$data['task'] = $this->Task_model->get_task($id);
-      	ob_start();
-      	$this->load->view('deal_pdf_view',$data);
-		$html = ob_get_contents();
-		ob_end_clean();
-		$mpdf = new \Mpdf\Mpdf([
-			'margin_top' => 0,
-			'margin_bottom' => 0,
-			'margin_left' => 5,
-			'margin_right' => 5,
-		]);
-		$mpdf->SetTitle('Quote - ' . $data['task']['quote_number']);
-		$backgroundImage= base_url().'assets/photos/logo/databg.png';
-      	$mpdf->SetDefaultBodyCSS('background', "url('{$backgroundImage}')");
-		$mpdf->SetDefaultBodyCSS('background-image-resize', 1);
-		$mpdf->WriteHTML($html);
-		$filename = 'quote_' . $data['task']['quote_number'] . '.pdf';
+        $data['task'] = $this->Task_model->get_task($id);
+        ob_start();
+        $this->load->view('deal_pdf_view', $data);
+        $html = ob_get_contents();
+        ob_end_clean();
+    
+        $mpdf = new \Mpdf\Mpdf([
+            'margin_top' => 11,
+            'margin_bottom' => 0,
+            'margin_left' => 6,
+            'margin_right' => 6,
+            'default_font' => 'yorkten',
+        ]);
+    
+        // Font data for Yorkten
+        $mpdf->fontdata['yorkten'] = [
+            'R' => $_SERVER['DOCUMENT_ROOT'] . '/voltronix/assets/fonts/Yorkten-NorReg.ttf',
+            'B' => $_SERVER['DOCUMENT_ROOT'] . '/voltronix/assets/fonts/Yorkten-NorBol.ttf',
+            'I' => $_SERVER['DOCUMENT_ROOT'] . '/voltronix/assets/fonts/Yorkten-NorRegIt.ttf',
+            'BI' => $_SERVER['DOCUMENT_ROOT'] . '/voltronix/assets/fonts/Yorkten-NorBolIt.ttf',
+        ];
+    
+        $mpdf->SetTitle('Quote - ' . $data['task']['quote_number']);
+        $backgroundImage = base_url() . 'assets/photos/logo/databg.png';
+        $mpdf->SetDefaultBodyCSS('background', "url('{$backgroundImage}')");
+        $mpdf->SetDefaultBodyCSS('background-image-resize', 1);
+    
+        // Write HTML to PDF
+        $mpdf->WriteHTML($html);
+    
+        $filename = 'quote_' . $data['task']['quote_number'] . '.pdf';
         $mpdf->Output($filename, \Mpdf\Output\Destination::INLINE);
-   
     }
 
-	public function search() {
-		$this->check_logged_in();
-	
-		// Debug session
-		log_message('debug', 'Session data: ' . json_encode($this->session->userdata()));
-	
-		// Get the user ID from the session
-		$id = $this->session->userdata('id');
-		if (!$id) {
-			log_message('error', 'User ID not found in session.');
-			$this->output->set_status_header(404);
-			echo json_encode(['error' => 'User ID not found in session.']);
-			return;
-		}
-	
-		// Retrieve user information by ID
-		$user_id = $this->User_model->get_user_id_by_id($id);
-		log_message('debug', 'Fetched User ID: ' . $user_id);
-	
-		if (!$user_id) {
-			log_message('error', 'User not found for ID: ' . $id);
-			$this->output->set_status_header(404);
-			echo json_encode(['error' => 'User not found for this ID.']);
-			return;
-		}
-	
-		// Get the search query
-		$query = $this->input->post('query', true);
-		log_message('debug', 'Search Query: ' . $query);
-	
-		// Build the query for tasks specific to the user
-		$this->db->select('id, deal_name, deal_number, complaint_info, status');
-		$this->db->from('tasks');
-		$this->db->where('assigned_to', $user_id); // Fetch only tasks assigned to this user
-		$this->db->order_by('created_at', 'DESC');
-	
-		if (!empty($query)) {
-			// If query is provided, search in deal_name and deal_number
-			$this->db->group_start();
-			$this->db->like('deal_name', $query);
-			$this->db->or_like('deal_number', $query);
-			$this->db->group_end();
-		}
-	
-		$result = $this->db->get()->result_array();
-		log_message('debug', 'SQL Query: ' . $this->db->last_query());
-	
-		if (empty($result)) {
-			log_message('info', 'No Jobs found for query: ' . $query);
-			echo json_encode([
-				'success' => false,
-				'message' => 'No Jobs found.'
-			]);
-			return;
-		}
-	
-		log_message('debug', 'Search Results: ' . json_encode($result));
-	
-		// Return all tasks or filtered results
-		echo json_encode([
-			'success' => true,
-			'data' => $result
-		]);
-	}
-
-	private function validate_api_key() {
+    public function search() {
+        $this->check_logged_in();
+    
+        // Debug session
+        log_message('debug', 'Session in fetch_tasks: ' . json_encode($this->session->userdata()));
+    
+        // Get the user ID from the session
+        $id = $this->session->userdata('id');
+    
+        if (!$id) {
+            $this->output->set_status_header(404);
+            echo json_encode(['error' => 'User ID not found in session.']);
+            return;
+        }
+    
+        // Retrieve user information by ID
+        $user_id = $this->User_model->get_user_id_by_id($id);
+    
+        if (!$user_id) {
+            $this->output->set_status_header(404);
+            echo json_encode(['error' => 'User not found for this ID.']);
+            return;
+        }
+    
+        // Get the search query
+        $query = $this->input->post('query', true);
+    
+        // Build the query for tasks specific to the user
+        $this->db->select('id, deal_name, deal_number, complaint_info, status');
+        $this->db->from('tasks');
+        $this->db->where('assigned_to', $user_id); // Fetch only tasks assigned to this user
+        $this->db->order_by('created_at', 'DESC');
+    
+        if (!empty($query)) {
+            // If query is provided, search in deal_name and deal_number
+            $this->db->group_start(); // Start grouping WHERE conditions
+            $this->db->like('deal_name', $query);
+            $this->db->or_like('deal_number', $query);
+            $this->db->group_end(); // End grouping
+        }
+    
+        $result = $this->db->get()->result_array();
+    
+        if (empty($result)) {
+            // If no results are found
+            echo json_encode([
+                'success' => false,
+                'message' => 'No Jobs found.'
+            ]);
+            return;
+        }
+    
+        // Return all tasks or filtered results
+        echo json_encode([
+            'success' => true,
+            'data' => $result
+        ]);
+    }
+    
+    private function validate_api_key() {
 		$headers = $this->input->request_headers();
 		$api_key = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : null;
 
@@ -260,16 +285,16 @@ class Login extends CI_Controller {
             ->set_status_header($status_code)
             ->set_output(json_encode($data));
     }
+
     
     public function search2()
     {
-        // Validate API key and retrieve user data
-		$api_key = $this->validate_api_key();
-
-		if (!$api_key) {
-			return $this->_send_response(['success' => false, 'error' => 'Unauthorized access'], 401);
-		}
-        
+        // Validate API key and get user ID
+        $user_id = $this->validate_api_key();
+        if (!$user_id) {
+            return $this->_send_response(['success' => false, 'error' => 'Unauthorized access'], 401);
+        }
+    
         // Detect Content-Type and retrieve data
         $content_type = $this->input->server('CONTENT_TYPE');
         $data = strpos($content_type, 'application/json') !== false 
@@ -291,16 +316,6 @@ class Login extends CI_Controller {
                 'error' => 'Validation failed.',
                 'details' => $this->form_validation->error_array(),
             ], 422);
-        }
-    
-        // Debug session for development purposes
-        log_message('debug', 'Session in search2: ' . json_encode($this->session->userdata()));
-    
-        // Retrieve user information by ID
-        $user_id = $this->User_model->get_user_id_by_id($id);
-    
-        if (!$user_id) {
-            return $this->_send_response(['success' => false, 'error' => 'User not found for this ID.'], 404);
         }
     
         // Extract query from input data
@@ -337,5 +352,6 @@ class Login extends CI_Controller {
             'data' => $result
         ]);
     }
+
 
 }

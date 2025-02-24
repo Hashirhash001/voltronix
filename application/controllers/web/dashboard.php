@@ -97,6 +97,7 @@ class Dashboard extends CI_Controller {
 	
 		// Log successful addition
 		log_message('info', 'Proposal successfully added to Zoho for Deal ID: ' . $data['dealNumber']);
+	
 		// return $this->response(['success' => true, 'message' => 'Proposal added successfully.'], 201);
 	}        
 	
@@ -267,13 +268,13 @@ class Dashboard extends CI_Controller {
 					'Sub_Total' => (float) ($proposal_data['subTotal'] ?? 0),
 					'Discount' => (float) ($proposal_data['discount'] ?? 0),
 					'line_tax' => [
-						[
-							'percentage' => 5, // VAT Percentage
-							'name' => 'Vat',
-							'id' => '5653678000000021003', // You can use the Zoho ID for the VAT line tax
-							'value' => (float) (((float) $proposal_data['subTotal'] - (float) $proposal_data['discount']) * 5 / 100), // Ensure numeric
-						]
-					],
+                        [
+                            'percentage' => 5, // VAT Percentage
+                            'name' => 'Vat',
+                            'id' => '5653678000000021003', // You can use the Zoho ID for the VAT line tax
+                            'value' => (float) (((float) $proposal_data['subTotal'] - (float) $proposal_data['discount']) * 5 / 100), // Ensure numeric
+                        ]
+                    ],
 					'Adjustment' => (float) ($proposal_data['adjustment'] ?? 0),
 					'Grand_Total' => (float) ($proposal_data['grandTotal'] ?? 0),
 					'Contact_Name' => [
@@ -383,6 +384,8 @@ class Dashboard extends CI_Controller {
 				'product_name' => $proposal_data['product_name'],
 				'product_description' => $proposal_data['itemDescription'],
 				'uom' => $proposal_data['uom'],
+				'discount' => $proposal_data['discount'],
+				'adjustment' => $proposal_data['adjustment'],
 				'service_charge' => $proposal_data['unitPrice'],
 				'kind_attention' => $proposal_data['kind_attention'],
 				'specification' => $proposal_data['specification'],
@@ -700,45 +703,46 @@ class Dashboard extends CI_Controller {
 	
 		// Step 2: Prepare data for updating the quote
 		$data = json_encode([
-			'data' => [
-				[
-					'Subject' => $proposal_data['subject'] ?? 'Default Subject',
-					'Project' => $proposal_data['project'] ?? 'na',
-					'Terms_of_Payment' => $proposal_data['termsOfPayment'] ?? 'na',
-					'Specification' => $proposal_data['specification'] ?? 'na',
-					'General_Exclusion' => $proposal_data['generalExclusion'] ?? 'na',
-					'Brand' => $proposal_data['brand'] ?? 'na',
-					'Warranty' => $proposal_data['warranty'] ?? 'na',
-					'Delivery' => $proposal_data['delivery'] ?? 'na',
-					'Valid_Till' => $proposal_data['validUntil'] ?? null,
-					'Sub_Total' => (float) ($proposal_data['subTotal'] ?? 0),
-					'Discount' => (float) ($proposal_data['discount'] ?? 0),
-					'line_tax' => [
+            'data' => [
+                [
+                    'Subject' => $proposal_data['subject'] ?? 'Default Subject',
+                    'Project' => $proposal_data['project'] ?? 'na',
+                    'Terms_of_Payment' => $proposal_data['termsOfPayment'] ?? 'na',
+                    'Specification' => $proposal_data['specification'] ?? 'na',
+                    'General_Exclusion' => $proposal_data['generalExclusion'] ?? 'na',
+                    'Brand' => $proposal_data['brand'] ?? 'na',
+                    'Warranty' => $proposal_data['warranty'] ?? 'na',
+                    'Delivery' => $proposal_data['delivery'] ?? 'na',
+                    'Valid_Till' => $proposal_data['validUntil'] ?? null,
+                    'Sub_Total' => (float) ($proposal_data['subTotal'] ?? 0),
+                    'Discount' => (float) ($proposal_data['discount'] ?? 0),
+                    'line_tax' => [
                         [
                             'percentage' => 5, // VAT Percentage
                             'name' => 'Vat',
-                            'id' => '5653678000000021003', // You can use the Zoho ID for the VAT line tax
+                            'id' => '5653678000000021003', // Zoho ID for the VAT line tax
                             'value' => (float) (((float) $proposal_data['subTotal'] - (float) $proposal_data['discount']) * 5 / 100), // Ensure numeric
                         ]
                     ],
-					'Adjustment' => (float) ($proposal_data['adjustment'] ?? 0),
-					'Grand_Total' => (float) ($proposal_data['grandTotal'] ?? 0),
-					'Contact_Name' => [
-						'name' => $contact_name,
-						'id' => $contact_id,
-					],
-					'Quoted_Items' => [
-						[
-							'Product_Name' => $proposal_data['itemName2'],
-							'Quantity' => (float) $proposal_data['quantity'],
-							'List_Price' => (float) $proposal_data['unitPrice'],
-							'U_O_M' => $proposal_data['uom'],
-							'Description' => $proposal_data['itemDescription'] ?? '',
-						]
-					]
-				]
-			]
-		]);
+                    'Adjustment' => (float) ($proposal_data['adjustment'] ?? 0),
+                    'Grand_Total' => (float) ($proposal_data['grandTotal'] ?? 0),
+                    'Contact_Name' => [
+                        'name' => $contact_name,
+                        'id' => $contact_id,
+                    ],
+                    'Quoted_Items' => [
+                        [
+                            'Product_Name' => $proposal_data['itemName2'],
+                            'Quantity' => (float) $proposal_data['quantity'],
+                            'List_Price' => (float) $proposal_data['unitPrice'],
+                            'U_O_M' => $proposal_data['uom'],
+                            'Description' => $proposal_data['itemDescription'] ?? '',
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+
 	
 		$headers = [
 			'Content-Type: application/json',
@@ -819,12 +823,14 @@ class Dashboard extends CI_Controller {
 					'product_name' => $proposal_data['product_name'],
 					'product_description' => $proposal_data['itemDescription'],
 					'uom' => $proposal_data['uom'],
+					'discount' => $proposal_data['discount'],
+					'adjustment' => $proposal_data['adjustment'],
 					'service_charge' => $proposal_data['unitPrice'],
 					'kind_attention' => $proposal_data['kind_attention'],
 					'specification' => $proposal_data['specification'],
-					'brand' => $proposal_data['brand'],
-					'warranty' => $proposal_data['warranty'],
-					'delivery' => $proposal_data['delivery'],
+    				'brand' => $proposal_data['brand'],
+    				'warranty' => $proposal_data['warranty'],
+    				'delivery' => $proposal_data['delivery'],
 					'quantity' => $proposal_data['quantity'],
 					'valid_until' => $proposal_data['validUntil'],
 					'general_exclusion' => $proposal_data['generalExclusion'],
@@ -846,7 +852,7 @@ class Dashboard extends CI_Controller {
 			return ['error' => 'Failed to update quote.'];
 		}
 	}
-
+	
 	public function get_quote_details() {
 		// Get the JSON data from the POST request
 		$data = json_decode($this->input->raw_input_stream, true);
@@ -855,7 +861,12 @@ class Dashboard extends CI_Controller {
 		if (isset($data['QuoteNumber']) && count($data) === 1) {
 			// Fetch quote details from the database
 			$quote_number = $data['QuoteNumber'];
-			$quote_data = $this->Task_model->get_quote_by_number($quote_number);
+			// Fetch the logged-in user's id
+			$id = $this->session->userdata('id');
+			// Fetch the user_id based on the id
+			$user_id = $this->User_model->get_user_id_by_id($id);
+
+			$quote_data = $this->Task_model->get_quote_by_number($quote_number, $user_id);
 	
 			// If quote is not found, return error
 			if (empty($quote_data)) {
@@ -871,7 +882,7 @@ class Dashboard extends CI_Controller {
 			// Handle the case where QuoteNumber is not provided or invalid
 			echo json_encode(['success' => false, 'error' => 'Invalid or missing QuoteNumber.']);
 		}
-	}			
+	}
 	
 	private function execute_curl_request($url, $headers, $data = null, $method = 'POST') {
 		$ch = curl_init($url);

@@ -1,89 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Jobs</title>
-	<link rel="icon" href="<?php echo base_url('assets/photos/logo/favicon.png'); ?>" type="image/x-icon">
-	<link href="<?php echo base_url('assets/css/style.css'); ?>" rel="stylesheet">
-	<link href="<?php echo base_url('assets/css/style2.css'); ?>" rel="stylesheet">
-	<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-	<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet">
-	<!-- Bootstrap CSS -->
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-	<!-- Bootstrap Icons -->
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-	<!-- Font Awesome Icons -->
-	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-
-	<script src="<?php echo base_url('assets/js/navbar.js'); ?>"></script>
-
-</head>
-
-<body style="overflow: hidden;">
-	<div class="full-wrapper d-flex">
-		<!-- Sidebar (Popup Style) -->
-		<nav class="sidebar text-dark" id="sidebar">
-			<!-- Sidebar Close Button -->
-			<button class="btn btn-outline-dark close-sidebar-button" id="closeSidebarButton" style="position: absolute; top: 20px; right: 20px;">
-				<i class="bi bi-x-lg"></i>
-			</button>
-			<!-- Sidebar Logo -->
-			<div class="text-center py-3 border-bottom">
-				<img src="<?php echo base_url('assets/photos/logo/voltronix_logo.png'); ?>" alt="Logo" style="height: 50px; width: auto;">
-			</div>
-			<!-- Navigation Menu -->
-			<ul class="nav flex-column px-3 pt-3">
-				<li class="nav-item mb-2">
-					<a href="<?php echo site_url('web/deals'); ?>" class="nav-link d-flex align-items-center gap-2 active">
-						<i class="bi bi-list-task"></i> My Jobs
-					</a>
-				</li>
-				<li class="nav-item mb-2">
-					<a href="<?php echo site_url('web/dashboard'); ?>" class="nav-link d-flex align-items-center gap-2">
-						<i class="bi bi-plus-circle"></i> Deals and Proposal
-					</a>
-				</li>
-			</ul>
-		</nav>
-
-		<!-- Hamburger Menu Button (Visible on Mobile) -->
-		<!--<button class="btn btn-outline-dark d-md-none" id="hamburgerButton" style="top: 20px; left: 20px; z-index: 1100;">-->
-		<!--    <i class="bi bi-list"></i>-->
-		<!--</button>-->
-
-		<!-- Header -->
-		<header class="d-flex justify-content-between align-items-center px-4 py-3 header-main">
-			<!-- Hamburger Button Inside Header (Visible on Mobile) -->
-			<button class="btn btn-outline-dark d-md-none" id="hamburgerButton" style="top: 20px; left: 20px; z-index: 1100;">
-				<i class="bi bi-list"></i>
-			</button>
-
-			<!-- Dashboard Title -->
-			<h4 class="mb-0" id="userNameDisplay"></h4>
-
-			<!-- User Dropdown -->
-			<div class="dropdown d-flex align-items-center gap-2">
-				<button type="button" class="btn btn-outline-light dropdown-toggle d-flex align-items-center" id="logoutDropdownButton" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 20px; padding: 8px 16px; color: #000;">
-					<span class="me-2">
-						<i class="bi bi-person-circle"></i>
-					</span>
-					<span><?php echo $this->session->userdata('username'); ?></span>
-				</button>
-				<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="logoutDropdownButton" style="min-width: 150px;">
-					<li>
-						<a class="dropdown-item text-danger" href="#" id="logoutButton">
-							<i class="bi bi-box-arrow-right me-2"></i> Logout
-						</a>
-					</li>
-				</ul>
-			</div>
-		</header>
 
 		<!-- Main Content -->
 		<div class="content flex-grow-1" id="mainContent">
-			<div class="container p-5" style="margin-top: 40px; padding-left: 32px !important; padding-right: 32px !important;">
+			<div class="p-5" style="margin-top: 40px; padding-left: 32px !important; padding-right: 32px !important;">
 				
 				<!-- Search Box -->
 				<div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
@@ -100,7 +19,6 @@
 						</button>
 					</div>
 				</div>
-
 
 				<!-- Error Message -->
 				<div id="errorMessage" class="alert alert-warning d-none"></div>
@@ -150,7 +68,7 @@
 						?>
 							<div class="col-md-3 d-inline-block" style="width: 350px; padding-right: 0px;">
 								<div class="card bg-light" style="border: none; box-shadow: none; width: 100%;">
-									<div class="card-header" style="background-color: <?= htmlspecialchars($headerColor); ?>; margin: 0; padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; position: relative;">
+									<div class="card-header" style="background-color: <?= htmlspecialchars($headerColor); ?>; margin: 0; padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; position: relative; color: #000;">
 										<h5 class="mb-0" style="font-size: 17px;"><?= htmlspecialchars($key); ?></h5>
 										<!-- Dynamic ::before pseudo-element styling -->
 										<div style="
@@ -178,10 +96,10 @@
 														box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
 														background: #fff;
 													">
-														<h6 style="font-weight: 600; margin-bottom: 2px;"><?= htmlspecialchars($task['deal_name']); ?></h6>
+														<h6 style="font-weight: 600; margin-bottom: 2px; text-wrap: wrap;"><?= htmlspecialchars($task['deal_name']); ?></h6>
 														<h4 style="color: #ff0000; margin-bottom: 2px;"><?= htmlspecialchars($task['deal_number'] ?? ''); ?></h4>
 														<p style="margin-bottom: 2px;">Marieswaran</p>
-														<p style="margin-bottom: 2px;"><?= htmlspecialchars($task['account_name'] ?? ''); ?></p>
+														<p style="margin-bottom: 2px; text-wrap: wrap;"><?= htmlspecialchars($task['account_name'] ?? ''); ?></p>
 														<!-- <small class="text-muted" style="text-wrap: wrap;"><?= htmlspecialchars($task['complaint_info'] ?? ''); ?></small> -->
 														<p style="margin-bottom: 2px;"><?= htmlspecialchars($task['service_charge'] ?? ''); ?></p>
 														<div class="mt-2">
@@ -390,10 +308,10 @@
 								box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
 								background: #fff;
 							">
-								<h6 style="font-weight: 600; margin-bottom: 2px;">${task.deal_name}</h6>
+								<h6 style="font-weight: 600; margin-bottom: 2px; text-wrap: wrap;">${task.deal_name}</h6>
 								<h4 style="color: #ff0000; margin-bottom: 2px;">${task.deal_number ?? ''}</h4>
 								<p style="margin-bottom: 2px;">Marieswaran</p>
-								<p style="margin-bottom: 2px;">${task.account_name ?? ''}</p>
+								<p style="margin-bottom: 2px; text-wrap: wrap;">${task.account_name ?? ''}</p>
 								<p style="margin-bottom: 2px;">${task.service_charge ?? ''}</p>
 								<div class="mt-2">
 									<button onclick="window.location.href='<?= site_url('web/deal/details/'); ?>${task.id}'" class="btn btn-sm btn-danger">
@@ -406,7 +324,7 @@
 					return `
 							<div class="col-md-3 d-inline-block" style="width: 350px; padding-right: 0px;">
 								<div class="card bg-light" style="border: none; box-shadow: none; width: 100%;">
-									<div class="card-header" style="background-color: ${headerColor}; margin: 0; padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; position: relative;">
+									<div class="card-header" style="background-color: ${headerColor}; margin: 0; padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; position: relative; color: #000;">
 										<h5 class="mb-0" style="font-size: 17px;">${key}</h5>
 										<div style="
 											content: '';

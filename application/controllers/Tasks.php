@@ -99,12 +99,12 @@ class Tasks extends CI_Controller {
 		$html = ob_get_contents();
 		ob_end_clean();
 		$mpdf = new \Mpdf\Mpdf([
-                'margin_top' => 0,
-                'margin_bottom' => 0,
-                'margin_left' => 5,
-                'margin_right' => 5,
-            ]);
-		$mpdf->SetTitle('Quote - ' . $data['task']['quote_number']);
+                    'margin_top' => 0,
+                    'margin_bottom' => 0,
+                    'margin_left' => 5,
+                    'margin_right' => 5,
+                ]);
+        $mpdf->SetTitle('Quote - ' . $data['task']['quote_number']);
 		$backgroundImage= base_url().'assets/photos/logo/databg.png';
       	$mpdf->SetDefaultBodyCSS('background', "url('{$backgroundImage}')");
 		$mpdf->SetDefaultBodyCSS('background-image-resize', 1);

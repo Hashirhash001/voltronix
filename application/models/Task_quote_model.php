@@ -15,7 +15,7 @@
 				return ['error' => 'Failed to insert new record.'];
 			}
 		}
-
+		
 		public function get_quotes_by_task($task_id) {
 			$this->db->select('quote_id');
 			$this->db->from('quotes');
@@ -23,7 +23,7 @@
 			$query = $this->db->get();
 			
 			return $query->result_array();
-		}		
+		}	
 		
 	}
 ?>

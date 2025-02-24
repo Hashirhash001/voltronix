@@ -21,5 +21,4 @@ class Task_photo_model extends CI_Model {
 		$query = $this->db->get();
 		return $query->result_array();
 	}
-	
 }

@@ -7,6 +7,4 @@ class Pdf extends TCPDF {
     public function __construct() {
         parent::__construct();
     }
-
-    // You can add custom methods here if needed
 }

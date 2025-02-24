@@ -15,8 +15,8 @@ class Payment_model extends CI_Model {
     //     $query = $this->db->get();
     //     return $query->result_array();
     // }
-
-	// Check if a payment with the given task_id exists
+    
+    // Check if a payment with the given task_id exists
 	public function payment_exists($task_id) {
 		$this->db->where('task_id', $task_id);
 		$query = $this->db->get('payments');
@@ -55,5 +55,6 @@ class Payment_model extends CI_Model {
             return null; // No payments found
         }
     }
+
 
 }

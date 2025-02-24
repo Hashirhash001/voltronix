@@ -1,6 +1,17 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /voltronix/
+
+    # Redirect to index.php if the requested resource doesn't exist
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php/$1 [L]
+</IfModule>
+
+# Allow access to all
 <IfModule authz_core_module>
-    Require all denied
+    Require all granted
 </IfModule>
 <IfModule !authz_core_module>
-    Deny from all
+    Allow from all
 </IfModule>

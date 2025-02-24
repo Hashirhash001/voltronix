@@ -85,7 +85,7 @@ class Task_model extends CI_Model {
 		$result = $query->result_array();
 		return $result;
 	}
-
+	
 	public function get_id_by_deal_id($deal_id) {
 		$this->db->select('id');
 		$this->db->from('tasks');
@@ -99,7 +99,7 @@ class Task_model extends CI_Model {
 			return null; // Return null if no record is found
 		}
 	}
-
+	
 	public function get_task_by_deal_id($deal_id) {
         $this->db->select('*');
         $this->db->from('tasks');
@@ -112,7 +112,7 @@ class Task_model extends CI_Model {
             return null; // Return null if no record is found
         }
     }
-
+	
 	public function get_id_by_quote_id($quote_no) {
 		$this->db->select('id');
 		$this->db->from('tasks');
@@ -141,15 +141,15 @@ class Task_model extends CI_Model {
             return $this->db->insert('tasks', $proposal_data);
         }
     }
-
-	public function get_quote_by_number($quote_number) {
+    
+    public function get_quote_by_number($quote_number, $user_id) {
         $this->db->select('*');
         $this->db->from('tasks'); // Replace 'quotes' with your actual table name
         $this->db->where('quote_number', $quote_number);
+		$this->db->where('assigned_to', $user_id);
         $query = $this->db->get();
 
         return $query->row_array(); // Return the first matching row as an associative array
     }
-	
 
 }

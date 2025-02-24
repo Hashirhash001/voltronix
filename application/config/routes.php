@@ -79,7 +79,17 @@ $route['deal/qoute/(:num)'] = 'deals/download_quote_pdf/$1';
 
 //web
 $route['signin'] = 'web/Login/index';
-$route['web/dashboard'] = 'web/Login/dashboard';
+$route['web/dashboard'] = 'web/Analytics/index';
+$route['web/dealsAndProposals'] = 'web/Login/dealsAndProposals';
+$route['web/assignTask'] = 'web/UserTasks/assignTask';
+$route['web/assignTask/assign'] = 'web/UserTasks/assign';
+$route['web/assignTask/all-tasks'] = 'web/UserTasks/all_tasks';
+$route['web/assignTask/my-tasks'] = 'web/UserTasks/my_tasks';
+$route['web/assignTask/get-task-details'] = 'web/UserTasks/getTaskDetails';
+$route['web/assignTask/update-status'] = 'web/UserTasks/updateStatus';
+$route['web/task/delete'] = 'web/UserTasks/delete';
+$route['web/task/get-task'] = 'web/UserTasks/get_task';
+$route['web/task/update'] = 'web/UserTasks/update';
 $route['web/logout'] = 'web/Login/logout';
 $route['web/deals'] = 'web/Login/fetch_tasks';
 $route['web/deal/search'] = 'web/Login/search';
