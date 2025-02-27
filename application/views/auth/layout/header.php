@@ -2,10 +2,12 @@
 // Default title
 $page_title = "Default Title";
 
-// Check the current page and set the title accordingly
-$segment = $this->uri->segment(2);
+// Get URI segments
+$segment2 = $this->uri->segment(2);
+$segment3 = $this->uri->segment(3); // Third segment, if available
 
-switch ($segment) {
+// Check the current page and set the title accordingly
+switch ($segment2) {
 	case 'deals':
 		$page_title = "My Jobs";
 		break;
@@ -16,22 +18,25 @@ switch ($segment) {
 		$page_title = "Deals and Proposal";
 		break;
 	case 'assignTask':
-		$page_title = "Assign a Task";
-		break;
-	case 'assignTask/all-tasks':
-		$page_title = "All Tasks";
+		// Check if there's a third segment
+		if ($segment3 === 'all-tasks') {
+			$page_title = "All Tasks";
+		} elseif ($segment3 === 'my-tasks') {
+			$page_title = "My Tasks";
+		} else {
+			$page_title = "Assign a Task";
+		}
 		break;
 	default:
 		$page_title = "Welcome";
 		break;
 }
 
-
 // Default body class
 $body_class = "";
 
 // Add 'overflow-hidden' class only for 'My Jobs' page
-if ($segment == 'deals') {
+if ($segment2 == 'deals') {
 	$body_class = "overflow-hidden";
 }
 ?>
@@ -90,7 +95,7 @@ if ($segment == 'deals') {
         }
         .card-icon {
             font-size: 2rem;
-            color: #fff;
+            color: #000;
         }
         .chart-container {
             background: #fff;
@@ -151,7 +156,7 @@ if ($segment == 'deals') {
 
 			<!-- User Dropdown -->
 			<div class="dropdown d-flex align-items-center gap-2">
-				<button type="button" class="btn btn-outline-light dropdown-toggle d-flex align-items-center" id="logoutDropdownButton" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 20px; padding: 8px 16px; color: #000;">
+				<button type="button" class="btn btn-outline-light d-flex align-items-center" id="logoutDropdownButton" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 20px; padding: 8px 16px; color: #000;">
 					<span class="me-2">
 						<i class="bi bi-person-circle"></i>
 					</span>

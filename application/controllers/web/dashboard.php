@@ -1,6 +1,19 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+/**
+ * Tasks Controller
+ *
+ * @property CI_Form_validation $form_validation
+ * @property CI_Output $output
+ * @property CI_Input $input
+ * @property CI_DB $db
+ * @property Task_model $Task_model
+ * @property User_model $User_model
+ * @property Access_token_model $Access_token_model
+ * @property session $session
+ */
+
 class Dashboard extends CI_Controller {
 	private $client_id;
     private $client_secret;
@@ -278,7 +291,7 @@ class Dashboard extends CI_Controller {
 					'Adjustment' => (float) ($proposal_data['adjustment'] ?? 0),
 					'Grand_Total' => (float) ($proposal_data['grandTotal'] ?? 0),
 					'Contact_Name' => [
-						'name' => $contact_name,
+						// 'name' => $contact_name,
 						'id' => $contact_id,
 					],
 					'Quoted_Items' => [

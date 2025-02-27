@@ -114,9 +114,14 @@ class UserTasks extends CI_Controller
 			$limit = 10;
 			$offset = ($page - 1) * $limit;
 
-			// Fetch paginated tasks
-			$tasks = $this->User_task_model->get_assigned_tasks($current_user_id, $limit, $offset);
-			$total_tasks = $this->User_task_model->count_tasks($current_user_id);
+			// Get filters
+			$search = $this->input->get('search', TRUE);
+			$assigned_to = $this->input->get('assigned_to', TRUE);
+			$status = $this->input->get('status', TRUE);
+
+			// Fetch paginated & filtered tasks
+			$tasks = $this->User_task_model->get_assigned_tasks($current_user_id, $limit, $offset, $search, $assigned_to, $status);
+			$total_tasks = $this->User_task_model->count_tasks($current_user_id, $search, $assigned_to, $status);
 			$total_pages = ceil($total_tasks / $limit);
 
 			// Generate pagination links with modern styling
@@ -218,13 +223,21 @@ class UserTasks extends CI_Controller
 			return;
 		}
 
+		// Fetch members and pass them to the view
+		$data['members'] = $this->User_task_model->get_all_members($current_user_id);
+
 		if ($this->input->is_ajax_request()) {
 			$page = $this->input->get('page', TRUE) ?? 1;
 			$limit = 10;
 			$offset = ($page - 1) * $limit;
 
-			$tasks = $this->User_task_model->get_tasks_assigned_to_me($current_user_id, $limit, $offset);
-			$total_tasks = $this->User_task_model->count_assigned_tasks($current_user_id);
+			// Get filters
+			$search = $this->input->get('search', TRUE);
+			$created_by = $this->input->get('created_by', TRUE);
+			$status = $this->input->get('status', TRUE);
+
+			$tasks = $this->User_task_model->get_tasks_assigned_to_me($current_user_id, $limit, $offset, $search, $created_by, $status);
+			$total_tasks = $this->User_task_model->count_assigned_tasks($current_user_id, $search, $created_by, $status);
 			$total_pages = ceil($total_tasks / $limit);
 
 			// Pagination Styling
@@ -273,7 +286,7 @@ class UserTasks extends CI_Controller
 		// Load the main page view for non-AJAX requests
 		$this->load->view('auth/layout/header');
 		$this->load->view('auth/layout/sidebar');
-		$this->load->view('auth/my_tasks');
+		$this->load->view('auth/my_tasks', $data);
 	}
 	
 	// Fetch Task Details for Editing

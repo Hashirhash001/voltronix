@@ -6,9 +6,19 @@
  * @property CI_Output $output
  * @property CI_Input $input
  * @property CI_DB $db
- * @property Tasks_model $Tasks_model
+ * @property Task_model $Task_model
+ * @property User_model $User_model
+ * @property Access_token_model $Access_token_model
+ * @property Task_photo_model $Task_photo_model
+ * @property Payment_model $Payment_model
+ * @property session $session
+ * @property upload $upload
  */
 class Deals extends CI_Controller {
+	private $client_id;
+    private $client_secret;
+	private $refresh_token;
+    private $access_token;
 
     public function __construct() {
         parent::__construct();
@@ -135,7 +145,9 @@ class Deals extends CI_Controller {
             $contact_id = $response['response']['data'][0]['details']['id'];
             return $this->create_deal_for_existing_contact($contact_id, $data);
         } elseif ($response['status_code'] === 401) {
-            return $this->retry_create_deal($data, $payload, $url);
+            // return $this->retry_create_deal($data, $payload, $url);
+			return ['success' => false, 'error' => 'Failed to retrieve or refresh access token'];
+
         } else {
             return ['success' => false, 'error' => 'Failed to create deal in Zoho CRM', 'details' => $response['response']];
         }

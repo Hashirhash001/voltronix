@@ -4,21 +4,26 @@
 			$deals_status_count = [
 				'Site Visit' => 0,
 				'Proposal' => 0,
-				'Close to Won' => 0
+				'Close to Won' => 0,
+				'Closed Lost/Omitted' => 0  // Merged category
 			];
-
+			
 			foreach ($deals as $deal) {
 				$total_deals += $deal['total']; // Sum all deals to get total count
-
+			
 				switch ($deal['status']) {
 					case 'Site Visit':
-						$deals_status_count['Site Visit'] = $deal['total'];
+						$deals_status_count['Site Visit'] += $deal['total'];
 						break;
 					case 'Proposal':
-						$deals_status_count['Proposal'] = $deal['total'];
+						$deals_status_count['Proposal'] += $deal['total'];
 						break;
 					case 'Close to Won':
-						$deals_status_count['Close to Won'] = $deal['total'];
+						$deals_status_count['Close to Won'] += $deal['total'];
+						break;
+					case 'Close to Lost':
+					case 'Omitted': // Merge Close to Lost & Omitted
+						$deals_status_count['Closed Lost/Omitted'] += $deal['total'];
 						break;
 				}
 			}
@@ -32,8 +37,9 @@
 				<!-- Cards for deal counts -->
 				<div class="row">
 					<div class="col-md-3">
-						<div class="card-analytics text-white p-3" style="background-color: #5fa1a5 !important; box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;">
-							<div class="d-flex align-items-center">
+						<div class="card-analytics text-white p-3" 
+							style="background-color: #9cb4b6;">
+							<div class="d-flex align-items-center text-dark">
 								<i class="bi bi-list-task card-icon me-3"></i>
 								<div>
 									<h5>Total Jobs</h5>
@@ -44,8 +50,9 @@
 					</div>
 
 					<div class="col-md-3">
-						<div class="card-analytics bg-warning text-white p-3" style="box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;">
-							<div class="d-flex align-items-center">
+						<div class="card-analytics text-white p-3" 
+							style="background-color: #99d1d3;">
+							<div class="d-flex align-items-center text-dark">
 								<i class="bi bi-geo-alt card-icon me-3"></i>
 								<div>
 									<h5>Jobs in Site Visit</h5>
@@ -56,8 +63,9 @@
 					</div>
 
 					<div class="col-md-3">
-						<div class="card-analytics bg-info text-white p-3" style="box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;">
-							<div class="d-flex align-items-center">
+						<div class="card-analytics text-white p-3" 
+							style="background-color: #fcd34d;">
+							<div class="d-flex align-items-center text-dark">
 								<i class="bi bi-file-earmark-text card-icon me-3"></i>
 								<div>
 									<h5>Jobs in Proposal</h5>
@@ -68,8 +76,9 @@
 					</div>
 
 					<div class="col-md-3">
-						<div class="card-analytics bg-success text-white p-3" style="box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;">
-							<div class="d-flex align-items-center">
+						<div class="card-analytics text-white p-3" 
+							style="background-color: #93cb9d; ">
+							<div class="d-flex align-items-center text-dark">
 								<i class="bi bi-check2-circle card-icon me-3"></i>
 								<div>
 									<h5>Closed Won Jobs</h5>
@@ -167,43 +176,46 @@
 		var dealsData = <?= json_encode($deals_status_count); ?>;
 		var totalDeals = <?= $total_deals; ?>;
 
+		console.log(dealsData);
+
 		// Deals Status Pie Chart
 		var ctxDeals = document.getElementById('dealsChart').getContext('2d');
 		var dealsChart = new Chart(ctxDeals, {
 			type: 'pie',
 			data: {
-				labels: ['Site Visit', 'Proposal', 'Close to Won'],
+				labels: ['Site Visit', 'Proposal', 'Close to Won', 'Closed Lost/Omitted'],
 				datasets: [{
 					data: [
 						dealsData['Site Visit'],
 						dealsData['Proposal'],
-						dealsData['Close to Won']
+						dealsData['Close to Won'],
+						dealsData['Closed Lost/Omitted']
 					],
-					backgroundColor: ['#ffc107', '#0dcaf0', '#198754']
+					backgroundColor: ['#1a99a0', '#f7c948', '#1e7b3c', '#e74c3c']
 				}]
 			}
 		});
 
-		// Funnel Chart (Bar Chart) - Using Total Deals as the first step
+		// Funnel Chart (Bar Chart)
 		var ctxFunnel = document.getElementById('funnelChart').getContext('2d');
 		var funnelChart = new Chart(ctxFunnel, {
 			type: 'bar',
 			data: {
-				labels: ['Total Deals', 'Site Visit', 'Proposal', 'Close to Won'],
+				labels: ['Total Jobs', 'Site Visit', 'Proposal', 'Close to Won', 'Closed Lost/Omitted'],
 				datasets: [{
-					label: 'Number of Deals',
+					label: 'Number of jobs',
 					data: [
-						totalDeals, // Total Deals as the first step
+						totalDeals, 
 						dealsData['Site Visit'] || 0,
 						dealsData['Proposal'] || 0,
-						dealsData['Close to Won'] || 0
+						dealsData['Close to Won'] || 0,
+						dealsData['Closed Lost/Omitted'] || 0
 					],
-					backgroundColor: ['#0d6efd', '#ffc107', '#0dcaf0', '#198754']
+					backgroundColor: ['#3d6f72', '#1a99a0', '#f7c948', '#1e7b3c', '#e74c3c']
 				}]
 			}
 		});
 	</script>
-
 
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>

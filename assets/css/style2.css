@@ -320,6 +320,13 @@ table td, table th {
 	/* padding: 1.15rem 2.35rem !important; */
 }
 
+td {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* white-space: nowrap; */
+}
+
 /* Row Borders */
 table tbody tr {
 	border-bottom-width: 1px;
@@ -338,6 +345,7 @@ table tbody tr {
     line-height: 1rem !important;
     font-weight: 600 !important;
 	border: 1px solid !important;
+	min-width: 86px !important;
 }
 
 .status-pending { color: #ffc107; border-color: #ffc107; background: white; }
@@ -363,9 +371,9 @@ table tbody tr {
 	transform: scale(1.2);
 }
 
-.edit-btn { color: #192caa; }
-.delete-btn { color: #c20113; }
-.view-btn { color: #28a745; }
+.edit-btn { color: #00ab55; }
+.delete-btn { color: #e7515a; }
+.view-btn { color: #0e1726; vertical-align: middle; }
 
 
 .pagination-modern {
@@ -417,13 +425,14 @@ table tbody tr {
     position: relative;
     display: inline-block;
     /* font-weight: bold; */
-    font-size: 16px;
-    color: #d10908 ;
+    /* font-size: 16px; */
+    /* color: #d10908 ; */
+    color: #000 ;
     z-index: 1;
     padding: 2px;
 }
 
-.scribble-text::before {
+/* .scribble-text::before {
     content: "";
     position: absolute;
     left: -2px;
@@ -444,4 +453,93 @@ table tbody tr {
     transform: rotate(-2deg);
     z-index: -1;
     opacity: 0.8;
+} */
+
+.custom-card{
+	padding: 2rem 3rem !important;
+}
+
+.card-text i{
+	/* color: #e71919fc; */
+}
+
+/* Ensuring proper width alignment */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    padding: 1.15rem 2.35rem !important;
+    border-bottom: none !important; /* Remove black line */
+    background-color: #f8f9fa; /* Light background for better visibility */
+    text-align: left;
+}
+
+td {
+    padding: 1.15rem 2.35rem !important;
+    border-bottom: 1px solid #ddd; /* Optional: Light gray bottom border for separation */
+}
+
+.remove-attachment {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px; /* Add padding for better clickability */
+}
+
+.remove-attachment svg {
+    width: 20px;
+    height: 20px;
+    color: red; /* Adjust icon color */
+}
+
+.table th,
+.table td {
+    width: auto;
+    white-space: nowrap;
+}
+
+/* Styled scrollbar */
+.table-responsive::-webkit-scrollbar {
+    width: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+/* Remove column borders */
+.table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.table th,
+.table td {
+    border: none !important;
+    text-align: left;
+    padding: 10px;
+}
+
+/* Row hover effect */
+.attachment-row:hover {
+    background-color: #f5f5f5;
+    transition: background-color 0.2s ease-in-out;
+}
+
+/* Sticky Header */
+.sticky-header {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
 }

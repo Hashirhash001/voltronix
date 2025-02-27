@@ -31,7 +31,7 @@
 					<input type="password" name="password" placeholder="Password" class="form-control" required>
 					<?php echo form_error('password', '<div class="text-danger">', '</div>'); ?>
 				</div>
-				<button type="submit" class="btn btn-primary2">Login</button>
+				<button type="submit" class="btn btn-primary2 mt-2">Login</button>
 			</form>
 		</div>
 	</div>

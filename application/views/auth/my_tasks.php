@@ -4,6 +4,49 @@
 			<div class="container mt-4" style="margin-top: 100px !important;padding-left: 2.5rem; padding-right: 2.5rem; padding-bottom: 2.5rem;">
 				<!-- <h2 class="mb-4 fw-bold">Task List</h2> -->
 
+				<div class="d-flex flex-wrap align-items-center gap-3 mb-3 p-3 bg-white shadow-sm" style="    border-radius: .6rem !important;">
+					<!-- Search Input -->
+					<div class="position-relative flex-grow-1">
+						<i class="bi bi-search position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-50%);"></i>
+						<input type="text" id="searchInput" class="form-control ps-5" placeholder="Search tasks..." style="box-shadow: rgba(9, 30, 66, 0.25) 0px 1px 1px, rgba(9, 30, 66, 0.13) 0px 0px 1px 1px; border: unset !important; border-radius: .25rem;">
+					</div>
+
+					<!-- Assigned To Filter -->
+					<div class="position-relative flex-grow-1">
+						<i class="bi bi-person-circle position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-50%);"></i>
+						<select id="assignedByFilter" class="form-select ps-5" style="box-shadow: rgba(9, 30, 66, 0.25) 0px 1px 1px, rgba(9, 30, 66, 0.13) 0px 0px 1px 1px; border: unset !important;">
+							<option value="">Assigned By</option>
+							<?php foreach ($members as $member) : ?>
+								<option value="<?php echo $member->user_id; ?>">
+									<?php echo htmlspecialchars($member->username); ?>
+								</option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+
+					<!-- Status Filter -->
+					<div class="position-relative flex-grow-1">
+						<i class="bi bi-filter-circle position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-50%);"></i>
+						<select id="statusFilter" class="form-select ps-5" style="box-shadow: rgba(9, 30, 66, 0.25) 0px 1px 1px, rgba(9, 30, 66, 0.13) 0px 0px 1px 1px; border: unset !important;">
+							<option value="">Task Status</option>
+							<option value="0">Pending</option>
+							<option value="1">In Progress</option>
+							<option value="2">Completed</option>
+							<option value="3">Overdue</option>
+						</select>
+					</div>
+
+					<!-- Action Buttons -->
+					<div class="d-flex gap-2">
+						<button id="searchBtn" class="btn btn-primary d-flex align-items-center gap-2" style="    background: #d10908; border: none !important;">
+							<i class="bi bi-search"></i> <span>Search</span>
+						</button>
+						<button id="clearFiltersBtn" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+							<i class="bi bi-x-circle"></i> <span>Clear</span>
+						</button>
+					</div>
+				</div>
+
 				<div class="table-container">
 					<div class="table-responsive">
 						<table id="taskTable" class="table align-middle">
@@ -18,7 +61,7 @@
 									<th style="border: none !important; padding: 1.15rem 2.35rem !important;">Actions</th>
 								</tr>
 							</thead>
-							<tbody id="taskTableBody">
+							<tbody id="taskTableBody" style="border-top: unset;">
 								<!-- Data will be inserted here dynamically -->
 							</tbody>
 						</table>
@@ -68,6 +111,25 @@
 			</div>
 		</div>
 
+		<!-- View Task Modal -->
+		<div class="modal fade" id="viewTaskModal" tabindex="-1" aria-labelledby="viewTaskModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="viewTaskModalLabel">Task Details</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<p><strong>Title:</strong> <span id="view_task_title"></span></p>
+						<p><strong>Assigned By:</strong> <span id="view_assigned_by"></span></p>
+						<p><strong>Due Date:</strong> <span id="view_due_date"></span></p>
+						<p><strong>Description:</strong> <span id="view_task_description"></span></p>
+						<p><strong>Status:</strong> <span id="view_task_status" class="badge"></span></p>
+					</div>
+				</div>
+			</div>
+		</div>
+
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 	<script>
@@ -76,10 +138,19 @@
 			loadTasks(1); // Load first page initially
 
 			function loadTasks(page) {
+				var search = $("#searchInput").val();
+				var assignedBy = $("#assignedByFilter").val();
+				var status = $("#statusFilter").val();
+
 				$.ajax({
-					url: "<?php echo base_url('web/assignTask/my-tasks'); ?>", // Change to your endpoint
+					url: "<?php echo base_url('web/assignTask/my-tasks'); ?>",
 					type: "GET",
-					data: { page: page },
+					data: { 
+						page: page,
+						search: search,
+						created_by: assignedBy,
+						status: status
+					},
 					dataType: "json",
 					success: function (response) {
 						if (response.success) {
@@ -88,57 +159,81 @@
 							var totalPages = response.total_pages || 1;
 							var taskRows = "";
 
-							var perPage = response.per_page || 10; // Default to 10 if undefined
-                			var startIndex = (page - 1) * perPage + 1; // Correct calculation
-							
-							$.each(tasks, function (index, task) {
-								var statusClasses = {
-									0: "color: #805dca;",
-									1: "color: #2196f3;",
-									2: "color: #00ab55;",
-									3: "color: #e7515a;"
-								};
+							var perPage = response.per_page || 10;
+							var startIndex = (page - 1) * perPage + 1;
 
-								var statusLabel = {
-									0: "Pending",
-									1: "In Progress",
-									2: "Completed",
-									3: "Overdue"
-								};
+							if (tasks.length > 0) {
+								$.each(tasks, function (index, task) {
+									var statusClasses = {
+										0: "color: #805dca;",
+										1: "color: #2196f3;",
+										2: "color: #00ab55;",
+										3: "color: #e7515a;"
+									};
 
-								var statusKey = parseInt(task.status, 10);
-								var statusClass = statusClasses[statusKey] || '';
+									var statusLabel = {
+										0: "Pending",
+										1: "In Progress",
+										2: "Completed",
+										3: "Overdue"
+									};
 
-								var formattedDate = new Date(task.due_date).toLocaleDateString("en-GB", {
-									day: "2-digit",
-									month: "short",
-									year: "numeric"
+									var statusKey = parseInt(task.status, 10);
+									var statusClass = statusClasses[statusKey] || '';
+
+									var formattedDate = new Date(task.due_date).toLocaleDateString("en-GB", {
+										day: "2-digit",
+										month: "short",
+										year: "numeric"
+									});
+
+									taskRows += `
+										<tr>
+											<td style="border: none !important; padding: 1.15rem 2.35rem !important;">${startIndex + index}</td>
+											<td style="border: none !important; padding: 1.15rem 2.35rem !important;">
+												<span class="task-title" title="${task.title}">
+													${task.title.length > 20 ? task.title.substring(0, 20) + '...' : task.title}
+												</span>
+											</td>
+											<td style="border: none !important; padding: 1.15rem 2.35rem !important; min-width: 170px;">
+												<span class="scribble-text">${task.assigned_by_name}</span>
+											</td>
+											<td style="border: none !important; padding: 1.15rem 2.35rem !important; min-width: 170px;">${formattedDate}</td>
+											<td style="border: none !important; padding: 1.15rem 2.35rem !important;">
+												<span class="task-description" title="${task.description}">
+													${task.description.length > 40 ? task.description.substring(0, 40) + '...' : task.description}
+												</span>
+											</td>
+											<td style="border: none !important; padding: 1.15rem 2.35rem !important; text-align: center;">
+												<span class="badge" style="${statusClass}">
+													${statusLabel[statusKey] || 'Pending'}
+												</span>
+											</td>
+											<td style="border: none !important; padding: 1.15rem 2.35rem !important; min-width: 170px;">
+												<button class="action-btn view-btn" data-id="${task.id}" title="View">
+													<i class="fas fa-eye"></i>
+												</button>
+												<button class="action-btn edit-btn" data-id="${task.id}" title="Edit">
+													<i class="fas fa-edit"></i>
+												</button>
+												<button class="action-btn delete-btn" data-id="${task.id}" title="Delete">
+													<i class="fas fa-trash"></i>
+												</button>
+											</td>
+										</tr>`;
+
 								});
-
-								taskRows += `
+							} else {
+								// Show "No tasks found" message when there are no tasks
+								taskRows = `
 									<tr>
-										<td style="border: none !important; padding: 1.15rem 2.35rem !important;">${startIndex + index}</td>
-										<td style="border: none !important; padding: 1.15rem 2.35rem !important;">${task.title}</td>
-										<td style="border: none !important; padding: 1.15rem 2.35rem !important;">
-											<span class="scribble-text">${task.assigned_by_name}</span>
-										</td>
-										<td style="border: none !important; padding: 1.15rem 2.35rem !important;">${formattedDate}</td>
-										<td style="border: none !important; padding: 1.15rem 2.35rem !important;">${task.description}</td>
-										<td style="border: none !important; padding: 1.15rem 2.35rem !important;">
-											<span class="badge" style="${statusClass}">
-												${statusLabel[statusKey] || 'Pending'}
-											</span>
-										</td>
-										<td style="border: none !important; padding: 1.15rem 2.35rem !important; text-align: center;">
-											<button class="action-btn edit-btn" data-id="${task.id}" title="Edit">
-												<i class="fas fa-edit"></i>
-											</button>
+										<td colspan="7" style="text-align: center; padding: 1.5rem; font-size: 16px; color: #999;">
+											No tasks found
 										</td>
 									</tr>`;
-							});
+							}
 
 							$("#taskTableBody").html(taskRows);
-							// Hide pagination if only one page
 							if (totalPages > 1) {
 								$("#pagination").html(pagination).show();
 							} else {
@@ -149,11 +244,86 @@
 				});
 			}
 
+			// Handle search & filters
+			$("#searchBtn, #assignedByFilter, #statusFilter").on("click change", function () {
+				loadTasks(1);
+			});
+
+			// Run search when "Enter" is pressed in the search input
+			$("#searchInput").keypress(function (event) {
+				if (event.which === 13) { // 13 is the Enter key
+					event.preventDefault(); // Prevent default form submission
+					loadTasks(1); // Trigger search
+				}
+			});
+
+			$("#clearFiltersBtn").click(function () {
+				$("#searchInput").val("");
+				$("#assignedByFilter").val("");
+				$("#statusFilter").val("");
+				loadTasks(1); // Reload tasks with no filters
+			});
+
+			$("#searchBtn").click(function () {
+				loadTasks(1);
+			});
+
 			// Handle pagination click
 			$(document).on("click", ".pagination a", function (e) {
 				e.preventDefault();
 				var page = $(this).attr("data-page");
 				loadTasks(page);
+			});
+
+			// View Task modal
+			$(document).on("click", ".view-btn", function () {
+				var taskId = $(this).data("id");
+
+				$.ajax({
+					url: "<?php echo base_url('web/assignTask/get-task-details'); ?>",
+					type: "GET",
+					data: { task_id: taskId },
+					dataType: "json",
+					success: function (response) {
+						if (response.success) {
+							var task = response.task;
+
+							$("#view_task_title").text(task.title);
+							$("#view_assigned_by").text(task.created_by_name);
+							$("#view_due_date").text(new Date(task.due_date).toLocaleDateString("en-GB", {
+								day: "2-digit",
+								month: "short",
+								year: "numeric"
+							}));
+							$("#view_task_description").text(task.description);
+							
+							// Status Badge
+							var statusStyles = {
+								0: "color: #805dca;",
+								1: "color: #2196f3;",
+								2: "color: #00ab55;",
+								3: "color: #e7515a;"
+							};
+
+							var statusLabels = {
+								0: "Pending",
+								1: "In Progress",
+								2: "Completed",
+								3: "Overdue"
+							};
+							
+							$("#view_task_status").attr("style", statusStyles[task.status] || "").text(statusLabels[task.status]);
+
+							// Show Modal
+							$("#viewTaskModal").modal("show");
+						} else {
+							Swal.fire("Error", "Failed to fetch task details.", "error");
+						}
+					},
+					error: function () {
+						Swal.fire("Error", "An error occurred while fetching task details.", "error");
+					},
+				});
 			});
 
 			// Open Edit Modal and Fetch Task Details
