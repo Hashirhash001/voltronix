@@ -37,9 +37,8 @@
 				<!-- Cards for deal counts -->
 				<div class="row">
 					<div class="col-md-3">
-						<div class="card-analytics text-white p-3" 
-							style="background-color: #9cb4b6;">
-							<div class="d-flex align-items-center text-dark">
+						<div class="card-analytics text-white p-3 bg-secondary">
+							<div class="d-flex align-items-flex-start">
 								<i class="bi bi-list-task card-icon me-3"></i>
 								<div>
 									<h5>Total Jobs</h5>
@@ -51,8 +50,8 @@
 
 					<div class="col-md-3">
 						<div class="card-analytics text-white p-3" 
-							style="background-color: #99d1d3;">
-							<div class="d-flex align-items-center text-dark">
+							style="background-color: #1a99a0;">
+							<div class="d-flex align-items-flex-start">
 								<i class="bi bi-geo-alt card-icon me-3"></i>
 								<div>
 									<h5>Jobs in Site Visit</h5>
@@ -64,8 +63,8 @@
 
 					<div class="col-md-3">
 						<div class="card-analytics text-white p-3" 
-							style="background-color: #fcd34d;">
-							<div class="d-flex align-items-center text-dark">
+							style="background-color: #f7c948;">
+							<div class="d-flex align-items-flex-start">
 								<i class="bi bi-file-earmark-text card-icon me-3"></i>
 								<div>
 									<h5>Jobs in Proposal</h5>
@@ -77,8 +76,8 @@
 
 					<div class="col-md-3">
 						<div class="card-analytics text-white p-3" 
-							style="background-color: #93cb9d; ">
-							<div class="d-flex align-items-center text-dark">
+							style="background-color: #1e7b3c; ">
+							<div class="d-flex align-items-flex-start">
 								<i class="bi bi-check2-circle card-icon me-3"></i>
 								<div>
 									<h5>Closed Won Jobs</h5>
@@ -91,19 +90,31 @@
 
 				<!-- Analytics Chart -->
 				<div class="row mt-4">
-					<div class="col-md-6">
+					<!-- <div class="col-md-6">
 						<div class="chart-container">
 							<h5 class="text-center">Jobs Overview</h5>
 							<canvas id="dealsChart"></canvas>
 						</div>
+					</div> -->
+
+					<div class="col-md-6">
+						<figure class="highcharts-figure">
+							<div id="container" class="chart-container"></div>
+						</figure>
 					</div>
 
 					<div class="col-md-6">
+						<figure class="highcharts-figure">
+							<div id="container-drilldown" class="chart-container"></div>
+						</figure>
+					</div>
+
+					<!-- <div class="col-md-6">
 						<div class="chart-container">
 							<h5 class="text-center">Conversion Funnel</h5>
 							<canvas id="funnelChart"></canvas>
 						</div>
-					</div>
+					</div> -->
 				</div>
 			</div>
 
@@ -173,47 +184,103 @@
 		});
 	</script>
 	<script>
+		// PHP data passed to JavaScript
 		var dealsData = <?= json_encode($deals_status_count); ?>;
-		var totalDeals = <?= $total_deals; ?>;
-
-		console.log(dealsData);
-
-		// Deals Status Pie Chart
-		var ctxDeals = document.getElementById('dealsChart').getContext('2d');
-		var dealsChart = new Chart(ctxDeals, {
-			type: 'pie',
-			data: {
-				labels: ['Site Visit', 'Proposal', 'Close to Won', 'Closed Lost/Omitted'],
-				datasets: [{
-					data: [
-						dealsData['Site Visit'],
-						dealsData['Proposal'],
-						dealsData['Close to Won'],
-						dealsData['Closed Lost/Omitted']
-					],
-					backgroundColor: ['#1a99a0', '#f7c948', '#1e7b3c', '#e74c3c']
-				}]
-			}
+		
+		Highcharts.chart('container', {
+			chart: {
+				type: 'pie'
+			},
+			title: {
+				text: 'Jobs Status Distribution'
+			},
+			tooltip: {
+				valueSuffix: ''
+			},
+			credits: {
+				enabled: false // Removes the Highcharts.com watermark
+			},
+			plotOptions: {
+				series: {
+					allowPointSelect: true,
+					cursor: 'pointer',
+					dataLabels: [{
+						enabled: true,
+						distance: 20
+					}, {
+						enabled: true,
+						distance: -40,
+						format: '{point.percentage:.1f}%',
+						style: {
+							fontSize: '1.2em',
+							textOutline: 'none',
+							opacity: 0.7
+						},
+						filter: {
+							operator: '>',
+							property: 'percentage',
+							value: 10
+						}
+					}]
+				}
+			},
+			series: [{
+				name: 'Deals',
+				colorByPoint: true,
+				data: [
+					{ name: 'Site Visit', y: dealsData['Site Visit'] || 0, color: '#1a99a0' },
+					{ name: 'Proposal', y: dealsData['Proposal'] || 0, color: '#f7c948' },
+					{ name: 'Close to Won', y: dealsData['Close to Won'] || 0, color: '#1e7b3c' },
+					{ name: 'Closed Lost/Omitted', y: dealsData['Closed Lost/Omitted'] || 0, color: '#e74c3c' }
+				]
+			}]
 		});
 
-		// Funnel Chart (Bar Chart)
-		var ctxFunnel = document.getElementById('funnelChart').getContext('2d');
-		var funnelChart = new Chart(ctxFunnel, {
-			type: 'bar',
-			data: {
-				labels: ['Total Jobs', 'Site Visit', 'Proposal', 'Close to Won', 'Closed Lost/Omitted'],
-				datasets: [{
-					label: 'Number of jobs',
-					data: [
-						totalDeals, 
-						dealsData['Site Visit'] || 0,
-						dealsData['Proposal'] || 0,
-						dealsData['Close to Won'] || 0,
-						dealsData['Closed Lost/Omitted'] || 0
-					],
-					backgroundColor: ['#3d6f72', '#1a99a0', '#f7c948', '#1e7b3c', '#e74c3c']
-				}]
-			}
+		Highcharts.chart('container-drilldown', {
+			chart: {
+				type: 'column'
+			},
+			title: {
+				text: 'Job Status Distribution'
+			},
+			xAxis: {
+				type: 'category',
+				categories: ['Site Visit', 'Proposal', 'Close to Won', 'Closed Lost/Omitted']
+			},
+			yAxis: {
+				title: {
+					text: 'Number of Jobs'
+				}
+			},
+			legend: {
+				enabled: false
+			},
+			credits: {
+				enabled: false // Removes the Highcharts.com watermark
+			},
+			plotOptions: {
+				series: {
+					borderWidth: 0,
+					dataLabels: {
+						enabled: true,
+						format: '{point.y}'
+					}
+				}
+			},
+			tooltip: {
+				headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
+				pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y}</b> jobs<br/>'
+			},
+			series: [{
+				name: 'Jobs',
+				colorByPoint: true,
+				data: [
+					{ name: 'Site Visit', y: dealsData['Site Visit'] || 0, color: '#1a99a0' },
+					{ name: 'Proposal', y: dealsData['Proposal'] || 0, color: '#f7c948' },
+					{ name: 'Close to Won', y: dealsData['Close to Won'] || 0, color: '#1e7b3c' },
+					{ name: 'Closed Lost/Omitted', y: dealsData['Closed Lost/Omitted'] || 0, color: '#e74c3c' }
+				]
+			}]
 		});
 	</script>
 

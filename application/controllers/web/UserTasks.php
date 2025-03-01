@@ -38,6 +38,7 @@ class UserTasks extends CI_Controller
 		}
 	}
 
+	// Assign a task view
 	public function assignTask()
 	{
 		$data['current_user_id'] = $this->session->userdata('user_id');
@@ -58,6 +59,7 @@ class UserTasks extends CI_Controller
 		$this->load->view('auth/task_assign', $data);
 	}
 
+	// Assign a task
 	public function assign()
 	{
 		$current_user_id = $this->session->userdata('user_id');
@@ -70,15 +72,22 @@ class UserTasks extends CI_Controller
 		$this->form_validation->set_rules('task_title', 'Task Title', 'required');
 		$this->form_validation->set_rules('assigned_to', 'Assigned To', 'required');
 		$this->form_validation->set_rules('due_date', 'Due Date', 'required');
+		$this->form_validation->set_rules('priority', 'Priority', 'required');
 		$this->form_validation->set_rules('description', 'Description', 'required');
 
 		if ($this->form_validation->run() == FALSE) {
 			$this->assignTask();
 		} else {
+			// Generate a unique task_id with prefix "VTSK"
+			$unique_id = uniqid(); // Generates a unique string
+			$task_id = 'VTSK-' . strtoupper(substr(md5($unique_id), 0, 5)); // Shortened hash for uniqueness
+
 			$task_data = array(
+				'task_id'     => $task_id,
 				'title'       => $this->input->post('task_title'),
 				'assigned_to' => $this->input->post('assigned_to'),
 				'due_date'    => $this->input->post('due_date'),
+				'priority'    => $this->input->post('priority'),
 				'description' => $this->input->post('description'),
 				'created_by'  => $current_user_id
 			);
@@ -93,6 +102,7 @@ class UserTasks extends CI_Controller
 		}
 	}
 
+	// View all tasks
 	public function all_tasks()
 	{
 		$data['current_user_id'] = $this->session->userdata('user_id');
@@ -118,10 +128,11 @@ class UserTasks extends CI_Controller
 			$search = $this->input->get('search', TRUE);
 			$assigned_to = $this->input->get('assigned_to', TRUE);
 			$status = $this->input->get('status', TRUE);
+			$priority = $this->input->get('priority');
 
 			// Fetch paginated & filtered tasks
-			$tasks = $this->User_task_model->get_assigned_tasks($current_user_id, $limit, $offset, $search, $assigned_to, $status);
-			$total_tasks = $this->User_task_model->count_tasks($current_user_id, $search, $assigned_to, $status);
+			$tasks = $this->User_task_model->get_assigned_tasks($current_user_id, $limit, $offset, $search, $assigned_to, $status, $priority);
+			$total_tasks = $this->User_task_model->count_tasks($current_user_id, $search, $assigned_to, $status, $priority);
 			$total_pages = ceil($total_tasks / $limit);
 
 			// Generate pagination links with modern styling
@@ -192,6 +203,7 @@ class UserTasks extends CI_Controller
 			'title' => $this->input->post('task_title'),
 			'assigned_to' => $this->input->post('assigned_to'),
 			'due_date' => $this->input->post('due_date'),
+			'priority' => $this->input->post('priority'),
 			'description' => $this->input->post('description')
 		];
 
@@ -235,9 +247,10 @@ class UserTasks extends CI_Controller
 			$search = $this->input->get('search', TRUE);
 			$created_by = $this->input->get('created_by', TRUE);
 			$status = $this->input->get('status', TRUE);
+			$priority = $this->input->get('priority', TRUE);
 
-			$tasks = $this->User_task_model->get_tasks_assigned_to_me($current_user_id, $limit, $offset, $search, $created_by, $status);
-			$total_tasks = $this->User_task_model->count_assigned_tasks($current_user_id, $search, $created_by, $status);
+			$tasks = $this->User_task_model->get_tasks_assigned_to_me($current_user_id, $limit, $offset, $search, $created_by, $status, $priority);
+			$total_tasks = $this->User_task_model->count_assigned_tasks($current_user_id, $search, $created_by, $status, $priority);
 			$total_pages = ceil($total_tasks / $limit);
 
 			// Pagination Styling

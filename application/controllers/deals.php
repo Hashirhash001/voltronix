@@ -880,10 +880,10 @@ class Deals extends CI_Controller {
 		}
 	
 		$config['upload_path'] = $upload_path;
-		$config['allowed_types'] = 'gif|jpg|jpeg|webp|png|heic';
+		$config['allowed_types'] = '*';
 		$config['max_size'] = 5024;
 	
-		$this->load->library('upload', $config);
+		$this->upload = new CI_Upload($config);
 	
 		$uploaded_files = [];
 		$existing_files = [];
@@ -895,6 +895,8 @@ class Deals extends CI_Controller {
 		}
 	
 		log_message('debug', 'Existing files in DB: ' . print_r($existing_files, true));
+		log_message('debug', 'Uploaded files: ' . print_r($files, true));
+		log_message('debug', 'type: ' . print_r($files['type'], true));
 	
 		for ($i = 0; $i < count($files['name']); $i++) {
 			$_FILES['photo'] = [
@@ -912,7 +914,7 @@ class Deals extends CI_Controller {
 				return ['error' => $this->upload->display_errors()];
 			} else {
 				$upload_data = $this->upload->data();
-				$file_name = $upload_data['file_name'];
+				$file_name = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $upload_data['file_name']); // Sanitize filename
 	
 				log_message('debug', 'Checking file: ' . $file_name . ' against existing files.');
 	

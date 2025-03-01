@@ -30,6 +30,15 @@
 							</div>
 
 							<div class="mb-3">
+								<label for="priority" class="form-label fw-semibold">Priority</label>
+								<select name="priority" class="form-select" required>
+									<option value="0">Low</option>
+									<option value="1">Normal</option>
+									<option value="2">High</option>
+								</select>
+							</div>
+
+							<div class="mb-3">
 								<label for="description" class="form-label fw-semibold">Description</label>
 								<textarea class="form-control" id="description" name="description" rows="4" placeholder="Enter task description"  required></textarea>
 							</div>

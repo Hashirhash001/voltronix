@@ -464,22 +464,7 @@ table tbody tr {
 }
 
 /* Ensuring proper width alignment */
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
 
-th {
-    padding: 1.15rem 2.35rem !important;
-    border-bottom: none !important; /* Remove black line */
-    background-color: #f8f9fa; /* Light background for better visibility */
-    text-align: left;
-}
-
-td {
-    padding: 1.15rem 2.35rem !important;
-    border-bottom: 1px solid #ddd; /* Optional: Light gray bottom border for separation */
-}
 
 .remove-attachment {
     background: none;
@@ -497,39 +482,6 @@ td {
     color: red; /* Adjust icon color */
 }
 
-.table th,
-.table td {
-    width: auto;
-    white-space: nowrap;
-}
-
-/* Styled scrollbar */
-.table-responsive::-webkit-scrollbar {
-    width: 6px;
-}
-
-.table-responsive::-webkit-scrollbar-thumb {
-    background-color: #ccc;
-    border-radius: 4px;
-}
-
-.table-responsive::-webkit-scrollbar-track {
-    background-color: transparent;
-}
-
-/* Remove column borders */
-.table {
-    border-collapse: collapse;
-    width: 100%;
-}
-
-.table th,
-.table td {
-    border: none !important;
-    text-align: left;
-    padding: 10px;
-}
-
 /* Row hover effect */
 .attachment-row:hover {
     background-color: #f5f5f5;
@@ -542,4 +494,11 @@ td {
     top: 0;
     background: white;
     z-index: 10;
+}
+
+.file-name {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal; /* Ensure wrapping */
+    max-width: 250px; /* Adjust as needed */
 }

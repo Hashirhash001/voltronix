@@ -20,7 +20,7 @@ class ZohoAttachments_model extends CI_Model
 		return $this->db->insert_id();
 	}
 
-	// ✅ Fetch attachments for a deal
+	// Fetch attachments for a deal
 	public function getAttachmentsByDeal($dealId)
 	{
 		return $this->db->where('deal_id', (string) $dealId) // Cast to string

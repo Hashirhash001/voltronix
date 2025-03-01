@@ -8,26 +8,53 @@
 					<!-- Search Input -->
 					<div class="position-relative flex-grow-1">
 						<i class="bi bi-search position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-50%);"></i>
-						<input type="text" id="searchInput" class="form-control ps-5" placeholder="Search tasks..." style="box-shadow: rgba(9, 30, 66, 0.25) 0px 1px 1px, rgba(9, 30, 66, 0.13) 0px 0px 1px 1px; border: unset !important; border-radius: .25rem;">
+						<input type="text" id="searchInput" class="form-control ps-5" placeholder="Search tasks by task Id or title" style="box-shadow: rgba(9, 30, 66, 0.25) 0px 1px 1px, rgba(9, 30, 66, 0.13) 0px 0px 1px 1px; border: unset !important; border-radius: .25rem;">
 					</div>
 
 					<!-- Assigned To Filter -->
 					<div class="position-relative flex-grow-1">
-						<i class="bi bi-person-circle position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-50%);"></i>
-						<select id="assignedByFilter" class="form-select ps-5" style="box-shadow: rgba(9, 30, 66, 0.25) 0px 1px 1px, rgba(9, 30, 66, 0.13) 0px 0px 1px 1px; border: unset !important;">
+						<span class="position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-56%);">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<circle cx="12" cy="6" r="4" stroke="currentColor" stroke-width="1.5"></circle>
+								<path d="M15 20.6151C14.0907 20.8619 13.0736 21 12 21C8.13401 21 5 19.2091 5 17C5 14.7909 8.13401 13 12 13C15.866 13 19 14.7909 19 17C19 17.3453 18.9234 17.6804 18.7795 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+							</svg>
+						</span>
+						<select id="assignedByFilter" class="form-select ps-5" style="padding-left: 40px; box-shadow: rgba(9, 30, 66, 0.25) 0px 1px 1px, rgba(9, 30, 66, 0.13) 0px 0px 1px 1px; border: unset !important; font-size: 14px !important;">
 							<option value="">Assigned By</option>
 							<?php foreach ($members as $member) : ?>
 								<option value="<?php echo $member->user_id; ?>">
-									<?php echo htmlspecialchars($member->username); ?>
+									<?php echo htmlspecialchars($member->username ?? ''); ?>
 								</option>
 							<?php endforeach; ?>
 						</select>
 					</div>
 
+					<!-- Priority Filter -->
+					<div class="position-relative flex-grow-1">
+						<span class="position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px !important;">
+							<!-- <i class="bi bi-list-task"></i> -->
+							<i class="bi bi-exclamation-circle"></i>
+						</span>
+						<select id="priorityFilter" class="form-select ps-5" style="padding-left: 40px; font-size: 14px !important;">
+							<option value="" data-icon="bi-exclamation-circle">Priority</option>
+							<option value="0" data-icon="bi-arrow-down-circle">Low</option>
+							<option value="1" data-icon="bi-arrow-right-circle">Normal</option>
+							<option value="2" data-icon="bi-arrow-up-circle-fill">High</option>
+						</select>
+
+					</div>
+
 					<!-- Status Filter -->
 					<div class="position-relative flex-grow-1">
-						<i class="bi bi-filter-circle position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-50%);"></i>
-						<select id="statusFilter" class="form-select ps-5" style="box-shadow: rgba(9, 30, 66, 0.25) 0px 1px 1px, rgba(9, 30, 66, 0.13) 0px 0px 1px 1px; border: unset !important;">
+						<span class="position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-50%);">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<circle cx="19" cy="5" r="3" stroke="currentColor" stroke-width="1.5"></circle>
+								<path d="M7 14H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+								<path d="M7 17.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+								<path d="M2 12C2 16.714 2 19.0711 3.46447 20.5355C4.92893 22 7.28595 22 12 22C16.714 22 19.0711 22 20.5355 20.5355C22 19.0711 22 16.714 22 12V10.5M13.5 2H12C7.28595 2 4.92893 2 3.46447 3.46447C2.49073 4.43821 2.16444 5.80655 2.0551 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+							</svg>
+						</span>
+						<select id="statusFilter" class="form-select ps-5" style="padding-left: 40px; box-shadow: rgba(9, 30, 66, 0.25) 0px 1px 1px, rgba(9, 30, 66, 0.13) 0px 0px 1px 1px; border: unset !important;font-size: 14px !important;">
 							<option value="">Task Status</option>
 							<option value="0">Pending</option>
 							<option value="1">In Progress</option>
@@ -38,11 +65,11 @@
 
 					<!-- Action Buttons -->
 					<div class="d-flex gap-2">
-						<button id="searchBtn" class="btn btn-primary d-flex align-items-center gap-2" style="    background: #d10908; border: none !important;">
+						<!-- <button id="searchBtn" class="btn btn-primary d-flex align-items-center gap-2" style="    background: #d10908; border: none !important;">
 							<i class="bi bi-search"></i> <span>Search</span>
-						</button>
-						<button id="clearFiltersBtn" class="btn btn-outline-secondary d-flex align-items-center gap-2">
-							<i class="bi bi-x-circle"></i> <span>Clear</span>
+						</button> -->
+						<button id="clearFiltersBtn" class="btn btn-outline-secondary d-flex align-items-center" style="box-shadow: rgba(9, 30, 66, 0.25) 0px 1px 1px, rgba(9, 30, 66, 0.13) 0px 0px 1px 1px; border: unset !important; padding: 4px 7px;">
+							<i class="bi bi-x-circle" style="font-size: 18px;"></i> <span></span>
 						</button>
 					</div>
 				</div>
@@ -52,11 +79,11 @@
 						<table id="taskTable" class="table align-middle">
 							<thead>
 								<tr>
-									<th style="border: none !important; padding: 1.15rem 2.35rem !important;">#</th>
+									<th style="border: none !important; padding: 1.15rem 2.35rem !important;">Task ID</th>
 									<th style="border: none !important; padding: 1.15rem 2.35rem !important;">Task Title</th>
 									<th style="border: none !important; padding: 1.15rem 2.35rem !important;">Assigned By</th>
 									<th style="border: none !important; padding: 1.15rem 2.35rem !important;">Due Date</th>
-									<th style="border: none !important; padding: 1.15rem 2.35rem !important;">Description</th>
+									<th style="border: none !important; padding: 1.15rem 2.35rem !important;">Priority</th>
 									<th style="border: none !important; padding: 1.15rem 2.35rem !important;">Status</th>
 									<th style="border: none !important; padding: 1.15rem 2.35rem !important;">Actions</th>
 								</tr>
@@ -124,6 +151,7 @@
 						<p><strong>Assigned By:</strong> <span id="view_assigned_by"></span></p>
 						<p><strong>Due Date:</strong> <span id="view_due_date"></span></p>
 						<p><strong>Description:</strong> <span id="view_task_description"></span></p>
+						<p><strong>Priority:</strong> <span id="view_task_priority"></span></p>
 						<p><strong>Status:</strong> <span id="view_task_status" class="badge"></span></p>
 					</div>
 				</div>
@@ -141,6 +169,7 @@
 				var search = $("#searchInput").val();
 				var assignedBy = $("#assignedByFilter").val();
 				var status = $("#statusFilter").val();
+				var priority = $("#priorityFilter").val();
 
 				$.ajax({
 					url: "<?php echo base_url('web/assignTask/my-tasks'); ?>",
@@ -149,7 +178,8 @@
 						page: page,
 						search: search,
 						created_by: assignedBy,
-						status: status
+						status: status,
+						priority: priority
 					},
 					dataType: "json",
 					success: function (response) {
@@ -178,6 +208,12 @@
 										3: "Overdue"
 									};
 
+									var priorityLabel = {
+										0: '<span class="badge bg-success">Low</span>',
+										1: '<span class="badge bg-warning">Normal</span>',
+										2: '<span class="badge bg-danger">High</span>'
+									};
+
 									var statusKey = parseInt(task.status, 10);
 									var statusClass = statusClasses[statusKey] || '';
 
@@ -189,7 +225,7 @@
 
 									taskRows += `
 										<tr>
-											<td style="border: none !important; padding: 1.15rem 2.35rem !important;">${startIndex + index}</td>
+											<td style="border: none !important; padding: 1.15rem 2.35rem !important;min-width: 170px;">${task.task_id}</td>
 											<td style="border: none !important; padding: 1.15rem 2.35rem !important;">
 												<span class="task-title" title="${task.title}">
 													${task.title.length > 20 ? task.title.substring(0, 20) + '...' : task.title}
@@ -199,27 +235,23 @@
 												<span class="scribble-text">${task.assigned_by_name}</span>
 											</td>
 											<td style="border: none !important; padding: 1.15rem 2.35rem !important; min-width: 170px;">${formattedDate}</td>
-											<td style="border: none !important; padding: 1.15rem 2.35rem !important;">
-												<span class="task-description" title="${task.description}">
-													${task.description.length > 40 ? task.description.substring(0, 40) + '...' : task.description}
-												</span>
-											</td>
+											<td style="border: none !important; padding: 1.15rem 2.35rem !important; min-width: 170px;">${priorityLabel[task.priority] || '<span class="badge bg-secondary">Unknown</span>'}</td>
 											<td style="border: none !important; padding: 1.15rem 2.35rem !important; text-align: center;">
 												<span class="badge" style="${statusClass}">
 													${statusLabel[statusKey] || 'Pending'}
 												</span>
 											</td>
-											<td style="border: none !important; padding: 1.15rem 2.35rem !important; min-width: 170px;">
-												<button class="action-btn view-btn" data-id="${task.id}" title="View">
-													<i class="fas fa-eye"></i>
-												</button>
-												<button class="action-btn edit-btn" data-id="${task.id}" title="Edit">
-													<i class="fas fa-edit"></i>
-												</button>
-												<button class="action-btn delete-btn" data-id="${task.id}" title="Delete">
-													<i class="fas fa-trash"></i>
-												</button>
-											</td>
+											<td style="border: none !important; padding: 1.15rem 2.35rem !important; min-width: 181px;">
+											<button class="action-btn view-btn" data-id="${task.id}" title="View">
+												<i class="fas fa-eye"></i>
+											</button>
+											<button class="action-btn edit-btn" data-id="${task.id}" title="Edit">
+												<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5">
+                                                    <path d="M15.2869 3.15178L14.3601 4.07866L5.83882 12.5999L5.83881 12.5999C5.26166 13.1771 4.97308 13.4656 4.7249 13.7838C4.43213 14.1592 4.18114 14.5653 3.97634 14.995C3.80273 15.3593 3.67368 15.7465 3.41556 16.5208L2.32181 19.8021L2.05445 20.6042C1.92743 20.9852 2.0266 21.4053 2.31063 21.6894C2.59466 21.9734 3.01478 22.0726 3.39584 21.9456L4.19792 21.6782L7.47918 20.5844L7.47919 20.5844C8.25353 20.3263 8.6407 20.1973 9.00498 20.0237C9.43469 19.8189 9.84082 19.5679 10.2162 19.2751C10.5344 19.0269 10.8229 18.7383 11.4001 18.1612L11.4001 18.1612L19.9213 9.63993L20.8482 8.71306C22.3839 7.17735 22.3839 4.68748 20.8482 3.15178C19.3125 1.61607 16.8226 1.61607 15.2869 3.15178Z" stroke="currentColor" stroke-width="1.5"></path>
+                                                    <path opacity="0.5" d="M14.36 4.07812C14.36 4.07812 14.4759 6.04774 16.2138 7.78564C17.9517 9.52354 19.9213 9.6394 19.9213 9.6394M4.19789 21.6777L2.32178 19.8015" stroke="currentColor" stroke-width="1.5"></path>
+                                                </svg>
+											</button>
+										</td>
 										</tr>`;
 
 								});
@@ -245,7 +277,7 @@
 			}
 
 			// Handle search & filters
-			$("#searchBtn, #assignedByFilter, #statusFilter").on("click change", function () {
+			$("#searchBtn, #assignedByFilter, #statusFilter, #priorityFilter").on("click change", function () {
 				loadTasks(1);
 			});
 
@@ -261,6 +293,7 @@
 				$("#searchInput").val("");
 				$("#assignedByFilter").val("");
 				$("#statusFilter").val("");
+				$("#priorityFilter").val("");
 				loadTasks(1); // Reload tasks with no filters
 			});
 
@@ -273,6 +306,21 @@
 				e.preventDefault();
 				var page = $(this).attr("data-page");
 				loadTasks(page);
+			});
+
+			// Change priority icon dynamically
+			document.getElementById("priorityFilter").addEventListener("change", function() {
+				let selectedOption = this.options[this.selectedIndex];
+				let iconClass = selectedOption.getAttribute("data-icon");
+				let iconElement = document.querySelector(".position-absolute i");
+
+				if (iconElement) {
+					if (iconClass) {
+						iconElement.className = "bi " + iconClass; // Update Bootstrap icon
+					} else {
+						iconElement.className = "bi-exclamation-circle"; // Reset to default
+					}
+				}
 			});
 
 			// View Task modal
@@ -313,6 +361,14 @@
 							};
 							
 							$("#view_task_status").attr("style", statusStyles[task.status] || "").text(statusLabels[task.status]);
+
+							var priorityLabel = {
+								0: '<span class="badge bg-success">Low</span>',
+								1: '<span class="badge bg-warning">Normal</span>',
+								2: '<span class="badge bg-danger">High</span>'
+							};
+
+							$("#view_task_priority").html(priorityLabel[task.priority] || '<span class="badge bg-secondary">Unknown</span>');
 
 							// Show Modal
 							$("#viewTaskModal").modal("show");

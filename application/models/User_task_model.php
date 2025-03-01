@@ -19,7 +19,7 @@
 			return $this->db->insert('user_tasks', $data);
 		}
 
-		public function get_assigned_tasks($user_id, $limit = null, $offset = null, $search = "", $assigned_to = "", $status = "") {
+		public function get_assigned_tasks($user_id, $limit = null, $offset = null, $search = "", $assigned_to = "", $status = "", $priority = "") {
 			$this->db->select('ut.*, u.username AS assigned_to_name');
 			$this->db->from('user_tasks ut');
 			$this->db->join('users u', 'ut.assigned_to = u.user_id', 'left'); // Join with users table
@@ -28,7 +28,10 @@
 
 			// Apply filters
 			if (!empty($search)) {
+				$this->db->group_start(); // Start grouping conditions
 				$this->db->like('ut.title', $search);
+				$this->db->or_like('ut.task_id', $search);
+				$this->db->group_end(); // End grouping conditions
 			}
 		
 			if (!empty($assigned_to)) {
@@ -37,6 +40,10 @@
 		
 			if ($status !== "") {
 				$this->db->where('ut.status', $status);
+			}
+
+			if ($priority !== '') {
+				$this->db->where('priority', $priority);
 			}
 		
 			if ($limit !== null && $offset !== null) {
@@ -55,13 +62,16 @@
 			return $this->db->get()->result();
 		}				
 
-		public function count_tasks($user_id, $search = "", $assigned_to = "", $status = "") {
+		public function count_tasks($user_id, $search = "", $assigned_to = "", $status = "", $priority = "") {
 			$this->db->from('user_tasks');
 			$this->db->where('created_by', $user_id);
 
 			// Apply filters
 			if (!empty($search)) {
+				$this->db->group_start(); // Start grouping conditions
 				$this->db->like('title', $search);
+				$this->db->or_like('task_id', $search);
+				$this->db->group_end(); // End grouping conditions
 			}
 		
 			if (!empty($assigned_to)) {
@@ -70,6 +80,10 @@
 		
 			if ($status !== "") {
 				$this->db->where('user_tasks.status', $status);
+			}
+
+			if ($priority !== '') {
+				$this->db->where('priority', $priority);
 			}
 
 			return $this->db->count_all_results();
@@ -90,7 +104,7 @@
 			return $this->db->where('id', $id)->delete('user_tasks');
 		}
 
-		public function get_tasks_assigned_to_me($user_id, $limit = null, $offset = null, $search = "", $created_by = "", $status = "")
+		public function get_tasks_assigned_to_me($user_id, $limit = null, $offset = null, $search = "", $created_by = "", $status = "", $priority = "")
 		{
 			$this->db->select('ut.*, u.username AS assigned_by_name');
 			$this->db->from('user_tasks ut');
@@ -100,7 +114,10 @@
 
 			// Apply filters
 			if (!empty($search)) {
+				$this->db->group_start(); // Start grouping conditions
 				$this->db->like('ut.title', $search);
+				$this->db->or_like('ut.task_id', $search);
+				$this->db->group_end(); // End grouping conditions
 			}
 		
 			if (!empty($created_by)) {
@@ -109,6 +126,10 @@
 		
 			if ($status !== "") {
 				$this->db->where('ut.status', $status);
+			}
+
+			if ($priority !== '') {
+				$this->db->where('priority', $priority);
 			}
 		
 			if ($limit !== null && $offset !== null) {
@@ -124,17 +145,24 @@
 			return $this->db->get()->result();
 		}
 
-		public function count_assigned_tasks($user_id, $search = "", $created_by = "", $status = "")
+		public function count_assigned_tasks($user_id, $search = "", $created_by = "", $status = "", $priority = "")
 		{
 			$this->db->where('assigned_to', $user_id);
 
 			// Apply filters
 			if (!empty($search)) {
+				$this->db->group_start(); // Start grouping conditions
 				$this->db->like('title', $search);
+				$this->db->or_like('task_id', $search);
+				$this->db->group_end(); // End grouping conditions
 			}
 		
 			if (!empty($created_by)) {
 				$this->db->where('created_by', $created_by);
+			}
+
+			if ($priority !== '') {
+				$this->db->where('priority', $priority);
 			}
 		
 			if ($status !== "") {

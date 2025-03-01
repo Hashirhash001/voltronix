@@ -64,6 +64,12 @@ if ($segment2 == 'deals') {
 	<!-- Font Awesome Icons -->
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="https://code.highcharts.com/highcharts.js"></script>
+	<script src="https://code.highcharts.com/modules/data.js"></script>
+	<script src="https://code.highcharts.com/modules/drilldown.js"></script>
+	<script src="https://code.highcharts.com/modules/exporting.js"></script>
+	<script src="https://code.highcharts.com/modules/export-data.js"></script>
+	<script src="https://code.highcharts.com/modules/accessibility.js"></script>
 	<!-- FontAwesome Icons -->
 	<!-- FontAwesome 6.7.2 -->
 	<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha384-xxzJK+mIN2I4OeJGRkcz2M+yXDFp2g4XEkWUpa/X+O1gQaDjXnCqGfj9zRtqz7lT" crossorigin="anonymous"> -->
@@ -95,7 +101,7 @@ if ($segment2 == 'deals') {
         }
         .card-icon {
             font-size: 2rem;
-            color: #000;
+            /* color: #000; */
         }
         .chart-container {
             background: #fff;
@@ -156,9 +162,12 @@ if ($segment2 == 'deals') {
 
 			<!-- User Dropdown -->
 			<div class="dropdown d-flex align-items-center gap-2">
-				<button type="button" class="btn btn-outline-light d-flex align-items-center" id="logoutDropdownButton" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 20px; padding: 8px 16px; color: #000;">
+				<button type="button" class="btn btn-outline-light d-flex align-items-center me-4" id="logoutDropdownButton" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 20px; padding: 8px 16px; color: #000; background-color: #ffe5e5;">
 					<span class="me-2">
-						<i class="bi bi-person-circle"></i>
+						<svg class="h-4.5 w-4.5 shrink-0 ltr:mr-2 rtl:ml-2" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<circle cx="12" cy="6" r="4" stroke="currentColor" stroke-width="1.5"></circle>
+							<path opacity="0.5" d="M20 17.5C20 19.9853 20 22 12 22C4 22 4 19.9853 4 17.5C4 15.0147 7.58172 13 12 13C16.4183 13 20 15.0147 20 17.5Z" stroke="currentColor" stroke-width="1.5"></path>
+						</svg>
 					</span>
 					<span><?php echo $this->session->userdata('username'); ?></span>
 				</button>
