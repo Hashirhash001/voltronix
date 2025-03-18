@@ -232,7 +232,7 @@
                         <td style="text-align: center; border: none; border-left: 0.3px solid #000;">' . htmlspecialchars($pageItem['quantity'] ?? '') . ' ' . htmlspecialchars($pageItem['uom'] ?? '') . '</td>
                         <td style="text-align: right; border: none; border-left: 0.3px solid #000;">' . number_format($pageServiceCharge, 2) . '</td>
                         <td style="text-align: center; border: none; border-left: 0.3px solid #000;">5%</td>
-                        <td style="text-align: center; border: none; border-left: 0.3px solid #000;">' . number_format((float)$task['discount'], 2) . '</td>
+                        <td style="text-align: center; border: none; border-left: 0.3px solid #000;">' . number_format((float)$pageItem['item_discount'], 2) . '</td>
                         <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;">' . number_format($pageItemTotal, 2) . '</td>
                     </tr>';
                 }
@@ -302,7 +302,7 @@
                     <td style="text-align: center; border: none; border-left: 0.3px solid #000;">' . htmlspecialchars($pageItem['quantity'] ?? '') . ' ' . htmlspecialchars($pageItem['uom'] ?? '') . '</td>
                     <td style="text-align: right; border: none; border-left: 0.3px solid #000;">' . number_format($pageServiceCharge, 2) . '</td>
                     <td style="text-align: center; border: none; border-left: 0.3px solid #000;">5%</td>
-                    <td style="text-align: center; border: none; border-left: 0.3px solid #000;">' . number_format((float)$task['discount'], 2) . '</td>
+                    <td style="text-align: center; border: none; border-left: 0.3px solid #000;">' . number_format((float)$pageItem['item_discount'], 2) . '</td>
                     <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;">' . number_format($pageItemTotal, 2) . '</td>
                 </tr>';
             }

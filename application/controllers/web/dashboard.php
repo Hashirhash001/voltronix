@@ -85,6 +85,7 @@ class Dashboard extends CI_Controller {
 				$this->form_validation->set_rules("items[$index][itemName]", "Item Name for item $index", 'required');
 				$this->form_validation->set_rules("items[$index][quantity]", "Quantity for item $index", 'required|numeric');
 				$this->form_validation->set_rules("items[$index][unitPrice]", "Unit Price for item $index", 'required|numeric');
+				$this->form_validation->set_rules("items[$index][itemDiscount]", "Discount % for item $index", 'required|numeric');
 			}
 		} else {
 			$this->output->set_status_header(400);
@@ -121,7 +122,7 @@ class Dashboard extends CI_Controller {
 		// Log successful addition
 		log_message('info', 'Proposal successfully added to Zoho for Deal ID: ' . $data['dealNumber']);
 	
-		return $this->response(['success' => true, 'message' => 'Proposal added successfully.', 'id' => $result['quote_id']], 201);
+		return $this->response(['success' => true, 'message' => 'Proposal added successfully.', 'id' => $result['id']], 201);
 	}        
 	
 	private function add_proposal_to_zoho($deal_number, $proposal_data) {
@@ -238,6 +239,7 @@ class Dashboard extends CI_Controller {
 				'Product_Name' => $item['itemName'],
 				'Quantity' => (float) $item['quantity'],
 				'List_Price' => (float) $item['unitPrice'],
+				'ItemDiscount' => (float) $item['itemDiscount'],
 				'U_O_M' => $item['uom'],
 				'Description' => $item['itemDescription'],
 			];
@@ -303,7 +305,18 @@ class Dashboard extends CI_Controller {
 		// Step 5: Handle Zoho response and store data in the database
 		if (isset($response_body['data'][0]['details']['id'])) {
 			$quote_id = $response_body['data'][0]['details']['id'];
-			$quote_number = $response_body['data'][0]['Quote_No'] ?? $quote_id; // Fallback to quote ID if Quote_No is missing
+			
+			// Fetch Quote_No from the created quote
+            $quote_details_response = $this->execute_curl_request(
+                "https://www.zohoapis.com/crm/v2/Quotes/$quote_id",
+                $headers,
+                null,
+                'GET'
+            );
+    
+            $quote_details = json_decode($quote_details_response['body'], true);
+            $quote_number = $quote_details['data'][0]['Quote_No'] ?? null;
+            $modified_time = $quote_details['data'][0]['Modified_Time'] ?? null;
 	
 			if (!$quote_number) {
 				log_message('error', 'Quote number missing from Zoho CRM response: ' . print_r($response_body, true));
@@ -338,13 +351,14 @@ class Dashboard extends CI_Controller {
 			foreach ($proposal_data['items'] as $item) {
 				$items_data[] = [
 					'task_id' => $id,
-					'quote_id' => $quote_id,
+					'quote_id' => $quote_number,
 					'product_id' => $item['product_id'],
 					'product_name' => $item['product_name'],
 					'product_description' => $item['itemDescription'],
 					'uom' => $item['uom'],
 					'quantity' => $item['quantity'],
 					'service_charge' => $item['unitPrice'],
+					'item_discount' => $item['itemDiscount'],
 					'total' => $item['total'],
 				];
 			}
@@ -352,7 +366,7 @@ class Dashboard extends CI_Controller {
 			// Save items data to the database
 			$this->Proposal_model->save_proposal_items($items_data);
 	
-			return ['success' => true, 'quote_id' => $quote_id, 'quote_number' => $quote_number];
+			return ['success' => true, 'quote_id' => $quote_id, 'id' => $id];
 		} else {
 			log_message('error', 'Failed to create quote in Zoho CRM: ' . print_r($response_body, true));
 			return ['error' => 'Failed to create quote in Zoho CRM.'];

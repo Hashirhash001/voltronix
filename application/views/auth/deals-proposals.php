@@ -119,6 +119,7 @@
 													<th>U.O.M</th>
 													<th>Quantity</th>
 													<th>Unit Price (AED)</th>
+													<th>Discount %</th>
 													<th>Total (AED)</th>
 													<th>Action</th>
 												</tr>
@@ -127,7 +128,7 @@
 												<!-- Primary Row -->
 												<tr class="item-row">
 													<td style="min-width: 80px;">1</td>
-													<td style="min-width: 400px;">
+													<td style="min-width: 350px;">
 														<input type="hidden" class="product_id" name="product_id[]">
 														<input type="hidden" class="product_name" name="product_name[]">
 														<select class="form-control itemName" name="itemName[]" style="width: 100%;" required>
@@ -187,6 +188,10 @@
 													</td>
 													<td style="min-width: 100px;">
 														<input type="number" name="unitPrice[]" class="form-control unitPrice" placeholder="Unit Price" required>
+														<div class="error-message"></div>
+													</td>
+													<td style="min-width: 100px;">
+														<input type="number" name="itemDiscount[]" class="form-control no-arrows itemDiscount" placeholder="Discount" required>
 														<div class="error-message"></div>
 													</td>
 													<td style="min-width: 100px;">
@@ -344,7 +349,7 @@
 											<tbody>
 												<tr>
 													<td>1</td>
-													<td style="min-width: 400px;">
+													<td style="min-width: 300px;">
 													    <input type="hidden" id="product_id2" name="product_id">
 														<input type="hidden" id="product_name2" name="product_name">
 														<select class="form-control" id="itemName2" name="itemName2" style="width: 100%;" required>
@@ -404,6 +409,10 @@
 													</td>
 													<td style="min-width: 100px;">
 														<input type="number" name="unitPrice" class="form-control no-arrows" id="unitPrice2" placeholder="Unit Price" required>
+														<div class="error-message"></div>
+													</td>
+													<td style="min-width: 100px;">
+														<input type="number" name="itemDiscount" class="form-control no-arrows" id="itemDiscount2" placeholder="Discount" required>
 														<div class="error-message"></div>
 													</td>
 													<td style="min-width: 100px;">
@@ -685,6 +694,10 @@
 							<input type="number" name="unitPrice[]" class="form-control unitPrice" placeholder="Unit Price" required>
 							<div class="error-message"></div>
 						</td>
+						<td style="min-width: 100px;">
+							<input type="number" name="itemDiscount[]" class="form-control no-arrows itemDiscount" placeholder="Discount" required>
+							<div class="error-message"></div>
+						</td>
 						<td>
 							<input type="number" name="total[]" class="form-control total" placeholder="Total" readonly>
 							<div class="error-message"></div>
@@ -715,32 +728,49 @@
 			initializeSelect2($('#itemRows tr:first'));
 		});
 
+		// Separate calculateTotals function
 		function calculateTotals() {
 			let subTotal = 0;
 
-			// Loop through each row and calculate totals
+			// Loop through each row and calculate totals with discount
 			$('.item-row').each(function () {
 				const quantity = parseFloat($(this).find('.quantity').val()) || 0;
 				const unitPrice = parseFloat($(this).find('.unitPrice').val()) || 0;
-				const total = quantity * unitPrice;
-				$(this).find('.total').val(total.toFixed(2));
+				const discountPercentage = parseFloat($(this).find('.itemDiscount').val()) || 0;
 
-				subTotal += total;
+				const baseTotal = quantity * unitPrice;
+				const discountFactor = 1 - (discountPercentage / 100);
+				const discountedTotal = baseTotal * discountFactor;
+
+				$(this).find('.total').val(discountedTotal.toFixed(2));
+				subTotal += discountedTotal;
 			});
 
 			$('#sub-total').val(subTotal.toFixed(2));
 
-			// Calculate Grand Total (same as before)
-			const discountAmount = parseFloat($('#discount').val()) || 0;
+			// Calculate overall totals with safeguards
+			const discountAmount = parseFloat($('#discount').val()) || 0; // Overall discount (AED)
+			const subTotalAfterDiscount = Math.max(0, subTotal - discountAmount); // Prevent negative
 			const vatPercentage = 5;
-			const vat = (vatPercentage / 100) * (subTotal - discountAmount);
+			const vat = (vatPercentage / 100) * subTotalAfterDiscount;
 			const adjustment = parseFloat($('#adjustment').val()) || 0;
-			const grandTotal = subTotal - discountAmount + vat + adjustment;
+			const grandTotal = subTotalAfterDiscount + vat + adjustment;
+
+			// Debug output
+			console.log({
+				subTotal: subTotal.toFixed(2),
+				discountAmount: discountAmount.toFixed(2),
+				subTotalAfterDiscount: subTotalAfterDiscount.toFixed(2),
+				vat: vat.toFixed(2),
+				adjustment: adjustment.toFixed(2),
+				grandTotal: grandTotal.toFixed(2)
+			});
+
 			$('#grand-total').val(grandTotal.toFixed(2));
 		}
 
 		// Attach event listeners to recalculate totals
-		$('#itemRows').on('input', '.quantity, .unitPrice', calculateTotals);
+		$('#itemRows').on('input', '.quantity, .unitPrice, .itemDiscount', calculateTotals);
 		$('#discount, #adjustment').on('input', calculateTotals);
 
 	    // toggle icons
@@ -781,44 +811,44 @@
 		});
 	
 		// Calculate and update totals of item1
-		$(document).ready(function() {
-			function calculateTotals() {
-				let quantity = parseFloat($('#quantity').val()) || 0;
-				let unitPrice = parseFloat($('#unitPrice').val()) || 0;
-				let total = quantity * unitPrice;
-				$('#total').val(total.toFixed(2));
+		// $(document).ready(function() {
+		// 	function calculateTotals() {
+		// 		let quantity = parseFloat($('#quantity').val()) || 0;
+		// 		let unitPrice = parseFloat($('#unitPrice').val()) || 0;
+		// 		let total = quantity * unitPrice;
+		// 		$('#total').val(total.toFixed(2));
 
-				// Calculate Sub Total (only one item row is present in this example)
-				let subTotal = total;
-				$('#sub-total').val(subTotal.toFixed(2));
+		// 		// Calculate Sub Total (only one item row is present in this example)
+		// 		let subTotal = total;
+		// 		$('#sub-total').val(subTotal.toFixed(2));
 
-				// Get the fixed discount amount (instead of percentage)
-				let discountAmount = parseFloat($('#discount').val()) || 0;
+		// 		// Get the fixed discount amount (instead of percentage)
+		// 		let discountAmount = parseFloat($('#discount').val()) || 0;
 
-				// Subtract discount from Sub Total before VAT calculation
-                let subTotalAfterDiscount = subTotal - discountAmount;
+		// 		// Subtract discount from Sub Total before VAT calculation
+        //         let subTotalAfterDiscount = subTotal - discountAmount;
         
-                // VAT Calculation (Fixed VAT percentage of 5%)
-                let vatPercentage = 5; // Fixed VAT percentage
-                let vat = (vatPercentage / 100) * subTotalAfterDiscount;
+        //         // VAT Calculation (Fixed VAT percentage of 5%)
+        //         let vatPercentage = 5; // Fixed VAT percentage
+        //         let vat = (vatPercentage / 100) * subTotalAfterDiscount;
 
-				// Get other values for Grand Total calculation
-				let adjustment = parseFloat($('#adjustment').val()) || 0;
+		// 		// Get other values for Grand Total calculation
+		// 		let adjustment = parseFloat($('#adjustment').val()) || 0;
 
-				// Grand Total Calculation: Sub Total - Discount + VAT + Adjustment
-				let grandTotal = subTotal - discountAmount + vat + adjustment;
-				$('#grand-total').val(grandTotal.toFixed(2));
-			}
+		// 		// Grand Total Calculation: Sub Total - Discount + VAT + Adjustment
+		// 		let grandTotal = subTotal - discountAmount + vat + adjustment;
+		// 		$('#grand-total').val(grandTotal.toFixed(2));
+		// 	}
 
-			// Attach event listeners to calculate totals when Quantity or Unit Price changes
-			$('#quantity, #unitPrice').on('input', calculateTotals);
+		// 	// Attach event listeners to calculate totals when Quantity or Unit Price changes
+		// 	$('#quantity, #unitPrice').on('input', calculateTotals);
 
-			// Attach event listeners for the discount and adjustment fields to update the Grand Total
-			$('#discount, #adjustment').on('input', calculateTotals);
+		// 	// Attach event listeners for the discount and adjustment fields to update the Grand Total
+		// 	$('#discount, #adjustment').on('input', calculateTotals);
 
-			// Initial calculation to ensure totals are correct on page load
-			calculateTotals();
-		});
+		// 	// Initial calculation to ensure totals are correct on page load
+		// 	calculateTotals();
+		// });
 
 		// Calculate and update totals of item2
 		$(document).ready(function() {
@@ -1276,6 +1306,7 @@
 						itemDescription: $(this).find('.itemDescription').val(),
 						uom: $(this).find('.uom').val(),
 						quantity: $(this).find('.quantity').val(),
+						itemDiscount: $(this).find('.itemDiscount').val(),
 						unitPrice: $(this).find('.unitPrice').val(),
 						total: $(this).find('.total').val()
 					};
