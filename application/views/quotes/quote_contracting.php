@@ -10,6 +10,21 @@
         padding-bottom:3px;
         font-family: 'Roboto', sans-serif;
      }
+     
+     table {
+        page-break-inside: avoid;
+    }
+    tr, td {
+        page-break-inside: avoid;
+    }
+    p {
+        page-break-inside: auto;
+    }
+     
+    .page-break {
+        page-break-before: always;
+    }
+    
  
 </style>
 <div style="color: #000; font-family: 'Roboto', sans-serif;">
@@ -33,7 +48,7 @@
                 </tr>
                 <tr>
                   <td style="font-weight:bold;font-size:11px;">Sales Person:</td>
-                  <td style="font-size:11px;"><b>Marieswaran</b></td>
+                  <td style="font-size:11px;"><b><?= htmlspecialchars(ucfirst($username ?? '')) ?></b></td>
                 </tr>
               </table>
             </td>
@@ -76,31 +91,32 @@
         <tbody>
             <tr>
                 <td style="border: 1px solid #e3dfcb; padding: 10px; width: 7%; text-align:center; vertical-align: top;">1</td>
-                <td style="border: 1px solid #e3dfcb; padding: 10px; width: 45%; text-align:left;"><b style="font-size:12px;"><?= htmlspecialchars($task['product_name'] ?? '') ?>:</b> 
-                    <?php 
-                        // Extract product description
-                        $description = $task['product_description'] ?? '';
-                    
-                        // Check if "Note:" exists in the description
-                        $parts = preg_split('/(Note:)/i', $description, 2, PREG_SPLIT_DELIM_CAPTURE);
-                    
-                        // Process the main description before "Note:"
-                        if (!empty(trim($parts[0]))) {
-                            // Split the main description by bullets
-                            $points = explode('•', trim($parts[0]));
-                            foreach ($points as $point) {
-                                $trimmedPoint = trim($point);
-                                if (!empty($trimmedPoint)) {
-                                    // Use <p> tag with custom bullet point symbol
-                                    echo "<p style='font-size: 12px; margin: 0; padding-left: 20px;'>• " . htmlspecialchars($trimmedPoint) . "</p>";
-                                }
-                            }
-                        }
-                    
-                        // Display the "Note:" and its content if present
-                        if (count($parts) > 1) {
-                            echo "<br><p style='font-size: 12px; padding-top: 30px;'>" . htmlspecialchars($parts[1] . ' ' . trim($parts[2])) . "</p>";
-                        }
+                <td style="border: 1px solid #e3dfcb; padding: 10px; width: 45%; text-align:left;"><b style="font-size:12px;">
+					<?= htmlspecialchars($task['product_name'] ?? '') ?>:</b> 
+						<?php 
+							// Extract product description
+							$description = $task['product_description'] ?? '';
+						
+							// Check if "Note:" exists in the description
+							$parts = preg_split('/(Note:)/i', $description, 2, PREG_SPLIT_DELIM_CAPTURE);
+						
+							// Process the main description before "Note:"
+							if (!empty(trim($parts[0]))) {
+								// Split the main description by bullets
+								$points = explode('•', trim($parts[0]));
+								foreach ($points as $point) {
+									$trimmedPoint = trim($point);
+									if (!empty($trimmedPoint)) {
+										// Use <p> tag with custom bullet point symbol
+										echo "<p style='font-size: 12px; margin: 0; padding-left: 20px;'>• " . htmlspecialchars($trimmedPoint) . "</p>";
+									}
+								}
+							}
+						
+							// Display the "Note:" and its content if present
+							if (count($parts) > 1) {
+								echo "<br><p style='font-size: 12px; padding-top: 30px;'>" . htmlspecialchars($parts[1] . ' ' . trim($parts[2])) . "</p>";
+							}
                     ?>
                 </td>
                 <td style="border: 1px solid #e3dfcb; padding: 10px; width: 7%; text-align:center; vertical-align: top; font-size:13px;"><?= htmlspecialchars($task['quantity'] ?? '') ?></td>
@@ -112,7 +128,9 @@
     </table>
 
     <p style="font-size: 12px; margin: 0 !important; padding-bottom: 13px; padding-right: 5px; padding-top: 10px;"><b>2. <span style="border-bottom: 1px solid #000;">PAYMENT TERMS</span>  : </b><?= htmlspecialchars($task['terms_of_payment']) ?><p/>
-    <p style="font-size: 12px; margin: 0 !important; padding-bottom: 13px; padding-right: 5px;"><b>3. <span style="border-bottom: 1px solid #000;">PRICE</span>  : AED <?= number_format((float)$task['quantity'] * (float)$task['service_charge'], 2) ?> - Excl. VAT</b></p>
+    <p style="font-size: 12px; margin: 0 !important; padding-bottom: 13px; padding-right: 5px;"><b>3. <span style="border-bottom: 1px solid #000;">PRICE</span>  : AED <?= number_format((float)$task['quantity'] * (float)$task['service_charge'], 2) ?> - Excl. VAT
+    </b>
+    </p>
     <p style="font-size: 12px; margin: 0 !important; padding-bottom: 13px; padding-right: 5px;"><b>4. <span style="border-bottom: 1px solid #000;">GENERAL EXCLUSION</span>  : </b></p>
         <span>
             <?php 

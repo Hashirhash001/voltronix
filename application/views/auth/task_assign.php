@@ -5,7 +5,7 @@
 				<div class="card shadow-lg p-4 w-50">
 					<h3 class="mb-4 text-center fw-bold">Assign a Task</h3>
 
-					<?php if ($current_user_id == '5653678000013160085'): ?>
+					<?php if ($role == '1'): ?>
 						<form action="<?php echo site_url('web/assignTask/assign'); ?>" method="post" id="taskForm">
 							<div class="mb-3">
 								<label for="task_title" class="form-label fw-semibold">Task Title</label>

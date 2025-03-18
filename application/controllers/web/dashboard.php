@@ -11,6 +11,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @property Task_model $Task_model
  * @property User_model $User_model
  * @property Access_token_model $Access_token_model
+ * @property Proposal_model $Proposal_model
  * @property session $session
  */
 
@@ -27,6 +28,7 @@ class Dashboard extends CI_Controller {
 		$this->load->model('User_model');
 		$this->load->model('Task_photo_model');
 		$this->load->model('Access_token_model');
+		$this->load->model('Proposal_model');
 		$this->load->helper(['url', 'json_input', 'form']);
 		$this->output->set_content_type('application/json');
 
@@ -50,9 +52,9 @@ class Dashboard extends CI_Controller {
 	public function add_proposal() {
 		// Check if the user is logged in
 		$this->check_logged_in();
-
-		$content_type = $this->input->server('CONTENT_TYPE') ?? '';
-		$data = strpos($content_type, 'application/json') !== false ? json_decode($this->input->raw_input_stream, true) : $this->input->post();
+	
+		// Parse JSON input
+		$data = json_decode($this->input->raw_input_stream, true);
 	
 		if ($data === null) {
 			$this->output->set_status_header(400);
@@ -64,13 +66,10 @@ class Dashboard extends CI_Controller {
 		log_message('debug', 'Parsed data: ' . json_encode($data));
 	
 		// Set validation rules for required fields
+		$this->form_validation->set_data($data);
 		$this->form_validation->set_rules('dealNumber', 'Deal Number', 'required');
-		$this->form_validation->set_rules('subject', 'subject', 'required');
-		// $this->form_validation->set_rules('accountName', 'Account Name', 'required');
-		$this->form_validation->set_rules('itemName', 'Item Name', 'required');
-		$this->form_validation->set_rules('quantity', 'Quantity', 'required');
-		$this->form_validation->set_rules('unitPrice', 'Unit Price', 'required');
-		$this->form_validation->set_rules('total', 'Total', 'required');
+		$this->form_validation->set_rules('subject', 'Subject', 'required');
+		$this->form_validation->set_rules('kind_attention', 'Kind Attention', 'required');
 		$this->form_validation->set_rules('project', 'Project Name', 'required');
 		$this->form_validation->set_rules('termsOfPayment', 'Terms of Payment', 'required');
 		$this->form_validation->set_rules('specification', 'Specification', 'required');
@@ -80,25 +79,36 @@ class Dashboard extends CI_Controller {
 		$this->form_validation->set_rules('delivery', 'Delivery', 'required');
 		$this->form_validation->set_rules('validUntil', 'Valid Until', 'required');
 	
-		$_POST = $data;
+		// Validate each item in the items array
+		if (!empty($data['items'])) {
+			foreach ($data['items'] as $index => $item) {
+				$this->form_validation->set_rules("items[$index][itemName]", "Item Name for item $index", 'required');
+				$this->form_validation->set_rules("items[$index][quantity]", "Quantity for item $index", 'required|numeric');
+				$this->form_validation->set_rules("items[$index][unitPrice]", "Unit Price for item $index", 'required|numeric');
+			}
+		} else {
+			$this->output->set_status_header(400);
+			echo json_encode(['error' => 'At least one item is required.']);
+			return;
+		}
 	
 		if ($this->form_validation->run() == FALSE) {
 			// Log the validation errors
 			log_message('error', 'Validation errors: ' . json_encode($this->form_validation->error_array()));
-		
+	
 			// Set response status to 400 for validation errors
 			$this->output->set_status_header(400);
-		
+	
 			// Return the response with a single error message
 			$errors = $this->form_validation->error_array();
 			$errorMessage = reset($errors);  // Retrieve the first error message
-		
+	
 			echo json_encode(['error' => $errorMessage ?: 'Validation failed.']);
 			return;
 		}
-		
+	
 		// Ensure `general_exclusion` is properly formatted before sending to Zoho
-        $data['general_exclusion'] = $this->input->post('generalExclusion', true);
+		$data['general_exclusion'] = $this->input->post('generalExclusion', true);
 	
 		// Add proposal to Zoho
 		$result = $this->add_proposal_to_zoho($data['dealNumber'], $data);
@@ -111,7 +121,7 @@ class Dashboard extends CI_Controller {
 		// Log successful addition
 		log_message('info', 'Proposal successfully added to Zoho for Deal ID: ' . $data['dealNumber']);
 	
-		// return $this->response(['success' => true, 'message' => 'Proposal added successfully.'], 201);
+		return $this->response(['success' => true, 'message' => 'Proposal added successfully.', 'id' => $result['quote_id']], 201);
 	}        
 	
 	private function add_proposal_to_zoho($deal_number, $proposal_data) {
@@ -136,9 +146,9 @@ class Dashboard extends CI_Controller {
 			$contact_data,
 			'POST'
 		);
-		
+	
 		$contact_data_response = json_decode($contact_response['body'], true);
-		
+	
 		if ($contact_response['http_code'] == 401) {
 			if ($this->refresh_access_token()) {
 				$this->access_token = $this->get_access_token();
@@ -164,54 +174,12 @@ class Dashboard extends CI_Controller {
 		$contact_response_body = json_decode($contact_response['body'], true);
 		if (isset($contact_response_body['data'][0]['details']['id'])) {
 			$contact_id = $contact_response_body['data'][0]['details']['id'];
-			// $contact_name = $proposal_data['kind_attention'];
 		} else {
 			log_message('error', 'Failed to create contact in Zoho CRM: ' . print_r($contact_response_body, true));
 			return ['error' => 'Failed to create contact.'];
 		}
-		
-		// Fetch product details from Zoho CRM using product_id
-		if (!empty($proposal_data['product_id'])) {
-			$product_response = $this->execute_curl_request(
-				"https://www.zohoapis.com/crm/v2.1/Products/{$proposal_data['product_id']}",
-				[
-					'Content-Type: application/json',
-					"Authorization: Zoho-oauthtoken " . $this->access_token
-				],
-				null,
-				'GET'
-			);
-		
-			$product_data = json_decode($product_response['body'], true);
-		
-			if ($product_response['http_code'] == 401) {
-				if ($this->refresh_access_token()) {
-					$this->access_token = $this->get_access_token();
-					$headers = [
-						'Content-Type: application/json',
-						"Authorization: Zoho-oauthtoken " . $this->access_token
-					];
 	
-					$product_response = $this->execute_curl_request(
-						"https://www.zohoapis.com/crm/v2.1/Products/{$proposal_data['product_id']}",
-						$headers,
-						null,
-						'GET'
-					);
-	
-					$product_data = json_decode($product_response['body'], true);
-				} else {
-					log_message('error', 'Failed to refresh access token for product details.');
-					return ['error' => 'Failed to refresh access token.'];
-				}
-			}
-		
-			$product_description = $product_data['data']['0']['Description'] ?? '';
-		} else {
-			$product_description = '';
-		}
-
-		// Step 1: Get the Deal ID using DealNumber
+		// Step 2: Get the Deal ID using DealNumber
 		$deal_response = $this->execute_curl_request(
 			"https://www.zohoapis.com/crm/v2.1/Deals/search?criteria=(DealNumber:equals:$deal_number)",
 			[
@@ -253,7 +221,7 @@ class Dashboard extends CI_Controller {
 		}
 	
 		$deal_id = $deal_data['data'][0]['id'];
-		
+
 		// Fetch task data by Deal ID
         $task = $this->Task_model->get_task_by_deal_id($deal_id);
         if (!$task) {
@@ -262,13 +230,23 @@ class Dashboard extends CI_Controller {
         }
     
         $id = $task->id;
-        $account_name = $task->account_name;
-
+	
+		// Step 3: Prepare data for Zoho Quote creation
+		$quoted_items = [];
+		foreach ($proposal_data['items'] as $item) {
+			$quoted_items[] = [
+				'Product_Name' => $item['itemName'],
+				'Quantity' => (float) $item['quantity'],
+				'List_Price' => (float) $item['unitPrice'],
+				'U_O_M' => $item['uom'],
+				'Description' => $item['itemDescription'],
+			];
+		}
+	
 		$data = json_encode([
 			'data' => [
 				[
 					'Deal_Name' => $deal_id,
-					'Account_Name' => $account_name ?? null,
 					'Subject' => $proposal_data['subject'] ?? 'Default Subject',
 					'Project' => $proposal_data['project'] ?? 'na',
 					'Terms_of_Payment' => $proposal_data['termsOfPayment'] ?? 'na',
@@ -281,32 +259,24 @@ class Dashboard extends CI_Controller {
 					'Sub_Total' => (float) ($proposal_data['subTotal'] ?? 0),
 					'Discount' => (float) ($proposal_data['discount'] ?? 0),
 					'line_tax' => [
-                        [
-                            'percentage' => 5, // VAT Percentage
-                            'name' => 'Vat',
-                            'id' => '5653678000000021003', // You can use the Zoho ID for the VAT line tax
-                            'value' => (float) (((float) $proposal_data['subTotal'] - (float) $proposal_data['discount']) * 5 / 100), // Ensure numeric
-                        ]
-                    ],
+						[
+							'percentage' => 5, // VAT Percentage
+							'name' => 'Vat',
+							'id' => '5653678000000021003', // Zoho ID for VAT
+							'value' => (float) (((float) $proposal_data['subTotal'] - (float) $proposal_data['discount']) * 5 / 100),
+						]
+					],
 					'Adjustment' => (float) ($proposal_data['adjustment'] ?? 0),
 					'Grand_Total' => (float) ($proposal_data['grandTotal'] ?? 0),
 					'Contact_Name' => [
-						// 'name' => $contact_name,
 						'id' => $contact_id,
 					],
-					'Quoted_Items' => [
-						[
-							'Product_Name' => $proposal_data['itemName'],
-							'Quantity' => (float) $proposal_data['quantity'],
-							'List_Price' => (float) $proposal_data['unitPrice'],
-							'U_O_M' => $proposal_data['uom'],
-							'Description' => $proposal_data['itemDescription'],
-						]
-					]
+					'Quoted_Items' => $quoted_items,
 				]
 			]
-		]);			   
+		]);
 	
+		// Step 4: Submit the quote to Zoho
 		$this->access_token = $this->get_access_token();
 	
 		if (!$this->access_token) {
@@ -318,9 +288,6 @@ class Dashboard extends CI_Controller {
 			"Authorization: Zoho-oauthtoken " . $this->access_token
 		];
 	
-		// log_message('debug', 'Headers: ' . print_r($headers, true));
-		// log_message('debug', 'Post Data: ' . $data);
-	
 		$response = $this->execute_curl_request(
 			"https://www.zohoapis.com/crm/v2.1/Quotes",
 			$headers,
@@ -329,103 +296,67 @@ class Dashboard extends CI_Controller {
 		);
 	
 		$response_body = json_decode($response['body'], true);
-
-		// Now handle the insertion of task quote
+	
+		// Log the full Zoho CRM response for debugging
+		log_message('debug', 'Zoho CRM Response: ' . print_r($response_body, true));
+	
+		// Step 5: Handle Zoho response and store data in the database
 		if (isset($response_body['data'][0]['details']['id'])) {
 			$quote_id = $response_body['data'][0]['details']['id'];
-		
-			log_message('debug', 'Quote ID: ' . $quote_id);
-			
-			// Fetch the created quote to get its Quote_No
-			$quote_details_response = $this->execute_curl_request(
-				"https://www.zohoapis.com/crm/v2/Quotes/$quote_id",
-				$headers,
-				null,
-				'GET'
-			);
-			
-			$quote_details = json_decode($quote_details_response['body'], true);
-			$quote_number = $quote_details['data'][0]['Quote_No'] ?? null;
-		
+			$quote_number = $response_body['data'][0]['Quote_No'] ?? $quote_id; // Fallback to quote ID if Quote_No is missing
+	
 			if (!$quote_number) {
-				log_message('debug', 'Quote number missing from Zoho CRM response: ' . print_r($quote_details, true));
-				$this->output->set_status_header(500);
-				return json_encode(['success' => false, 'error' => 'Quote number not found in Zoho CRM response.']);
+				log_message('error', 'Quote number missing from Zoho CRM response: ' . print_r($response_body, true));
+				return ['error' => 'Quote number not found in Zoho CRM response.'];
 			}
-			
-			// Now update the deal status to 'Proposal'
-			$update_status_response = $this->update_deal_in_zoho($deal_id, 'Proposal/Price Quote', $proposal_data['unitPrice']);
-		
-			// $id = $this->Task_model->get_id_by_deal_id($deal_id);
-		
-			log_message('debug', 'Task ID: ' . $id);
-		
-			if (!$id) {
-				log_message('debug', 'No task found for the provided deal_id: ' . $deal_id);
-				$this->output->set_status_header(404);
-				return json_encode(['error' => 'No task found for the provided deal_id']);
-			}
-			
-			$quote_id = $quote_details['data'][0]['id'];
-    
-            // Fetch Quote_No from the created quote
-            $quote_details_response = $this->execute_curl_request(
-                "https://www.zohoapis.com/crm/v2/Quotes/$quote_id",
-                $headers,
-                null,
-                'GET'
-            );
-    
-            $quote_details = json_decode($quote_details_response['body'], true);
-            $quote_number = $quote_details['data'][0]['Quote_No'] ?? null;
-            $modified_time = $quote_details['data'][0]['Modified_Time'] ?? null;
-    
-            if (!$quote_number) {
-                log_message('error', 'Quote number missing from Zoho CRM response: ' . print_r($quote_details, true));
-                return ['error' => 'Quote number not found in Zoho CRM response.'];
-            }
-			
-			$data = [
-				// 'id' => $id,
-				'zoho_crm_id' => $deal_id,
+	
+			// Prepare quote data for database
+			$quote_data = [
 				'quote_id' => $quote_id,
 				'quote_number' => $quote_number,
 				'subject' => $proposal_data['subject'],
 				'project_name' => $proposal_data['project'],
 				'terms_of_payment' => $proposal_data['termsOfPayment'],
-				'product_id' => $proposal_data['product_id'],
-				'product_name' => $proposal_data['product_name'],
-				'product_description' => $proposal_data['itemDescription'],
-				'uom' => $proposal_data['uom'],
-				'discount' => $proposal_data['discount'],
-				'adjustment' => $proposal_data['adjustment'],
-				'service_charge' => $proposal_data['unitPrice'],
 				'kind_attention' => $proposal_data['kind_attention'],
 				'specification' => $proposal_data['specification'],
+				'general_exclusion' => $proposal_data['generalExclusion'],
 				'brand' => $proposal_data['brand'],
 				'warranty' => $proposal_data['warranty'],
 				'delivery' => $proposal_data['delivery'],
-				'quantity' => $proposal_data['quantity'],
 				'valid_until' => $proposal_data['validUntil'],
-				'general_exclusion' => $proposal_data['generalExclusion'],
-				'updated_at' => $modified_time,
+				// 'sub_total' => $proposal_data['subTotal'],
+				'discount' => $proposal_data['discount'],
+				'adjustment' => $proposal_data['adjustment'],
+				// 'grand_total' => $proposal_data['grandTotal'],
 			];
-		
-			if (!$this->Task_model->save_proposal_data($data, $id)) {
-				log_message('error', 'Failed to insert data into Task_model with data: ' . print_r($data, true));
-				$this->db->trans_rollback();
-				$this->output->set_status_header(500);
-				return json_encode(['error' => 'Failed to update Task_quote_model.']);
+	
+			// Save quote data to the database
+			$this->Task_model->save_proposal_data($quote_data, $id);
+	
+			// Prepare items data for database
+			$items_data = [];
+			foreach ($proposal_data['items'] as $item) {
+				$items_data[] = [
+					'task_id' => $id,
+					'quote_id' => $quote_id,
+					'product_id' => $item['product_id'],
+					'product_name' => $item['product_name'],
+					'product_description' => $item['itemDescription'],
+					'uom' => $item['uom'],
+					'quantity' => $item['quantity'],
+					'service_charge' => $item['unitPrice'],
+					'total' => $item['total'],
+				];
 			}
-		
-			// return ['success' => true, 'message' => 'Task quote created successfully.'];
-			return $this->response(['success' => true, 'message' => 'Proposal added successfully.', 'id' => $id], 201);
+	
+			// Save items data to the database
+			$this->Proposal_model->save_proposal_items($items_data);
+	
+			return ['success' => true, 'quote_id' => $quote_id, 'quote_number' => $quote_number];
 		} else {
-			log_message('debug', 'Full response for error handling: ' . print_r($response_body, true));
-			$this->output->set_status_header(500);
-			return json_encode(['error' => 'Quote ID not found in Zoho CRM response.']);
+			log_message('error', 'Failed to create quote in Zoho CRM: ' . print_r($response_body, true));
+			return ['error' => 'Failed to create quote in Zoho CRM.'];
 		}
-		
 	}
 	
 	// Function to update the deal status to 'Proposal' in Zoho CRM

@@ -1,6 +1,17 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+/**
+ * Tasks Controller
+ * @property session $session
+ * @property User_model $User_model
+ * @property form_validation $form_validation
+ * @property User_model $User_model
+ * @property User_task_model $User_task_model
+ * @property input $input
+ * @property output $output
+ */
+
 class Auth extends CI_Controller {
 
     public function __construct() {
@@ -24,6 +35,7 @@ class Auth extends CI_Controller {
 		$this->form_validation->set_rules('user_id', 'User Id', 'required');
 		$this->form_validation->set_rules('status', 'Status');
 		$this->form_validation->set_rules('department', 'Status');
+		$this->form_validation->set_rules('role', 'Role');
 	
 		if ($this->form_validation->run() === FALSE) {
 			echo json_encode(array("status" => "error", "message" => validation_errors()));
@@ -40,6 +52,7 @@ class Auth extends CI_Controller {
 				'status' => $data['status'],
 				'department' => $data['department'],
 				'quote_access' => $data['quote_access'],
+				'role' => $data['role']
 			);
 	
 			// Check if the user already exists by email or user_id

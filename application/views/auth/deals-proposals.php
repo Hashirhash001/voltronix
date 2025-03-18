@@ -120,22 +120,24 @@
 													<th>Quantity</th>
 													<th>Unit Price (AED)</th>
 													<th>Total (AED)</th>
+													<th>Action</th>
 												</tr>
 											</thead>
-											<tbody>
-												<tr>
-													<td>1</td>
+											<tbody id="itemRows">
+												<!-- Primary Row -->
+												<tr class="item-row">
+													<td style="min-width: 80px;">1</td>
 													<td style="min-width: 400px;">
-													    <input type="hidden" id="product_id" name="product_id">
-														<input type="hidden" id="product_name" name="product_name">
-														<select class="form-control" id="itemName" name="itemName" style="width: 100%;" required>
+														<input type="hidden" class="product_id" name="product_id[]">
+														<input type="hidden" class="product_name" name="product_name[]">
+														<select class="form-control itemName" name="itemName[]" style="width: 100%;" required>
 															<option value="">-None-</option>
 														</select>
-														<textarea name="itemDescription" id="itemDescription" cols="30" rows="3" style="width: 100%; border: 1px solid #ced4da;"></textarea>
+														<textarea name="itemDescription[]" class="itemDescription" cols="30" rows="3" style="width: 100%; border: 1px solid #ced4da;"></textarea>
 														<div class="error-message"></div>
 													</td>
 													<td style="min-width: 130px;">
-														<select class="form-control" name="uom" id="uom" required>
+														<select class="form-control uom" name="uom[]" required>
 															<option value="">-None-</option>
 															<option value="NOS">NOS</option>
 															<option value="PCS">PCS</option>
@@ -180,16 +182,19 @@
 														<div class="error-message"></div>
 													</td>
 													<td style="min-width: 100px;">
-														<input type="number" name="quantity" class="form-control no-arrows" id="quantity" placeholder="Quantity" required>
+														<input type="number" name="quantity[]" class="form-control quantity" placeholder="Quantity" required>
 														<div class="error-message"></div>
 													</td>
 													<td style="min-width: 100px;">
-														<input type="number" name="unitPrice" class="form-control no-arrows" id="unitPrice" placeholder="Unit Price" required>
+														<input type="number" name="unitPrice[]" class="form-control unitPrice" placeholder="Unit Price" required>
 														<div class="error-message"></div>
 													</td>
 													<td style="min-width: 100px;">
-														<input type="number" name="total" class="form-control" id="total" placeholder="Total" readonly>
+														<input type="number" name="total[]" class="form-control total" placeholder="Total" readonly>
 														<div class="error-message"></div>
+													</td>
+													<td>
+														<!-- No Remove button for the first row -->
 													</td>
 												</tr>
 											</tbody>
@@ -198,6 +203,10 @@
 
 									<!-- Totals Section -->
 									<div class="row mt-4">
+										<!-- Add Item Button -->
+										<div class="text-start my-3">
+											<button type="button" id="addItem" class="btn" style="background-color: #d10908; color: #fff;">+ Add Item</button>
+										</div>
 										<div class="col-md-5 offset-md-7">
 											<div class="form-group d-flex align-items-center justify-content-between">
 												<label style="color: #000; font-weight: 600;" for="sub-total" class="label-nowrap">Sub Total (AED)</label>
@@ -508,6 +517,232 @@
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script>
 	<script>
+
+ 		//add a row for each product and Initialize Select2 for each row
+		$(document).ready(function () {
+			let rowCount = 1; // Track the number of rows
+
+			// Function to initialize Select2 for a row
+			function initializeSelect2(row) {
+				const productDetails = {}; // Store product descriptions for quick access
+				let loading = false; // Prevent multiple concurrent requests
+				let hasMoreRecords = true; // Indicator for more records
+				let page = 1; // Current page for pagination
+				let lastQuery = ''; // To track the last search query
+
+				$(row).find('.itemName').select2({
+					placeholder: 'Search for an item...',
+					allowClear: true,
+					width: '100%',
+					ajax: {
+						transport: function (params, success, failure) {
+							const query = params.data.q || ''; // Capture the current search query
+
+							// Reset pagination and clear results if the query changes
+							if (query !== lastQuery) {
+								page = 1; // Reset to the first page
+								hasMoreRecords = true; // Reset the flag for more records
+								lastQuery = query; // Update the last query
+								success({ results: [] }); // Clear previous results in the dropdown
+							}
+
+							// Prevent multiple requests or if no more records
+							if (loading || !hasMoreRecords) return;
+
+							loading = true; // Mark as loading
+
+							fetch(`https://app.voltronix.ae/voltronix/deal/products?page=${page}&per_page=20&q=${encodeURIComponent(query)}`)
+								.then((response) => response.json())
+								.then((data) => {
+									const results = [];
+									if (data.success && Array.isArray(data.products)) {
+										data.products.forEach((product) => {
+											productDetails[product.id] = product.description || ''; // Cache product descriptions
+											results.push({ id: product.id, text: product.name }); // Format for Select2
+										});
+
+										hasMoreRecords = data.more_records; // Update the flag for more records
+										page++; // Increment page for the next request
+
+										success({ results, pagination: { more: hasMoreRecords } }); // Send results to Select2
+									} else {
+										hasMoreRecords = false; // No more records
+										success({ results: [], pagination: { more: false } });
+									}
+								})
+								.catch((error) => {
+									console.error('Error fetching products:', error);
+									failure(error);
+								})
+								.finally(() => {
+									loading = false; // Reset loading state
+								});
+						},
+						processResults: function (data) {
+							return data; // The transport already formats the response correctly
+						},
+						delay: 250, // Add delay to prevent excessive requests
+					},
+					templateResult: formatOption,
+					templateSelection: formatOption,
+				});
+
+				// Handle description display when a product is selected
+				$(row).find('.itemName').on('change', function () {
+					const selectedItemId = $(this).val();
+					const descriptionField = $(row).find('.itemDescription');
+
+					// Clear the description if no item is selected
+					if (!selectedItemId) {
+						descriptionField.val('');
+						return;
+					}
+
+					// Fetch the product description from the stored details
+					const selectedDescription = productDetails[selectedItemId];
+					descriptionField.val(selectedDescription || '');
+				});
+			}
+
+			// Format long text in dropdown and selection
+			function formatOption(option) {
+				if (!option.id) return option.text; // Show placeholder
+				return $('<span class="wrap-text"></span>').text(option.text); // Wrap long text
+			}
+
+			// Function to update row numbers
+			function updateRowNumbers() {
+				$('#itemRows tr').each(function (index) {
+					$(this).find('td:first').text(index + 1); // Update the S.NO column
+				});
+			}
+
+			// Add new row on button click
+			$('#addItem').on('click', function () {
+				rowCount++;
+				const newRow = `
+					<tr class="item-row">
+						<td>${$('#itemRows tr').length + 1}</td>
+						<td>
+							<input type="hidden" class="product_id" name="product_id[]">
+							<input type="hidden" class="product_name" name="product_name[]">
+							<select class="form-control itemName" name="itemName[]" style="width: 100%;" required>
+								<option value="">-None-</option>
+							</select>
+							<textarea name="itemDescription[]" class="itemDescription" cols="30" rows="3" style="width: 100%; border: 1px solid #ced4da;"></textarea>
+							<div class="error-message"></div>
+						</td>
+						<td>
+							<select class="form-control uom" name="uom[]" required>
+								<option value="">-None-</option>
+								<option value="NOS">NOS</option>
+								<option value="PCS">PCS</option>
+								<option value="LS">LS</option>
+								<option value="BAG">BAG</option>
+								<option value="BKT">BKT</option>
+								<option value="BND">BND</option>
+								<option value="BOWL">BOWL</option>
+								<option value="BX">BX</option>
+								<option value="CRD">CRD</option>
+								<option value="CM">CM</option>
+								<option value="CS">CS</option>
+								<option value="CTN">CTN</option>
+								<option value="DZ">DZ</option>
+								<option value="EA">EA</option>
+								<option value="FT">FT</option>
+								<option value="GAL">GAL</option>
+								<option value="GROSS">GROSS</option>
+								<option value="IN">IN</option>
+								<option value="KIT">KIT</option>
+								<option value="LOT">LOT</option>
+								<option value="M">M</option>
+								<option value="MM">MM</option>
+								<option value="PC">PC</option>
+								<option value="PK">PK</option>
+								<option value="PK100">PK100</option>
+								<option value="PK50">PK50</option>
+								<option value="PR">PR</option>
+								<option value="RACK">RACK</option>
+								<option value="RL">RL</option>
+								<option value="SET">SET</option>
+								<option value="SET3">SET3</option>
+								<option value="SET4">SET4</option>
+								<option value="SET5">SET5</option>
+								<option value="SGL">SGL</option>
+								<option value="SHT">SHT</option>
+								<option value="SQFT">SQFT</option>
+								<option value="TUBE">TUBE</option>
+								<option value="YD">YD</option>
+								<option value="SQM">SQM</option>
+							</select>
+							<div class="error-message"></div>
+						</td>
+						<td>
+							<input type="number" name="quantity[]" class="form-control quantity" placeholder="Quantity" required>
+							<div class="error-message"></div>
+						</td>
+						<td>
+							<input type="number" name="unitPrice[]" class="form-control unitPrice" placeholder="Unit Price" required>
+							<div class="error-message"></div>
+						</td>
+						<td>
+							<input type="number" name="total[]" class="form-control total" placeholder="Total" readonly>
+							<div class="error-message"></div>
+						</td>
+						<td>
+							<button type="button" class="btn btn-danger btn-sm remove-row">
+								<i class="bi bi-trash"></i> <!-- Bootstrap trash icon -->
+							</button>
+						</td>
+					</tr>
+				`;
+				$('#itemRows').append(newRow);
+
+				// Initialize Select2 for the new row
+				initializeSelect2($('#itemRows tr:last'));
+
+				// Update row numbers
+				updateRowNumbers();
+			});
+
+			 // Remove row when the "Remove" button is clicked
+			 $('#itemRows').on('click', '.remove-row', function () {
+				$(this).closest('tr').remove(); // Remove the closest row
+				updateRowNumbers(); // Update the row numbers
+			});
+
+			// Initialize Select2 for the primary row
+			initializeSelect2($('#itemRows tr:first'));
+		});
+
+		function calculateTotals() {
+			let subTotal = 0;
+
+			// Loop through each row and calculate totals
+			$('.item-row').each(function () {
+				const quantity = parseFloat($(this).find('.quantity').val()) || 0;
+				const unitPrice = parseFloat($(this).find('.unitPrice').val()) || 0;
+				const total = quantity * unitPrice;
+				$(this).find('.total').val(total.toFixed(2));
+
+				subTotal += total;
+			});
+
+			$('#sub-total').val(subTotal.toFixed(2));
+
+			// Calculate Grand Total (same as before)
+			const discountAmount = parseFloat($('#discount').val()) || 0;
+			const vatPercentage = 5;
+			const vat = (vatPercentage / 100) * (subTotal - discountAmount);
+			const adjustment = parseFloat($('#adjustment').val()) || 0;
+			const grandTotal = subTotal - discountAmount + vat + adjustment;
+			$('#grand-total').val(grandTotal.toFixed(2));
+		}
+
+		// Attach event listeners to recalculate totals
+		$('#itemRows').on('input', '.quantity, .unitPrice', calculateTotals);
+		$('#discount, #adjustment').on('input', calculateTotals);
+
 	    // toggle icons
 		$(document).ready(function () {
 			// Initialize icons based on the initial state of collapses
@@ -636,92 +871,92 @@
 		dateInput2.setAttribute('min', today2);
 
 		// Fetch item names1 from the API
-		$(document).ready(function () {
-            const productDetails = {}; // Store product descriptions for quick access
-            let loading = false; // Prevent multiple concurrent requests
-            let hasMoreRecords = true; // Indicator for more records
-            let page = 1; // Current page for pagination
-            let lastQuery = ''; // To track the last search query
+		// $(document).ready(function () {
+        //     const productDetails = {}; // Store product descriptions for quick access
+        //     let loading = false; // Prevent multiple concurrent requests
+        //     let hasMoreRecords = true; // Indicator for more records
+        //     let page = 1; // Current page for pagination
+        //     let lastQuery = ''; // To track the last search query
         
-            // Initialize Select2 with placeholder, infinite scrolling, and custom templates
-            $('#itemName').select2({
-                placeholder: 'Search for an item...',
-                allowClear: true,
-                width: '100%',
-                ajax: {
-                    transport: function (params, success, failure) {
-                        const query = params.data.q || ''; // Capture the current search query
+        //     // Initialize Select2 with placeholder, infinite scrolling, and custom templates
+        //     $('#itemName').select2({
+        //         placeholder: 'Search for an item...',
+        //         allowClear: true,
+        //         width: '100%',
+        //         ajax: {
+        //             transport: function (params, success, failure) {
+        //                 const query = params.data.q || ''; // Capture the current search query
         
-                        // Reset pagination and clear results if the query changes
-                        if (query !== lastQuery) {
-                            page = 1; // Reset to the first page
-                            hasMoreRecords = true; // Reset the flag for more records
-                            lastQuery = query; // Update the last query
-                            success({ results: [] }); // Clear previous results in the dropdown
-                        }
+        //                 // Reset pagination and clear results if the query changes
+        //                 if (query !== lastQuery) {
+        //                     page = 1; // Reset to the first page
+        //                     hasMoreRecords = true; // Reset the flag for more records
+        //                     lastQuery = query; // Update the last query
+        //                     success({ results: [] }); // Clear previous results in the dropdown
+        //                 }
         
-                        // Prevent multiple requests or if no more records
-                        if (loading || !hasMoreRecords) return;
+        //                 // Prevent multiple requests or if no more records
+        //                 if (loading || !hasMoreRecords) return;
         
-                        loading = true; // Mark as loading
+        //                 loading = true; // Mark as loading
         
-                        fetch(`https://app.voltronix.ae/voltronix/deal/products?page=${page}&per_page=20&q=${encodeURIComponent(query)}`)
-                            .then((response) => response.json())
-                            .then((data) => {
-                                const results = [];
-                                if (data.success && Array.isArray(data.products)) {
-                                    data.products.forEach((product) => {
-                                        productDetails[product.id] = product.description || ''; // Cache product descriptions
-                                        results.push({ id: product.id, text: product.name }); // Format for Select2
-                                    });
+        //                 fetch(`https://app.voltronix.ae/voltronix/deal/products?page=${page}&per_page=20&q=${encodeURIComponent(query)}`)
+        //                     .then((response) => response.json())
+        //                     .then((data) => {
+        //                         const results = [];
+        //                         if (data.success && Array.isArray(data.products)) {
+        //                             data.products.forEach((product) => {
+        //                                 productDetails[product.id] = product.description || ''; // Cache product descriptions
+        //                                 results.push({ id: product.id, text: product.name }); // Format for Select2
+        //                             });
         
-                                    hasMoreRecords = data.more_records; // Update the flag for more records
-                                    page++; // Increment page for the next request
+        //                             hasMoreRecords = data.more_records; // Update the flag for more records
+        //                             page++; // Increment page for the next request
         
-                                    success({ results, pagination: { more: hasMoreRecords } }); // Send results to Select2
-                                } else {
-                                    hasMoreRecords = false; // No more records
-                                    success({ results: [], pagination: { more: false } });
-                                }
-                            })
-                            .catch((error) => {
-                                console.error('Error fetching products:', error);
-                                failure(error);
-                            })
-                            .finally(() => {
-                                loading = false; // Reset loading state
-                            });
-                    },
-                    processResults: function (data) {
-                        return data; // The transport already formats the response correctly
-                    },
-                    delay: 250, // Add delay to prevent excessive requests
-                },
-                templateResult: formatOption,
-                templateSelection: formatOption,
-            });
+        //                             success({ results, pagination: { more: hasMoreRecords } }); // Send results to Select2
+        //                         } else {
+        //                             hasMoreRecords = false; // No more records
+        //                             success({ results: [], pagination: { more: false } });
+        //                         }
+        //                     })
+        //                     .catch((error) => {
+        //                         console.error('Error fetching products:', error);
+        //                         failure(error);
+        //                     })
+        //                     .finally(() => {
+        //                         loading = false; // Reset loading state
+        //                     });
+        //             },
+        //             processResults: function (data) {
+        //                 return data; // The transport already formats the response correctly
+        //             },
+        //             delay: 250, // Add delay to prevent excessive requests
+        //         },
+        //         templateResult: formatOption,
+        //         templateSelection: formatOption,
+        //     });
         
-            // Format long text in dropdown and selection
-            function formatOption(option) {
-                if (!option.id) return option.text; // Show placeholder
-                return $('<span class="wrap-text"></span>').text(option.text); // Wrap long text
-            }
+        //     // Format long text in dropdown and selection
+        //     function formatOption(option) {
+        //         if (!option.id) return option.text; // Show placeholder
+        //         return $('<span class="wrap-text"></span>').text(option.text); // Wrap long text
+        //     }
         
-            // Handle description display when a product is selected
-            $('#itemName').on('change', function () {
-                const selectedItemId = $(this).val();
+        //     // Handle description display when a product is selected
+        //     $('#itemName').on('change', function () {
+        //         const selectedItemId = $(this).val();
         
-                // Clear the description if no item is selected
-                if (!selectedItemId) {
-                    $('#itemDescription').val('');
-                    return;
-                }
+        //         // Clear the description if no item is selected
+        //         if (!selectedItemId) {
+        //             $('#itemDescription').val('');
+        //             return;
+        //         }
         
-                // Fetch the product description from the stored details
-                const selectedDescription = productDetails[selectedItemId];
-                $('#itemDescription').val(selectedDescription || '');
-            });
-        });
+        //         // Fetch the product description from the stored details
+        //         const selectedDescription = productDetails[selectedItemId];
+        //         $('#itemDescription').val(selectedDescription || '');
+        //     });
+        // });
 
 		// Fetch item names2 from the API and quote details for editing a quote
 		$(document).ready(function () {
@@ -912,7 +1147,6 @@
             }
         });
 
-
 		// Handle logout
 		$(document).ready(function() {
 			// Handle logout button click
@@ -996,13 +1230,64 @@
 				$('#product_name2').val(productName);
 			});
 			
-			$('#reProposalForm').submit(function(e) {
+			// Handle product selection and store values in hidden fields for all rows
+			$(document).on('change', '.itemName', function () {
+				const row = $(this).closest('tr'); // Get the closest row
+				const productId = $(this).val(); // Get product_id from value
+				const productName = $(this).find('option:selected').text(); // Get product_name from text
+
+				// Store these values in hidden fields within the same row
+				row.find('.product_id').val(productId);
+				row.find('.product_name').val(productName);
+			});
+
+			$('#reProposalForm').submit(function (e) {
 				e.preventDefault();
 
 				// Reset any previous error messages
 				$('.error-message').empty();
 
-				var formData = $(this).serialize();
+				// Collect form data
+				const formData = {
+					dealNumber: $('#deal-number').val(),
+					subject: $('#subject').val(),
+					kind_attention: $('#kind_attention').val(),
+					project: $('#project').val(),
+					termsOfPayment: $('#terms-of-payment').val(),
+					specification: $('#specification').val(),
+					generalExclusion: $('#general-exclusion').val(),
+					brand: $('#brand').val(),
+					warranty: $('#warranty').val(),
+					delivery: $('#delivery').val(),
+					validUntil: $('#valid-until').val(),
+					subTotal: $('#sub-total').val(),
+					discount: $('#discount').val(),
+					adjustment: $('#adjustment').val(),
+					grandTotal: $('#grand-total').val(),
+					items: []
+				};
+
+				// Collect data for each item row
+				$('#itemRows tr').each(function () {
+					const item = {
+						product_id: $(this).find('.product_id').val(),
+						product_name: $(this).find('.product_name').val(),
+						itemName: $(this).find('.itemName').val(),
+						itemDescription: $(this).find('.itemDescription').val(),
+						uom: $(this).find('.uom').val(),
+						quantity: $(this).find('.quantity').val(),
+						unitPrice: $(this).find('.unitPrice').val(),
+						total: $(this).find('.total').val()
+					};
+
+					// Validate itemName before adding to formData
+					if (!item.itemName) {
+						$(this).find('.error-message').text('Item Name is required.');
+						return false; // Stop submission if validation fails
+					}
+
+					formData.items.push(item);
+				});
 
 				// Show loader and disable button
 				$('.buttonLoader').show();
@@ -1012,9 +1297,10 @@
 				$.ajax({
 					url: 'dashboard/add_proposal',
 					type: 'POST',
-					data: formData,
+					data: JSON.stringify(formData),
+					contentType: 'application/json',
 					dataType: 'json',
-					success: function(response) {
+					success: function (response) {
 						// Hide loader and enable button on success
 						$('.buttonLoader').hide();
 						$('.submitButton').prop('disabled', false);
@@ -1024,25 +1310,28 @@
 								icon: 'success',
 								title: 'Proposal Created!',
 								html: `
-                                    <p>${response.message}</p>
-                                    <a href="<?= site_url('web/deal/download-quote/') ?>${response.id}"
-                                       class="btn btn-success btn-sm" 
-                                       title="Download Quote" target="_blank" 
-                                        rel="noopener noreferrer">
-                                        <i class="bi bi-download"></i> Download Quote
-                                    </a>
-                                `,
-                                showConfirmButton: true
+									<p>${response.message}</p>
+									<a href="<?= site_url('web/deal/download-quote/') ?>${response.id}"
+									class="btn btn-success btn-sm" 
+									title="Download Quote" target="_blank" 
+										rel="noopener noreferrer">
+										<i class="bi bi-download"></i> Download Quote
+									</a>
+								`,
+								showConfirmButton: true
 							});
 
 							// Reset the form after showing success message
 							$('#reProposalForm')[0].reset();
 
-							// Optionally, call fetchData if needed
-							fetchData(1, $('#searchInput').val(), sort_by, sort_direction);
+							// Clear all dynamically added rows except the first one
+							$('#itemRows tr').not(':first').remove();
+
+							// Reset the row count to 1
+							$('#itemRows tr:first td:first').text('1');
 						}
 					},
-					error: function(xhr) {
+					error: function (xhr) {
 						// Hide loader and enable button on error
 						$('.buttonLoader').hide();
 						$('.submitButton').prop('disabled', false);
@@ -1051,7 +1340,7 @@
 						console.log(xhr.responseJSON);
 
 						// Show error message
-						var errorMessage = xhr.responseJSON?.error || 'An unexpected error occurred. Please try again.';
+						const errorMessage = xhr.responseJSON?.error || 'An unexpected error occurred. Please try again.';
 						Swal.fire({
 							icon: 'error',
 							title: 'Form Submission Error',

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quotation - Voltronix Switchgear LLC</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        .invoice-title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            margin: 3px 0;
+        }
+
+        .invoice-info {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        .invoice-info td {
+            border: 0.3px solid #000;
+            padding: 5px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .table th, .table td {
+            border: 0.3px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .amount-section {
+            text-align: right;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 0px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        table td {
+            font-size: 12px;
+        }
+
+        .invoice-info, .bank-details {
+            border-collapse: collapse;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            border-spacing: 0;
+        }
+
+        .bank-details td {
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+        .bank-details tr {
+            width: 100%;
+        }
+
+        .invoice-info + .bank-details {
+            margin-top: -1px !important;
+        }
+
+        table {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        .wrapper {
+            min-height: 100%;
+            height: auto;
+        }
+
+        /* Header and Footer Styles */
+        .header, .footer {
+            position: fixed;
+            left: 0;
+            right: 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="wrapper" style="border: 0.5px solid #7c7c7c; padding: 20px; margin: 0; border-top: none; border-bottom: none; height: 1500px;">
+		
+        <!-- Invoice Title -->
+        <div class="invoice-title">QUOTATION</div>
+
+        <!-- Invoice Information Table -->
+        <table class="invoice-info">
+            <tr>
+                <td colspan="2" style="width: 50%; border: none; border-left: 0.3px solid #000; border-top: 0.3px solid #000; padding:0 10px 0 10px; vertical-align: bottom;">
+                    To:
+                </td>
+                <td colspan="3" style="width: 25%;">Invoice No. _</td>
+                <td colspan="2" style="width: 25%;">Dated: 16-03-2025</td>
+            </tr>
+            <tr>
+                <td colspan="2" style="width: 50%; border: none; border-left: 0.3px solid #000; padding:0 10px 0 10px; vertical-align: bottom;"></td>
+                <td colspan="3" style="width: 25%;">DO No. _</td>
+                <td colspan="2" style="width: 25%;">LPO No. _</td>
+            </tr>
+            <tr>
+                <td colspan="2" style="width: 50%; border: none; border-left: 0.3px solid #000; padding:0 10px 0 10px; vertical-align: top;">Boyd and Reese Plc</td>
+                <td colspan="3" style="width: 25%;">Mode/Terms of Payment</td>
+                <td colspan="2" style="width: 25%;">100% ON DELIVERY</td>
+            </tr>
+            <tr>
+                <td colspan="2" style="width: 50%; border: none; border-left: 0.3px solid #000; border-bottom: 0.3px solid #000;"></td>
+                <td colspan="3" style="width: 25%;">TRN Number</td>
+                <td colspan="2" style="width: 25%;">_</td>
+            </tr>
+            <tr>
+                <td style="width: 6%; text-align: center;">S.No.</td>
+                <td style="width: 44%; text-align: center;">Description</td>
+                <td style="width: 8%; text-align: center;">Quantity</td>
+                <td style="width: 12%; text-align: center;">Rate</td>
+                <td style="width: 6%; text-align: center;">Tax%</td>
+                <td style="width: 8%; text-align: center;">Disc.%</td>
+                <td style="width: 16%; text-align: center;">Amount</td>
+            </tr>
+
+            <!-- Item Rows -->
+                                                        <tr>
+                    <td style="vertical-align: top; text-align: center;">1</td>
+                    <td style="vertical-align: top;">
+                        SUPPLY OF STAINLESS STEEL ENCLOSURE FOR CONTROL PANEL:
+                                            </td>
+                    <td style="vertical-align: top; text-align: center;">
+                        312.00 PR                    </td>
+                    <td style="vertical-align: top; text-align: right;">14.00</td>
+                    <td style="vertical-align: top; text-align:center;">5%</td>
+                    <td style="vertical-align: top; text-align: center;">48.00</td>
+                    <td style="vertical-align: top; text-align: right;">
+                        4,368.00                    </td>
+                </tr>
+                                            <tr>
+                    <td style="vertical-align: top; text-align: center;">2</td>
+                    <td style="vertical-align: top;">
+                        SUPPLY OF PANEL LOCK AND KEY:
+                                            </td>
+                    <td style="vertical-align: top; text-align: center;">
+                        50.00 EA                    </td>
+                    <td style="vertical-align: top; text-align: right;">679.00</td>
+                    <td style="vertical-align: top; text-align:center;">5%</td>
+                    <td style="vertical-align: top; text-align: center;">48.00</td>
+                    <td style="vertical-align: top; text-align: right;">
+                        33,950.00                    </td>
+                </tr>
+                                            <tr>
+                    <td style="vertical-align: top; text-align: center;">3</td>
+                    <td style="vertical-align: top;">
+                        SUPPLY OF VFD CONTROL PANEL (25HP, 18.5KW):
+                                            </td>
+                    <td style="vertical-align: top; text-align: center;">
+                        245.00 CS                    </td>
+                    <td style="vertical-align: top; text-align: right;">446.00</td>
+                    <td style="vertical-align: top; text-align:center;">5%</td>
+                    <td style="vertical-align: top; text-align: center;">48.00</td>
+                    <td style="vertical-align: top; text-align: right;">
+                        109,270.00                    </td>
+                </tr>
+                                            <tr>
+                    <td style="vertical-align: top; text-align: center;">4</td>
+                    <td style="vertical-align: top;">
+                        SUPPLY OF VFD CONTROL PANEL (25HP, 18.5KW):
+                                            </td>
+                    <td style="vertical-align: top; text-align: center;">
+                        174.00 M                    </td>
+                    <td style="vertical-align: top; text-align: right;">657.00</td>
+                    <td style="vertical-align: top; text-align:center;">5%</td>
+                    <td style="vertical-align: top; text-align: center;">48.00</td>
+                    <td style="vertical-align: top; text-align: right;">
+                        114,318.00                    </td>
+                </tr>
+                                            <tr>
+                    <td style="vertical-align: top; text-align: center;">5</td>
+                    <td style="vertical-align: top;">
+                        SUPPLY OF VFD CONTROL PANEL (25HP, 18.5KW):
+                                            </td>
+                    <td style="vertical-align: top; text-align: center;">
+                        882.00 EA                    </td>
+                    <td style="vertical-align: top; text-align: right;">792.00</td>
+                    <td style="vertical-align: top; text-align:center;">5%</td>
+                    <td style="vertical-align: top; text-align: center;">48.00</td>
+                    <td style="vertical-align: top; text-align: right;">
+                        698,544.00                    </td>
+                </tr>
+                                            <tr>
+                    <td style="vertical-align: top; text-align: center;">6</td>
+                    <td style="vertical-align: top;">
+                        INSPECTION AND MAINTENANCE OF CAPACITOR BANK::
+                        <p style='font-size: 12px; margin: 0; padding-left: 20px;'>• Specifications:</p><p style='font-size: 12px; margin: 0; padding-left: 20px;'>• 250KVAR Capacitor Bank – 4 UNITS</p><p style='font-size: 12px; margin: 0; padding-left: 20px;'>• 300KVAR Capacitor Bank – 2 UNITS.</p><p style='font-size: 12px; margin: 0; padding-left: 20px;'>• Checking all components Of Each Capacitor Bank Panel for Wear, Corrosion, and Correct Wiring.</p><p style='font-size: 12px; margin: 0; padding-left: 20px;'>• Cleaning/Removal Any Dust and Debris from Capacitor Bank Panels.</p><p style='font-size: 12px; margin: 0; padding-left: 20px;'>• Ensuring the Accuracy of Settings for Meters and Relays within the Panels.</p><p style='font-size: 12px; margin: 0; padding-left: 20px;'>• Verifying the Proper Functionality of Circuit Breakers and Capacitor Bank Operation.</p><p style='font-size: 12px; margin: 0; padding-left: 20px;'>• Testing and commissioning of each Capacitor bank.</p><br><p style='font-size: 12px; padding-top: 30px;'>Note: Any kind of faulty parts will be replaced with
+additional cost.</p>                    </td>
+                    <td style="vertical-align: top; text-align: center;">
+                        99.00 IN                    </td>
+                    <td style="vertical-align: top; text-align: right;">349.00</td>
+                    <td style="vertical-align: top; text-align:center;">5%</td>
+                    <td style="vertical-align: top; text-align: center;">48.00</td>
+                    <td style="vertical-align: top; text-align: right;">
+                        34,551.00                    </td>
+                </tr>
+                                            <tr>
+                    <td style="vertical-align: top; text-align: center;">7</td>
+                    <td style="vertical-align: top;">
+                        SUPPLY AND INSTALLATION OF SUB METER PROVISION:
+                        <p style='font-size: 12px; margin: 0; padding-left: 20px;'>• Supply and Installation of Sub meter provision arrangements including aluminum louvre cabinet, proper tray, trunking, connection, termination and civil works such as back filling… etc. inside the electrical room as per DEWA Approved design/ requirements.</p>                    </td>
+                    <td style="vertical-align: top; text-align: center;">
+                        10.00 BAG                    </td>
+                    <td style="vertical-align: top; text-align: right;">1,500.00</td>
+                    <td style="vertical-align: top; text-align:center;">5%</td>
+                    <td style="vertical-align: top; text-align: center;">48.00</td>
+                    <td style="vertical-align: top; text-align: right;">
+                        15,000.00                    </td>
+                </tr>
+                                            <tr>
+                    <td style="vertical-align: top; text-align: center;">8</td>
+                    <td style="vertical-align: top;">
+                        DEWA APPROVALS FOR SPLITTING OF WATER METER:
+                        <p style='font-size: 12px; margin: 0; padding-left: 20px;'>• Preparation of Water Supply Drawing.</p><p style='font-size: 12px; margin: 0; padding-left: 20px;'>• DEWA Online Portal - Water NOC submission.</p><p style='font-size: 12px; margin: 0; padding-left: 20px;'>• DEWA Online Portal - Drawing submission.</p><p style='font-size: 12px; margin: 0; padding-left: 20px;'>• Coordination of Dewa for drawing approvals.</p><br><p style='font-size: 12px; padding-top: 30px;'>Note: Any kind of site works will be done with an additional cost.</p>                    </td>
+                    <td style="vertical-align: top; text-align: center;">
+                        15.00 PCS                    </td>
+                    <td style="vertical-align: top; text-align: right;">225.00</td>
+                    <td style="vertical-align: top; text-align:center;">5%</td>
+                    <td style="vertical-align: top; text-align: center;">48.00</td>
+                    <td style="vertical-align: top; text-align: right;">
+                        3,375.00                    </td>
+                </tr>
+                    </table>
+
+        <!-- Total Amount Section (Only on Last Page) -->
+                <table class="invoice-info">
+            <tr>
+                <td colspan="6" style="text-align: right;">
+                    Total Amount <br>
+                    Vat 5% <br>
+                    Grand Total Amount Included VAT
+                </td>
+                <td colspan="1" style="text-align: right;">
+                    1,013,376.00 <br>
+                    50,668.80 <br>
+                    1,064,044.80                </td>
+            </tr>
+            <tr>
+                <td colspan="6" style="border: none; border-left: 0.3px solid #000; border-bottom: 0.3px solid #000; height: 40px; vertical-align: bottom;">
+                    ONE THOUSAND AND SIXTY-FOUR THOUSAND AND FORTY-FOUR POINT EIGHT ONLY <br>
+                    Amount (In words)
+                </td>
+                <td colspan="1" style="text-align: right; border: none; border-right: 0.3px solid #000; border-bottom: 0.3px solid #000; height: 40px; vertical-align: top;">E.&O.E</td>
+            </tr>
+        </table>
+
+        <!-- Bank & Signature Details -->
+        <table class="bank-details">
+            <tr>
+                <td style="width: 11%; border-left: 0.3px solid #000; padding-right: 0;">NAME</td>
+                <td style="width: 25%; border-right: 0.3px solid #000;">: VOLTRONIX SWITCHGEAR LLC</td>
+                <td style="width: 24%;"></td>
+                <td style="width: 32%; text-align: right; border-right: 0.3px solid #000;">for <strong>Voltronix Switchgear LLC</strong></td>
+            </tr>
+            <tr>
+                <td style="width: 11%; border-left: 0.3px solid #000; padding-right: 0;">A/C NO.</td>
+                <td style="width: 25%; border-right: 0.3px solid #000;">: 12784683920001</td>
+                <td style="width: 25%;"></td>
+                <td style="width: 25%; border-right: 0.3px solid #000;"></td>
+            </tr>
+            <tr>
+                <td style="width: 11%; border-left: 0.3px solid #000; padding-right: 0;">BANK</td>
+                <td style="width: 25%; border-right: 0.3px solid #000;">: ADCB</td>
+                <td style="width: 25%;"></td>
+                <td style="width: 25%; border-right: 0.3px solid #000;"></td>
+            </tr>
+            <tr>
+                <td style="width: 11%; border-left: 0.3px solid #000; padding-right: 0;">IBAN NO.</td>
+                <td style="width: 25%; border-right: 0.3px solid #000;">: AE330030012784683920001</td>
+                <td style="width: 25%;"></td>
+                <td style="width: 25%; border-right: 0.3px solid #000;"></td>
+            </tr>
+            <tr>
+                <td style="width: 11%; border-left: 0.3px solid #000; border-bottom: 0.3px solid #000; padding-right: 0;">SWIFT CODE</td>
+                <td style="width: 25%; border-right: 0.3px solid #000; border-bottom: 0.3px solid #000;">: ADCBAEAA</td>
+                <td style="width: 25%; border-bottom: 0.3px solid #000;">Received By:</td>
+                <td style="width: 25%; border-bottom: 0.3px solid #000; border-right: 0.3px solid #000; text-align: right;">Authorized Signatory</td>
+            </tr>
+        </table>
+
+        <!-- Footer Section -->
+        <p style="font-size: 0.83rem; padding: 0; margin-top: 3px;">Declaration: We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.</p>
+        
+    </div>
+</body>
+</html>

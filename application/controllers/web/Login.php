@@ -9,6 +9,9 @@ require FCPATH.'vendor/autoload.php';
  * @property CI_Input $input
  * @property CI_DB $db
  * @property User_model $User_model
+ * @property Task_model $Task_model
+ * @property Proposal_model $Proposal_model
+ * @property session $session
  */
 
 class Login extends CI_Controller {
@@ -17,10 +20,12 @@ class Login extends CI_Controller {
         parent::__construct();
         $this->load->model('User_model');
         $this->load->model('Task_model');
+        $this->load->model('Proposal_model');
         $this->load->library(['form_validation', 'session']);
         $this->load->helper(['url', 'form']);
         $this->load->library('Pdf');
         $this->load->helper('token_validate');
+		$this->load->helper('NumberToWords_helper');
     }
 
 	public function check_logged_in() {
@@ -88,6 +93,8 @@ class Login extends CI_Controller {
 					'id' => $user['id'],
 					'username' => $user['username'],
 					'user_id' => $user['user_id'],
+					'role' => $user['role'],
+					'company' => $user['company'],
 					'logged_in' => TRUE
 				]);
 				
@@ -175,43 +182,88 @@ class Login extends CI_Controller {
     }
     
     public function download_deal_pdf($id) {
-        $this->check_logged_in();
-    
-        // Get task data
-        $data['task'] = $this->Task_model->get_task($id);
-        ob_start();
-        $this->load->view('deal_pdf_view', $data);
-        $html = ob_get_contents();
-        ob_end_clean();
-    
-        $mpdf = new \Mpdf\Mpdf([
-            'margin_top' => 11,
-            'margin_bottom' => 0,
-            'margin_left' => 6,
-            'margin_right' => 6,
-            'default_font' => 'yorkten',
-        ]);
-    
-        // Font data for Yorkten
-        $mpdf->fontdata['yorkten'] = [
-            'R' => $_SERVER['DOCUMENT_ROOT'] . '/voltronix/assets/fonts/Yorkten-NorReg.ttf',
-            'B' => $_SERVER['DOCUMENT_ROOT'] . '/voltronix/assets/fonts/Yorkten-NorBol.ttf',
-            'I' => $_SERVER['DOCUMENT_ROOT'] . '/voltronix/assets/fonts/Yorkten-NorRegIt.ttf',
-            'BI' => $_SERVER['DOCUMENT_ROOT'] . '/voltronix/assets/fonts/Yorkten-NorBolIt.ttf',
-        ];
-    
-        $mpdf->SetTitle('Quote - ' . $data['task']['quote_number']);
-        $backgroundImage = base_url() . 'assets/photos/logo/databg.png';
-        $mpdf->SetDefaultBodyCSS('background', "url('{$backgroundImage}')");
-        $mpdf->SetDefaultBodyCSS('background-image-resize', 1);
-    
-        // Write HTML to PDF
-        $mpdf->WriteHTML($html);
-    
-        $filename = 'quote_' . $data['task']['quote_number'] . '.pdf';
-        $mpdf->Output($filename, \Mpdf\Output\Destination::INLINE);
-    }
-
+		$this->check_logged_in();
+	
+		$username = $this->session->userdata('username');
+		$user = $this->User_model->get_user_by_username($username);
+		if (!$user) {
+			show_error('User not found', 404);
+			return;
+		}
+	
+		$company = isset($user['company']) ? $user['company'] : null;
+	
+		$data['task'] = $this->Task_model->get_task($id);
+		if (!$data['task']) {
+			show_error('Task not found', 404);
+			return;
+		}
+	
+		$data['username'] = $username;
+		$data['items'] = $this->Proposal_model->get_proposal_items($id);
+	
+		// Calculate totals
+		$totalAmount = 0;
+		$vatAmount = 0;
+		$grandTotal = 0;
+		foreach ($data['items'] as $item) {
+			$serviceCharge = (float)($item['service_charge'] ?? 0);
+			$quantity = (float)($item['quantity'] ?? 0);
+			$itemTotal = $quantity * $serviceCharge;
+			$totalAmount += $itemTotal;
+			$vatAmount += $itemTotal * 0.05;
+			$grandTotal += $itemTotal * 1.05;
+		}
+		$data['totalAmount'] = $totalAmount;
+		$data['vatAmount'] = $vatAmount;
+		$data['grandTotal'] = $grandTotal;
+	
+		$company_views = [
+			'VOLTRONIX CONTRACTING LLC' => 'quotes/quote_contracting',
+			'VOLTRONIX SWITCHGEAR LLC' => 'quotes/quote_switchgear',
+		];
+		$view = isset($company_views[$company]) ? $company_views[$company] : 'quotes/quote_contracting';
+	
+		if ($company === 'VOLTRONIX CONTRACTING LLC') {
+			$mpdf = new \Mpdf\Mpdf([
+				'margin_top' => 0,
+				'margin_bottom' => 0,
+				'margin_left' => 4,
+				'margin_right' => 4,
+				'default_font' => 'yorkten',
+				'mode' => 'utf-8',
+				'format' => 'A4',
+				'autoPageBreak' => true, // Manual control
+			]);
+			$backgroundImage = base_url('assets/photos/logo/databg.png');
+			$mpdf->SetDefaultBodyCSS('background', "url('{$backgroundImage}')");
+			$mpdf->SetDefaultBodyCSS('background-image-resize', 1);
+		} elseif ($company === 'VOLTRONIX SWITCHGEAR LLC') {
+			$mpdf = new \Mpdf\Mpdf([
+				'margin_top' => 35,
+				'margin_bottom' => 40,
+				'margin_left' => 2,
+				'margin_right' => 2,
+				'mode' => 'utf-8',
+				'format' => [215, 280],
+				'autoPageBreak' => false, // Manual control
+			]);
+			$backgroundImage = base_url('assets/photos/logo/switchgear_bg.png');
+			$mpdf->SetDefaultBodyCSS('background', "url('{$backgroundImage}')");
+			$mpdf->SetDefaultBodyCSS('background-image-resize', 1);
+		}
+	
+		ob_start();
+		$this->load->view($view, $data);
+		$html = ob_get_contents();
+		ob_end_clean();
+	
+		$mpdf->WriteHTML($html);
+	
+		$filename = 'quote_' . $data['task']['quote_number'] . '.pdf';
+		$mpdf->Output($filename, \Mpdf\Output\Destination::INLINE);
+	}
+	
     public function search() {
         $this->check_logged_in();
     
@@ -285,7 +337,6 @@ class Login extends CI_Controller {
             ->set_status_header($status_code)
             ->set_output(json_encode($data));
     }
-
     
     public function search2()
     {

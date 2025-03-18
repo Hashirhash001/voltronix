@@ -617,7 +617,7 @@
 
 		// Handle dropdown item selection
 		document.querySelectorAll('#statusDropdown .dropdown-item').forEach(item => {
-			item.addEventListener('click', function() {
+			item.addEventListener('click', function () {
 				const selectedValue = this.getAttribute('data-value');
 				const selectedColor = this.getAttribute('data-color');
 
@@ -630,29 +630,30 @@
 				`;
 
 				// Show submit and clear buttons if status changes
-				if (selectedValue !== currentStatus) {
-					document.getElementById('submitButton').style.display = 'block';
-					document.getElementById('clearButton').style.display = 'block';
-				} else {
-					document.getElementById('submitButton').style.display = 'none';
-					document.getElementById('clearButton').style.display = 'none';
-				}
+				const isStatusChanged = selectedValue !== currentStatus;
+				document.getElementById('submitButton').style.display = isStatusChanged ? 'block' : 'none';
+				document.getElementById('clearButton').style.display = isStatusChanged ? 'block' : 'none';
 
-				// Show additional fields for 'Site Visit' or 'Close to Won'
-				if (selectedValue === 'Site Visit' || selectedValue === 'Close to Won') {
-					document.getElementById('additionalFields').style.display = 'block';
-				} else {
-					document.getElementById('additionalFields').style.display = 'none';
-				}
+				// Handle visibility for additional fields
+				const isSiteVisitOrCloseToWon = ['Site Visit', 'Close to Won'].includes(selectedValue);
+				document.getElementById('additionalFields').style.display = isSiteVisitOrCloseToWon ? 'block' : 'none';
 
 				// Show extra amount field only for 'Close to Won'
-				if (selectedValue === 'Close to Won') {
-					document.getElementById('extraAmountField').style.display = 'block';
-				} else {
-					document.getElementById('extraAmountField').style.display = 'none';
+				const extraAmountField = document.getElementById('extraAmountField');
+				extraAmountField.style.display = selectedValue === 'Close to Won' ? 'block' : 'none';
+
+				// Handle required attribute for service_charge dynamically
+				const serviceChargeInput = document.getElementById('extraAmount'); // Corrected ID
+				if (serviceChargeInput) { // Ensure element exists before modifying attributes
+					if (extraAmountField.style.display === 'block') {
+						serviceChargeInput.setAttribute('required', 'required');
+					} else {
+						serviceChargeInput.removeAttribute('required');
+					}
 				}
 			});
 		});
+
 
 		// Function to toggle the submit button and clear button visibility
 		const toggleSubmitButton = () => {

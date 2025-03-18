@@ -2,6 +2,22 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 require FCPATH.'vendor/autoload.php';
 
+/**
+ * Tasks Controller
+ *
+ * @property CI_Form_validation $form_validation
+ * @property CI_Output $output
+ * @property CI_Input $input
+ * @property CI_DB $db
+ * @property Task_model $Task_model
+ * @property User_model $User_model
+ * @property Access_token_model $Access_token_model
+ * @property Task_photo_model $Task_photo_model
+ * @property Payment_model $Payment_model
+ * @property session $session
+ * @property upload $upload
+ */
+
 class Tasks extends CI_Controller {
 
     public function __construct() {

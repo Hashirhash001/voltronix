@@ -215,6 +215,7 @@ class Deals extends CI_Controller {
 		
 		// Optional fields (no 'required' rule, just validation if present)
 		$this->form_validation->set_rules('deal_number', 'Deal number');
+		$this->form_validation->set_rules('c_deal_number', 'Custom Deal number');
 		$this->form_validation->set_rules('remark', 'Remark');
 		$this->form_validation->set_rules('service_charge', 'Amount');
 		$this->form_validation->set_rules('complaint_info', 'Description');

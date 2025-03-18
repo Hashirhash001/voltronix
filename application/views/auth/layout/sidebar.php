@@ -56,7 +56,7 @@
 					</a>
 					
 					<ul class="collapse list-unstyled ps-4 <?php echo ($this->uri->segment(2) == 'assignTask') ? 'show' : ''; ?>" id="taskSubmenu" style="padding: 0 !important;">
-						<?php if ($this->session->userdata('user_id') == '5653678000013160085') : ?>
+						<?php if ($this->session->userdata('role') == '1') : ?>
 							<li class="nav-item submenu-text">
 								<a href="<?php echo site_url('web/assignTask'); ?>" 
 								class="nav-link sub-menu d-flex align-items-center gap-2 w-100 <?php echo ($this->uri->segment(2) == 'assignTask' && !$this->uri->segment(3)) ? 'active submenu-active' : ''; ?>" style="padding: .625rem 2.25rem;">
@@ -70,7 +70,7 @@
 								</a>
 							</li>
 						<?php endif; ?>
-						<?php if ($this->session->userdata('user_id') != '5653678000013160085') : ?>
+						<?php if ($this->session->userdata('role') != '1') : ?>
 							<li class="nav-item submenu-text">
 								<a href="<?php echo site_url('web/assignTask/my-tasks'); ?>" 
 								class="nav-link sub-menu d-flex align-items-center gap-2 w-100 
