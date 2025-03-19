@@ -241,7 +241,7 @@ class Login extends CI_Controller {
 		} elseif ($company === 'VOLTRONIX SWITCHGEAR LLC') {
 			$mpdf = new \Mpdf\Mpdf([
 				'margin_top' => 35,
-				'margin_bottom' => 40,
+				'margin_bottom' => 35,
 				'margin_left' => 2,
 				'margin_right' => 2,
 				'mode' => 'utf-8',

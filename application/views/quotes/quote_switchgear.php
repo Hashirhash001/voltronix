@@ -72,14 +72,14 @@
         $itemCount = count($items);
         $rowCount = 1;
         $currentHeight = 0;
-        $maxHeight = 175; // Adjusted for page height with continuation text
+        $maxHeight = 184; // Adjusted for page height with continuation text
         $pageItems = []; // Buffer items for each page
         $currentPage = 1; // Track current page number
         $totalPages = 0; // Will calculate later
 
         // First pass: Estimate total pages
         $tempHeight = 0;
-        $headerHeight = 40; // Approx height for header
+        $headerHeight = 0; // Approx height for header
         $totalsHeight = 45; // Approx height for totals section (increased for continuation row)
         $bankDetailsHeight = 30; // Approx height for bank details
         foreach ($items as $item) {

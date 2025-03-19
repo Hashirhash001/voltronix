@@ -502,3 +502,7 @@ table tbody tr {
     white-space: normal; /* Ensure wrapping */
     max-width: 250px; /* Adjust as needed */
 }
+
+.swal2-popup .swal2-loader {
+    border-color: #d10908 #e9ecef #e9ecef; /* Match your theme */
+}

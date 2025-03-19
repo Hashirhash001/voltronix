@@ -148,17 +148,19 @@ if ($segment2 == 'deals') {
 				<i class="bi bi-list"></i>
 			</button> -->
 
-			<!-- Sidebar Toggle Button (Desktop) -->
-			<div class="hamburger-cover">
-				<button class="hamburger d-none" id="toggleSidebar">
-					<span></span>
-					<span></span>
-					<span></span>
-				</button>
-			</div>
+			<div class="d-flex align-items-center justify-content-center gap-2">
+				<!-- Sidebar Toggle Button (Desktop) -->
+				<div class="hamburger-cover">
+					<button class="hamburger d-none" id="toggleSidebar">
+						<span></span>
+						<span></span>
+						<span></span>
+					</button>
+				</div>
 
-			<!-- Dashboard Title -->
-			<h4 class="mb-0" id="userNameDisplay"></h4>
+				<!-- Dashboard Title -->
+				<h4 class="mb-0" id="userNameDisplay" style="font-size: 20px; color: #dc3545; font-weight: 700;"><?php echo $this->session->userdata('company'); ?></h4>
+			</div>
 
 			<!-- User Dropdown -->
 			<div class="dropdown d-flex align-items-center gap-2">
