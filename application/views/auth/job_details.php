@@ -20,7 +20,7 @@
 						<p class="card-text">
 							<i class="fas fa-user-tie"></i>
 							<span class="ms-2">Deal Owner :</span>
-							<?= htmlspecialchars('Marieswaran'); ?>
+							<?= htmlspecialchars($username ?? ''); ?>
 						</p>
 
 						<p class="card-text">
@@ -37,7 +37,7 @@
 							<p class="card-text">
 								<i class="bi bi-file-earmark-check"></i>
 								<span class="ms-2">Quote Number :</span>
-								<?= htmlspecialchars($task['quote_number']); ?>
+								<?= htmlspecialchars($task['quote_deal_number'] ?? $task['quote_number']); ?>
 							</p>
 						<?php endif; ?>
 					</div>
@@ -45,7 +45,7 @@
 						<p class="card-text">
 							<i class="fas fa-tag"></i>
 							<span class="ms-2">Deal Number :</span>
-							<?= htmlspecialchars($task['deal_number'] ?? ''); ?>
+							<?= htmlspecialchars($task['qual_deal_number'] ?? $task['deal_number']); ?>
 						</p>
 						<p class="card-text">
 							<i class="fas fa-building"></i>
@@ -75,7 +75,7 @@
 												<i class="bi bi-check-circle-fill"></i> <?= $task['status']; ?>
 											</span>
 										</button>
-										<ul class="dropdown-menu" aria-labelledby="dropdownStatusButton" id="statusDropdown">
+										<ul class="dropdown-menu" aria-labelledby="dropdownStatusButton" id="statusDropdown" style="min-width: 12.5rem;">
 											<?php if ($task['status'] === 'Pending'): ?>
 												<li>
 													<a class="dropdown-item" data-value="Site Visit" data-color="#98d681">
@@ -222,6 +222,50 @@
 				</div>
 			</div>
 		</div>
+
+		<!-- Card for Notes -->
+		<div class="card mt-3">
+			<div class="card-header d-flex justify-content-between align-items-center">
+				<h4 class="text-dark" style="font-size: 1.2rem; font-weight: bold; margin: 0;">Notes</h4>
+				<button type="button" class="btn btn-primary btn-sm border-0" data-bs-toggle="modal" data-bs-target="#noteAddModal" style="background-color: #dc3545;">
+					<i class="bi bi-plus"></i> Add Note
+				</button>
+			</div>
+			<div class="card-body">
+				<div id="notesDisplay" class="p-3">
+					<p style="text-align: center;">No Notes</p>
+				</div>
+			</div>
+		</div>
+
+		<!-- Bootstrap Modal for Adding Notes -->
+		<div class="modal fade" id="noteAddModal" tabindex="-1" aria-labelledby="noteAddModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-dialog-centered">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title">Add Note</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<form id="noteForm">
+							<input type="hidden" value="<?= htmlspecialchars($task['zoho_crm_id'] ?? ''); ?>" id="dealIdNote">
+							<div class="mb-3">
+								<label for="noteTitle" class="form-label">Note Title</label>
+								<input type="text" class="form-control" id="noteTitle" name="note_title" required>
+							</div>
+							<div class="mb-3">
+								<label for="noteContent" class="form-label">Note Content</label>
+								<textarea class="form-control" id="noteContent" name="note_content" rows="4" required></textarea>
+							</div>
+						</form>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+						<button type="button" class="btn" id="saveNoteBtn" style="background-color: #dc3545; color: #fff;">Save Note</button>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 
 </div>
@@ -230,6 +274,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
+	// Upload File Upload to crm
 	$(document).ready(function() {
 		let dealId = $("#dealId").val();
 		if (dealId) {
@@ -584,6 +629,292 @@
 			attachmentDisplay.append(tableHTML);
 		}
 
+	});
+</script>
+
+<script>
+	$(document).ready(function() {
+		// Load existing notes on page load (optional)
+		loadExistingNotes();
+
+		// Define reusable functions
+		function addNote() {
+			let dealId = $('#dealIdNote').val();
+			let noteTitle = $('#noteTitle').val();
+			let noteContent = $('#noteContent').val();
+
+			if (!dealId || !noteTitle || !noteContent) {
+				Swal.fire({
+					icon: 'error',
+					title: 'Oops...',
+					text: 'All fields are required!'
+				});
+				return;
+			}
+
+			$('#noteAddModal').modal('hide');
+			
+			Swal.fire({
+				title: 'Saving Note...',
+				text: 'Please wait while the note is being added.',
+				allowOutsideClick: false,
+				didOpen: () => {
+					Swal.showLoading();
+				}
+			});
+
+			$.ajax({
+				url: '<?= base_url('ZohoAttachments/add-note'); ?>',
+				type: 'POST',
+				data: {
+					deal_id: dealId,
+					note_title: noteTitle,
+					note_content: noteContent
+				},
+				dataType: 'json',
+				success: function(response) {
+					if (response.success) {
+						Swal.fire({
+							icon: 'success',
+							title: 'Note Added',
+							text: 'The note has been successfully added to Zoho CRM!',
+							timer: 2000,
+							showConfirmButton: false
+						}).then(() => {
+							$('#noteForm')[0].reset();
+							updateNotesDisplay(response.local_note_id, noteTitle, noteContent);
+						});
+					} else {
+						Swal.fire({
+							icon: 'error',
+							title: 'Error',
+							text: response.message || 'Failed to add note to Zoho CRM.'
+						});
+					}
+				},
+				error: function() {
+					Swal.fire({
+						icon: 'error',
+						title: 'Error',
+						text: 'An error occurred while saving the note.'
+					});
+				}
+			});
+		}
+
+		function updateNote(localNoteId) {
+			let dealId = $('#dealIdNote').val();
+			let noteTitle = $('#noteTitle').val();
+			let noteContent = $('#noteContent').val();
+
+			$('#noteAddModal').modal('hide');
+
+			Swal.fire({
+				title: 'Updating Note...',
+				text: 'Please wait while the note is being updated.',
+				allowOutsideClick: false,
+				didOpen: () => {
+					Swal.showLoading();
+				}
+			});
+
+			$.ajax({
+				url: '<?= base_url('ZohoAttachments/update-note'); ?>',
+				type: 'POST',
+				data: {
+					local_note_id: localNoteId,
+					deal_id: dealId,
+					note_title: noteTitle,
+					note_content: noteContent
+				},
+				dataType: 'json',
+				success: function(response) {
+					if (response.success) {
+						Swal.fire({
+							icon: 'success',
+							title: 'Note Updated',
+							text: 'The note has been successfully updated!',
+							timer: 2000,
+							showConfirmButton: false
+						}).then(() => {
+							$('#noteForm')[0].reset();
+							let noteItem = $(`.note-item[data-local-note-id="${localNoteId}"]`);
+							noteItem.find('h6').text(noteTitle);
+							noteItem.find('p').text(noteContent);
+							// Reset the button mode to "add"
+							$('#saveNoteBtn').data('mode', 'add');
+						});
+					} else {
+						Swal.fire('Error', response.message, 'error');
+					}
+				},
+				error: function() {
+					Swal.fire('Error', 'An error occurred while updating the note.', 'error');
+				}
+			});
+		}
+
+		// Set the save button handler with a mode flag
+		$('#saveNoteBtn').data('mode', 'add'); // Default mode is "add"
+		$('#saveNoteBtn').on('click', function() {
+			let mode = $(this).data('mode');
+			if (mode === 'update') {
+				let localNoteId = $(this).data('local-note-id');
+				updateNote(localNoteId);
+			} else {
+				addNote();
+			}
+		});
+
+		// Edit note handler
+		$('#notesDisplay').on('click', '.edit-note', function() {
+			let localNoteId = $(this).data('local-note-id');
+			let noteItem = $(this).closest('.note-item');
+			let title = noteItem.find('h6').text();
+			let content = noteItem.find('p').text();
+
+			// Populate the modal with existing note data
+			$('#noteTitle').val(title);
+			$('#noteContent').val(content);
+			$('#dealIdNote').val($('#dealIdNote').val()); // Keep the deal ID
+			$('#noteAddModal').modal('show');
+
+			// Switch save button to update mode
+			$('#saveNoteBtn').data('mode', 'update').data('local-note-id', localNoteId);
+		});
+
+		// Delete note handler
+		$('#notesDisplay').on('click', '.delete-note', function() {
+			let localNoteId = $(this).data('local-note-id');
+			Swal.fire({
+				title: 'Are you sure?',
+				text: 'This note will be deleted permanently.',
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#d33',
+				cancelButtonColor: '#3085d6',
+				confirmButtonText: 'Yes, delete it!'
+			}).then((result) => {
+				if (result.isConfirmed) {
+					deleteNote(localNoteId);
+				}
+			});
+		});
+
+		function deleteNote(localNoteId) {
+			$('#noteAddModal').modal('hide');
+
+			Swal.fire({
+				title: 'Deleting Note...',
+				text: 'Please wait while the note is being deleted.',
+				allowOutsideClick: false,
+				didOpen: () => {
+					Swal.showLoading();
+				}
+			});
+
+			$.ajax({
+				url: '<?= base_url('ZohoAttachments/delete-note'); ?>',
+				type: 'POST',
+				data: { local_note_id: localNoteId },
+				dataType: 'json',
+				success: function(response) {
+					if (response.success) {
+						let message = response.message || 'The note has been successfully deleted!';
+						if (response.warning) {
+							message += ' (' + response.warning + ')';
+							Swal.fire({
+								icon: 'warning',
+								title: 'Note Deleted Locally',
+								text: message,
+								timer: 3000,
+								showConfirmButton: false
+							});
+						} else {
+							Swal.fire({
+								icon: 'success',
+								title: 'Note Deleted',
+								text: message,
+								timer: 2000,
+								showConfirmButton: false
+							});
+						}
+						$(`.note-item[data-local-note-id="${localNoteId}"]`).remove();
+						if ($('#notesDisplay').children().length === 0) {
+							$('#notesDisplay').html('<p style="text-align: center;">No Notes</p>');
+						}
+					} else {
+						Swal.fire({
+							icon: 'error',
+							title: 'Error',
+							text: (response.message || 'An unknown error occurred') + 
+								(response.zoho_note_id ? ' (Zoho Note ID: ' + response.zoho_note_id + ')' : '')
+						});
+					}
+				},
+				error: function() {
+					Swal.fire({
+						icon: 'error',
+						title: 'Error',
+						text: 'A network error occurred while deleting the note.'
+					});
+				}
+			});
+		}
+
+		function updateNotesDisplay(localNoteId, title, content) {
+			let notesDisplay = $('#notesDisplay');
+			if (notesDisplay.text().trim() === 'No Notes') {
+				notesDisplay.empty();
+			}
+			notesDisplay.append(`
+				<div class="note-item mb-3 p-3 border rounded shadow-sm" data-local-note-id="${localNoteId}">
+					<div class="d-flex align-items-center justify-content-between">
+						<div class="d-flex align-items-center">
+							<i class="bi bi-sticky me-2 text-primary" style="font-size: 1.2rem;"></i>
+							<h6 class="font-weight-bold mb-0">${title}</h6>
+						</div>
+						<div>
+							<button class="btn-sm edit-note me-1 edit-btn border-0 bg-transparent" data-local-note-id="${localNoteId}">
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-4.5 h-4.5">
+									<path d="M15.2869 3.15178L14.3601 4.07866L5.83882 12.5999L5.83881 12.5999C5.26166 13.1771 4.97308 13.4656 4.7249 13.7838C4.43213 14.1592 4.18114 14.5653 3.97634 14.995C3.80273 15.3593 3.67368 15.7465 3.41556 16.5208L2.32181 19.8021L2.05445 20.6042C1.92743 20.9852 2.0266 21.4053 2.31063 21.6894C2.59466 21.9734 3.01478 22.0726 3.39584 21.9456L4.19792 21.6782L7.47918 20.5844L7.47919 20.5844C8.25353 20.3263 8.6407 20.1973 9.00498 20.0237C9.43469 19.8189 9.84082 19.5679 10.2162 19.2751C10.5344 19.0269 10.8229 18.7383 11.4001 18.1612L11.4001 18.1612L19.9213 9.63993L20.8482 8.71306C22.3839 7.17735 22.3839 4.68748 20.8482 3.15178C19.3125 1.61607 16.8226 1.61607 15.2869 3.15178Z" stroke="currentColor" stroke-width="1.5"></path>
+									<path opacity="0.5" d="M14.36 4.07812C14.36 4.07812 14.4759 6.04774 16.2138 7.78564C17.9517 9.52354 19.9213 9.6394 19.9213 9.6394M4.19789 21.6777L2.32178 19.8015" stroke="currentColor" stroke-width="1.5"></path>
+								</svg>
+							</button>
+							<button class="btn-sm delete-note delete-btn border-0 bg-transparent" data-local-note-id="${localNoteId}">
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5">
+									<path opacity="0.5" d="M9.17065 4C9.58249 2.83481 10.6937 2 11.9999 2C13.3062 2 14.4174 2.83481 14.8292 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+									<path d="M20.5001 6H3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+									<path d="M18.8334 8.5L18.3735 15.3991C18.1965 18.054 18.108 19.3815 17.243 20.1907C16.378 21 15.0476 21 12.3868 21H11.6134C8.9526 21 7.6222 21 6.75719 20.1907C5.89218 19.3815 5.80368 18.054 5.62669 15.3991L5.16675 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+									<path opacity="0.5" d="M9.5 11L10 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+									<path opacity="0.5" d="M14.5 11L14 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+								</svg>
+							</button>
+						</div>
+					</div>
+					<p class="ms-4 mt-2">${content}</p>
+				</div>
+			`);
+		}
+
+		// Optional: Load existing notes
+		function loadExistingNotes() {
+			let dealId = $('#dealIdNote').val();
+			$.ajax({
+				url: '<?= site_url('ZohoAttachments/get-notes'); ?>',
+				type: 'POST',
+				data: { deal_id: dealId },
+				dataType: 'json',
+				success: function(response) {
+					if (response.success && response.notes.length > 0) {
+						$('#notesDisplay').empty();
+						response.notes.forEach(note => {
+							updateNotesDisplay(note.id, note.note_title, note.note_content);
+						});
+					}
+				}
+			});
+		}
 	});
 </script>
 

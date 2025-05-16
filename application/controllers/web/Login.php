@@ -163,8 +163,15 @@ class Login extends CI_Controller {
 	
 	public function view_task($id) {
 	    $this->check_logged_in();
-        $this->load->model('Task_model');
+		$username = $this->session->userdata('username');
+		$data['username'] = $username;
         $task = $this->Task_model->get_task($id);
+		
+		if (!$task) {
+			$this->output->set_status_header(404);
+			echo json_encode(['error' => 'Task not found.']);
+			return;
+		}
         
         // Fetch the logged-in user's quote access
         $user_id = $this->session->userdata('id'); // Get the logged-in user's ID from the session
@@ -199,8 +206,28 @@ class Login extends CI_Controller {
 			return;
 		}
 	
-		$data['username'] = $username;
-		$data['items'] = $this->Proposal_model->get_proposal_items($id);
+		$quote_number = $data['task']['quote_number'] ?? null;
+	
+		// Initialize items array
+		$data['items'] = [];
+	
+		// For VOLTRONIX CONTRACTING LLC, fetch from tasks first, then proposal_items
+		if ($company === 'VOLTRONIX CONTRACTING LLC') {
+			// Fetch single item from tasks table if product_name exists
+			$task_items = $this->Task_model->get_task_items($id);
+			if (!empty($task_items)) {
+				$data['items'] = array_merge($data['items'], $task_items);
+			}
+	
+			// Fetch additional items from proposal_items table
+			$proposal_items = $this->Proposal_model->get_proposal_items($quote_number);
+			if (!empty($proposal_items)) {
+				$data['items'] = array_merge($data['items'], $proposal_items);
+			}
+		} else {
+			// For other companies (e.g., VOLTRONIX SWITCHGEAR LLC), use only proposal_items
+			$data['items'] = $this->Proposal_model->get_proposal_items($quote_number);
+		}
 	
 		// Calculate totals
 		$totalAmount = 0;
@@ -209,21 +236,26 @@ class Login extends CI_Controller {
 		foreach ($data['items'] as $item) {
 			$serviceCharge = (float)($item['service_charge'] ?? 0);
 			$quantity = (float)($item['quantity'] ?? 0);
-			$itemTotal = $quantity * $serviceCharge;
+			$itemDiscount = (float)($item['item_discount'] ?? 0);
+			$itemTotal = $quantity * $serviceCharge * (1 - $itemDiscount / 100); // Apply discount if present
 			$totalAmount += $itemTotal;
-			$vatAmount += $itemTotal * 0.05;
-			$grandTotal += $itemTotal * 1.05;
+			$vatAmount += $itemTotal * 0.05; // 5% VAT
+			$grandTotal += $itemTotal * 1.05; // Total including VAT
 		}
 		$data['totalAmount'] = $totalAmount;
 		$data['vatAmount'] = $vatAmount;
 		$data['grandTotal'] = $grandTotal;
 	
+		$data['username'] = $username;
+	
+		// Select view based on company
 		$company_views = [
 			'VOLTRONIX CONTRACTING LLC' => 'quotes/quote_contracting',
 			'VOLTRONIX SWITCHGEAR LLC' => 'quotes/quote_switchgear',
 		];
 		$view = isset($company_views[$company]) ? $company_views[$company] : 'quotes/quote_contracting';
 	
+		// Configure mPDF based on company
 		if ($company === 'VOLTRONIX CONTRACTING LLC') {
 			$mpdf = new \Mpdf\Mpdf([
 				'margin_top' => 0,
@@ -233,11 +265,13 @@ class Login extends CI_Controller {
 				'default_font' => 'yorkten',
 				'mode' => 'utf-8',
 				'format' => 'A4',
-				'autoPageBreak' => true, // Manual control
+				'autoPageBreak' => true,
 			]);
 			$backgroundImage = base_url('assets/photos/logo/databg.png');
 			$mpdf->SetDefaultBodyCSS('background', "url('{$backgroundImage}')");
 			$mpdf->SetDefaultBodyCSS('background-image-resize', 1);
+			// Set PDF title
+			$mpdf->SetTitle("Quotation - {$quote_number} - VOLTRONIX CONTRACTING LLC");
 		} elseif ($company === 'VOLTRONIX SWITCHGEAR LLC') {
 			$mpdf = new \Mpdf\Mpdf([
 				'margin_top' => 35,
@@ -246,12 +280,30 @@ class Login extends CI_Controller {
 				'margin_right' => 2,
 				'mode' => 'utf-8',
 				'format' => [215, 280],
-				'autoPageBreak' => false, // Manual control
+				'autoPageBreak' => false,
 			]);
-			$backgroundImage = base_url('assets/photos/logo/switchgear_bg.png');
+			$backgroundImage = base_url('assets/photos/logo/switchgear_bg4.png');
+			log_message('info', "backgroundImage: {$backgroundImage}");
 			$mpdf->SetDefaultBodyCSS('background', "url('{$backgroundImage}')");
 			$mpdf->SetDefaultBodyCSS('background-image-resize', 1);
-		}
+			// Set PDF title
+			$mpdf->SetTitle("Quotation - {$quote_number} - VOLTRONIX SWITCHGEAR LLC");
+		} else {
+            // Default case: use settings similar to VOLTRONIX CONTRACTING LLC
+            $mpdf = new \Mpdf\Mpdf([
+                'margin_top' => 0,
+                'margin_bottom' => 0,
+                'margin_left' => 4,
+                'margin_right' => 4,
+                'default_font' => 'yorkten',
+                'mode' => 'utf-8',
+                'format' => 'A4',
+                'autoPageBreak' => true,
+            ]);
+            $backgroundImage = base_url('assets/photos/logo/databg.png');
+            $mpdf->SetDefaultBodyCSS('background', "url('{$backgroundImage}')");
+            $mpdf->SetDefaultBodyCSS('background-image-resize', 1);
+        }
 	
 		ob_start();
 		$this->load->view($view, $data);
@@ -265,63 +317,50 @@ class Login extends CI_Controller {
 	}
 	
     public function search() {
-        $this->check_logged_in();
-    
-        // Debug session
-        log_message('debug', 'Session in fetch_tasks: ' . json_encode($this->session->userdata()));
-    
-        // Get the user ID from the session
-        $id = $this->session->userdata('id');
-    
-        if (!$id) {
-            $this->output->set_status_header(404);
-            echo json_encode(['error' => 'User ID not found in session.']);
-            return;
-        }
-    
-        // Retrieve user information by ID
-        $user_id = $this->User_model->get_user_id_by_id($id);
-    
-        if (!$user_id) {
-            $this->output->set_status_header(404);
-            echo json_encode(['error' => 'User not found for this ID.']);
-            return;
-        }
-    
-        // Get the search query
-        $query = $this->input->post('query', true);
-    
-        // Build the query for tasks specific to the user
-        $this->db->select('id, deal_name, deal_number, complaint_info, status');
-        $this->db->from('tasks');
-        $this->db->where('assigned_to', $user_id); // Fetch only tasks assigned to this user
-        $this->db->order_by('created_at', 'DESC');
-    
-        if (!empty($query)) {
-            // If query is provided, search in deal_name and deal_number
-            $this->db->group_start(); // Start grouping WHERE conditions
-            $this->db->like('deal_name', $query);
-            $this->db->or_like('deal_number', $query);
-            $this->db->group_end(); // End grouping
-        }
-    
-        $result = $this->db->get()->result_array();
-    
-        if (empty($result)) {
-            // If no results are found
-            echo json_encode([
-                'success' => false,
-                'message' => 'No Jobs found.'
-            ]);
-            return;
-        }
-    
-        // Return all tasks or filtered results
-        echo json_encode([
-            'success' => true,
-            'data' => $result
-        ]);
-    }
+		$this->check_logged_in();
+	
+		// Debug session
+		log_message('debug', 'Session in fetch_tasks: ' . json_encode($this->session->userdata()));
+	
+		// Get the user ID from the session
+		$id = $this->session->userdata('id');
+	
+		if (!$id) {
+			$this->output->set_status_header(404);
+			echo json_encode(['error' => 'User ID not found in session.']);
+			return;
+		}
+	
+		// Retrieve user information by ID
+		$user_id = $this->User_model->get_user_id_by_id($id);
+	
+		if (!$user_id) {
+			$this->output->set_status_header(404);
+			echo json_encode(['error' => 'User not found for this ID.']);
+			return;
+		}
+	
+		// Get the search query
+		$query = $this->input->post('query', true);
+	
+		// Fetch tasks using Task_model
+		$result = $this->Task_model->search_tasks($user_id, $query);
+	
+		if (empty($result)) {
+			// If no results are found
+			echo json_encode([
+				'success' => false,
+				'message' => 'No Jobs found.'
+			]);
+			return;
+		}
+	
+		// Return all tasks or filtered results
+		echo json_encode([
+			'success' => true,
+			'data' => $result
+		]);
+	}
     
     private function validate_api_key() {
 		$headers = $this->input->request_headers();
@@ -403,6 +442,5 @@ class Login extends CI_Controller {
             'data' => $result
         ]);
     }
-
 
 }

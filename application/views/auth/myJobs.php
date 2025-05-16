@@ -6,7 +6,7 @@
 				
 				<!-- Search Box -->
 				<div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
-					<h1 class="mb-3 mb-md-0">My Jobs</h1>
+					<h1 class="mb-3 mb-md-0" style="font-size: 31px;">My Jobs</h1>
 					<div class="input-group" style="max-width: 400px;">
 						<input 
 							type="text" 
@@ -31,25 +31,24 @@
 					<!-- Deals Cards -->
 					<div class="row flex-nowrap" style="overflow-x: auto; white-space: nowrap;" id="dealsContainer">
 						<?php
-						// Define categories based on status only, including the new "Closed Lost"
+						// Define categories based on status
 						$categories = [
 							'Qualification' => ['Pending'],
 							'Site Visit' => ['Site Visit'],
 							'Proposal/Price Quote' => ['Proposal'],
 							'Closed Won' => ['Close to Won'],
-							'Closed Lost' => ['Close to Lost', 'Proposal-Omitted', 'Omitted'], // Added this line
+							'Closed Lost' => ['Close to Lost', 'Proposal-Omitted', 'Omitted'],
 						];
 
-						// Define header colors and before element colors for each category
 						$headerColors = [
-							'Qualification' => ['header' => '#daf5f7', 'before' => '#99d1d3'], // Light blue
-							'Site Visit' => ['header' => '#daf5f7', 'before' => '#99d1d3'],    // Light green
-							'Proposal/Price Quote' => ['header' => '#fef3c7', 'before' => '#fcd34d'], // Light yellow
-							'Closed Won' => ['header' => '#d4edda', 'before' => '#93cb9d'],    // Green
-							'Closed Lost' => ['header' => '#f8d7da', 'before' => '#f0aeae'],   // Red
+							'Qualification' => ['header' => '#daf5f7', 'before' => '#99d1d3'],
+							'Site Visit' => ['header' => '#daf5f7', 'before' => '#99d1d3'],
+							'Proposal/Price Quote' => ['header' => '#fef3c7', 'before' => '#fcd34d'],
+							'Closed Won' => ['header' => '#d4edda', 'before' => '#93cb9d'],
+							'Closed Lost' => ['header' => '#f8d7da', 'before' => '#f0aeae'],
 						];
 
-						// Group tasks by category
+						// Group tasks by category (initial load)
 						$groupedTasks = [];
 						foreach ($tasks as $task) {
 							foreach ($categories as $key => $statuses) {
@@ -60,66 +59,83 @@
 							}
 						}
 
-						// Render categories
 						foreach ($categories as $key => $statuses):
-							// Use the header and before colors for this category
-							$headerColor = isset($headerColors[$key]['header']) ? $headerColors[$key]['header'] : '#ffffff'; // Default to white
-							$beforeColor = isset($headerColors[$key]['before']) ? $headerColors[$key]['before'] : '#99d1d3'; // Default to light blue
+							$headerColor = $headerColors[$key]['header'] ?? '#ffffff';
+							$beforeColor = $headerColors[$key]['before'] ?? '#99d1d3';
 						?>
 							<div class="col-md-3 d-inline-block" style="width: 350px; padding-right: 0px;">
 								<div class="card bg-light" style="border: none; box-shadow: none; width: 100%;">
 									<div class="card-header" style="background-color: <?= htmlspecialchars($headerColor); ?>; margin: 0; padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; position: relative; color: #000;">
 										<h5 class="mb-0" style="font-size: 17px;"><?= htmlspecialchars($key); ?></h5>
-										<!-- Dynamic ::before pseudo-element styling -->
-										<div style="
-											content: '';
-											position: absolute;
-											height: 4px;
-											background: <?= htmlspecialchars($beforeColor); ?>;
-											border-radius: 3px 3px 0 0;
-											top: -1px;
-											left: 0;
-											right: 0;
-										"></div>
+										<div style="content: ''; position: absolute; height: 4px; background: <?= htmlspecialchars($beforeColor); ?>; border-radius: 3px 3px 0 0; top: -1px; left: 0; right: 0;"></div>
 									</div>
-									<!-- Scrollable wrapper for card-body only -->
 									<div class="card-body-wrapper" style="position: relative; height: 72vh; overflow-y: auto; overflow-x: hidden; padding-right: 0px; box-sizing: content-box;">
 										<div class="card-body" style="padding: 0; margin: 0;">
-											<?php if (isset($groupedTasks[$key])): ?>
-												<?php foreach ($groupedTasks[$key] as $task): ?>
-													<div class="mb-3 border-bottom pb-2" style="
-														max-width: 100% !important;
-														padding: 7px 36px 4px 15px;
-														box-sizing: border-box;
-														margin-bottom: 10px;
-														min-height: 70px;
-														box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
-														background: #fff;
-													">
-														<h6 style="font-weight: 600; margin-bottom: 2px; text-wrap: wrap;"><?= htmlspecialchars($task['deal_name']); ?></h6>
-														<h4 style="color: #ff0000; margin-bottom: 2px;"><?= htmlspecialchars($task['deal_number'] ?? ''); ?></h4>
-														<p style="margin-bottom: 2px;">Marieswaran</p>
-														<p style="margin-bottom: 2px; text-wrap: wrap;"><?= htmlspecialchars($task['account_name'] ?? ''); ?></p>
-														<!-- <small class="text-muted" style="text-wrap: wrap;"><?= htmlspecialchars($task['complaint_info'] ?? ''); ?></small> -->
-														<p style="margin-bottom: 2px;"><?= htmlspecialchars($task['service_charge'] ?? ''); ?></p>
-														<div class="mt-2">
-															<button onclick="window.location.href='<?php echo site_url('web/deal/details/' . $task['id']); ?>'" class="btn btn-sm btn-danger">
-																<i class="fas fa-eye"></i> View
-															</button>
-														</div>
-													</div>
-												<?php endforeach; ?>
-											<?php else: ?>
-												<div class="d-flex justify-content-center align-items-center">
-													<p class="text-muted">No Jobs found.</p>
-												</div>
-											<?php endif; ?>
-										</div>
+                                            <?php if (isset($groupedTasks[$key]) && !empty($groupedTasks[$key])): ?>
+                                                <?php foreach ($groupedTasks[$key] as $task): ?>
+                                                    <div class="mb-3 border-bottom pb-2" style="max-width: 100% !important; padding: 7px 36px 4px 15px; box-sizing: border-box; margin-bottom: 10px; min-height: 70px; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1); background: #fff;">
+                                                        <h6 style="font-weight: 600; margin-bottom: 2px; text-wrap: wrap;"><?= htmlspecialchars($task['deal_name']); ?></h6>
+                                                        
+                                                        <h4 style="color: #ff0000; margin-bottom: 2px; font-size: 1.2rem;">
+                                                            <?php
+                                                            $stageDealNumber = '';
+                                                            $stageDealDate = '';
+                                                            switch ($task['status']) {
+                                                                case 'Pending':
+                                                                    $stageDealNumber = $task['qual_deal_number'] ?? '';
+                                                                    $stageDealDate = $task['qual_deal_date'] ?? '';
+                                                                    break;
+                                                                case 'Site Visit':
+                                                                    $stageDealNumber = $task['site_deal_number'] ?? '';
+                                                                    $stageDealDate = $task['site_deal_date'] ?? '';
+                                                                    break;
+                                                                case 'Proposal':
+                                                                    $stageDealNumber = $task['quote_deal_number'] ?? '';
+                                                                    $stageDealDate = $task['quote_deal_date'] ?? '';
+                                                                    break;
+                                                                case 'Close to Won':
+                                                                    $stageDealNumber = $task['job_deal_number'] ?? '';
+                                                                    $stageDealDate = $task['job_deal_date'] ?? '';
+                                                                    break;
+                                                                case 'Close to Lost':
+                                                                case 'Proposal-Omitted':
+                                                                case 'Omitted':
+                                                                    $stageDealNumber = $task['lost_deal_number'] ?? '';
+                                                                    $stageDealDate = $task['lost_deal_date'] ?? '';
+                                                                    break;
+                                                            }
+                                                            echo htmlspecialchars($stageDealNumber);
+                                                            ?>
+                                                        </h4>
+                                                        <?php if ($stageDealDate): ?>
+                                                            <p style="margin-bottom: 2px; color: #555; font-size: 0.9rem;">
+                                                                Updated: <?= htmlspecialchars(date('Y-m-d H:i:s', strtotime($stageDealDate))); ?>
+                                                            </p>
+                                                        <?php endif; ?>
+                                                        <p style="margin-bottom: 2px; text-wrap: wrap;"><?= htmlspecialchars($task['assign_notes'] ?? ''); ?></p>
+                                                        <p style="margin-bottom: 2px; text-wrap: wrap;"><?= htmlspecialchars($task['account_name'] ?? ''); ?></p>
+                                                        <p style="margin-bottom: 2px;"><?= htmlspecialchars($task['service_charge'] ?? ''); ?></p>
+                                                        <div class="mt-2">
+                                                            <button onclick="window.location.href='<?php echo site_url('web/deal/details/' . $task['id']); ?>'" class="btn btn-sm btn-danger">
+                                                                <i class="fas fa-eye"></i> View
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <div class="d-flex justify-content-center align-items-center">
+                                                    <p class="text-muted">No Jobs found.</p>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
 									</div>
 								</div>
 							</div>
 						<?php endforeach; ?>
 					</div>
+
+					<!-- Error Message -->
+					<div id="errorMessage" class="alert alert-danger d-none mt-3" role="alert"></div>
 
 
 				<?php endif; ?>
@@ -199,161 +215,167 @@
 				}
 			});
 
+			// Store initial deals from PHP for reset when query is empty
+			const allDeals = <?php echo json_encode($tasks); ?>;
+
 			function searchDeals() {
 				const query = $('#searchInput').val().trim();
 
-				// Show a loading state (optional)
+				// Show loading state
 				$('#dealsContainer').html('<div class="text-center"><div class="spinner-border text-danger" role="status"><span class="sr-only">Loading...</span></div></div>');
 
-				// If query is empty, don't send an AJAX request, just show all deals
 				if (query === '') {
 					$('#errorMessage').addClass('d-none');
-					renderDeals(allDeals); // `allDeals` should hold the original list of all tasks
+					renderDeals(allDeals); // Reset to all deals
 					return;
 				}
 
-				// Make AJAX request
 				$.ajax({
 					url: '<?= site_url('web/deal/search'); ?>',
 					type: 'POST',
-					data: {
-						query: query
-					},
+					data: { query: query },
 					dataType: 'json',
 					success: function(response) {
 						console.log('Search Response:', response);
-						if (response.success) {
+						if (response.success && response.data) {
 							$('#errorMessage').addClass('d-none');
 							renderDeals(response.data);
 						} else {
-							$('#dealsContainer').empty();
-							$('#errorMessage').removeClass('d-none').text(response.message);
+							$('#dealsContainer').html('<div class="text-center"><p class="text-muted">No Jobs found.</p></div>');
+							$('#errorMessage').removeClass('d-none').text(response.message || 'No matching deals found.');
 						}
 					},
-					error: function() {
-						$('#dealsContainer').empty();
-						$('#errorMessage').removeClass('d-none').text('An error occurred while fetching tasks. Please try again.');
+					error: function(xhr, status, error) {
+						console.error('AJAX Error:', status, error);
+						$('#dealsContainer').html('<div class="text-center"><p class="text-muted">Error loading deals.</p></div>');
+						$('#errorMessage').removeClass('d-none').text('An error occurred while fetching deals. Please try again.');
 					}
 				});
 			}
 
 			function renderDeals(deals) {
-				console.log('Deals Data:', deals);
-
-				// Test loop execution
-				deals.forEach(deal => {
-					console.log('Rendering Deal:', deal.deal_name);
-				});
+				console.log('Rendering Deals:', deals);
 
 				const categories = {
 					'Qualification': ['Pending'],
 					'Site Visit': ['Site Visit'],
 					'Proposal/Price Quote': ['Proposal'],
 					'Closed Won': ['Close to Won'],
-					'Closed Lost': ['Close to Lost', 'Proposal-Omitted', 'Omitted'],
+					'Closed Lost': ['Close to Lost', 'Proposal-Omitted', 'Omitted']
 				};
 
 				const headerColors = {
-					'Qualification': {
-						header: '#daf5f7',
-						before: '#99d1d3'
-					},
-					'Site Visit': {
-						header: '#daf5f7',
-						before: '#99d1d3'
-					},
-					'Proposal/Price Quote': {
-						header: '#fef3c7',
-						before: '#fcd34d'
-					},
-					'Closed Won': {
-						header: '#d4edda',
-						before: '#93cb9d'
-					},
-					'Closed Lost': {
-						header: '#f8d7da',
-						before: '#f0aeae'
-					}
+					'Qualification': { header: '#daf5f7', before: '#99d1d3' },
+					'Site Visit': { header: '#daf5f7', before: '#99d1d3' },
+					'Proposal/Price Quote': { header: '#fef3c7', before: '#fcd34d' },
+					'Closed Won': { header: '#d4edda', before: '#93cb9d' },
+					'Closed Lost': { header: '#f8d7da', before: '#f0aeae' }
 				};
 
 				const groupedTasks = {};
 				deals.forEach(deal => {
-					// console.log('Deal Status:', deal.status);
 					let matched = false;
 					for (const [category, statuses] of Object.entries(categories)) {
 						if (statuses.includes(deal.status)) {
 							if (!groupedTasks[category]) groupedTasks[category] = [];
 							groupedTasks[category].push(deal);
 							matched = true;
+							break;
 						}
 					}
 					if (!matched) {
-						// Add to a default category if no match
-						if (!groupedTasks['Uncategorized']) groupedTasks['Uncategorized'] = [];
-						groupedTasks['Uncategorized'].push(deal);
+						console.warn('Unmatched status:', deal.status, 'for deal:', deal.deal_name);
 					}
 				});
 
 				const dealsHtml = Object.entries(categories).map(([key, statuses]) => {
-					const headerColor = headerColors[key]?.header || '#ffffff';
-					const beforeColor = headerColors[key]?.before || '#99d1d3';
-
-					const tasksHtml = (groupedTasks[key] || []).map(task => `
-								<div class="mb-3 border-bottom pb-2" style="
-								max-width: 100% !important;
-								padding: 7px 36px 4px 15px;
-								box-sizing: border-box;
-								margin-bottom: 10px;
-								min-height: 70px;
-								box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1);
-								background: #fff;
-							">
-								<h6 style="font-weight: 600; margin-bottom: 2px; text-wrap: wrap;">${task.deal_name}</h6>
-								<h4 style="color: #ff0000; margin-bottom: 2px;">${task.deal_number ?? ''}</h4>
-								<p style="margin-bottom: 2px;">Marieswaran</p>
-								<p style="margin-bottom: 2px; text-wrap: wrap;">${task.account_name ?? ''}</p>
-								<p style="margin-bottom: 2px;">${task.service_charge ?? ''}</p>
-								<div class="mt-2">
-									<button onclick="window.location.href='<?= site_url('web/deal/details/'); ?>${task.id}'" class="btn btn-sm btn-danger">
-										<i class="fas fa-eye"></i> View
-									</button>
-								</div>
-							</div>
-						`).join('');
-
-					return `
-							<div class="col-md-3 d-inline-block" style="width: 350px; padding-right: 0px;">
-								<div class="card bg-light" style="border: none; box-shadow: none; width: 100%;">
-									<div class="card-header" style="background-color: ${headerColor}; margin: 0; padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; position: relative; color: #000;">
-										<h5 class="mb-0" style="font-size: 17px;">${key}</h5>
-										<div style="
-											content: '';
-											position: absolute;
-											height: 4px;
-											background: ${beforeColor};
-											border-radius: 3px 3px 0 0;
-											top: -1px;
-											left: 0;
-											right: 0;
-										"></div>
-									</div>
-									<div class="card-body-wrapper" style="position: relative; height: 72vh; overflow-y: auto; overflow-x: hidden; padding-right: 0px; box-sizing: content-box;">
-										<div class="card-body" style="padding: 0; margin: 0;">
-											${tasksHtml || `
-												<div class="d-flex justify-content-center align-items-center">
-													<p class="text-muted">No Jobs found.</p>
-												</div>
-											`}
-										</div>
-									</div>
-								</div>
-							</div>
-						`;
-				}).join('');
-
+                    const headerColor = headerColors[key]?.header || '#ffffff';
+                    const beforeColor = headerColors[key]?.before || '#99d1d3';
+                    const tasksHtml = (groupedTasks[key] || []).map(task => {
+                        let stageDealNumber = '';
+                        let stageDealDate = '';
+                        switch (task.status) {
+                            case 'Pending':
+                                stageDealNumber = task.qual_deal_number || '';
+                                stageDealDate = task.qual_deal_date || '';
+                                break;
+                            case 'Site Visit':
+                                stageDealNumber = task.site_deal_number || '';
+                                stageDealDate = task.site_deal_date || '';
+                                break;
+                            case 'Proposal':
+                                stageDealNumber = task.quote_deal_number || '';
+                                stageDealDate = task.quote_deal_date || '';
+                                break;
+                            case 'Close to Won':
+                                stageDealNumber = task.job_deal_number || '';
+                                stageDealDate = task.job_deal_date || '';
+                                break;
+                            case 'Close to Lost':
+                            case 'Proposal-Omitted':
+                            case 'Omitted':
+                                stageDealNumber = task.lost_deal_number || '';
+                                stageDealDate = task.lost_deal_date || '';
+                                break;
+                            default:
+                                stageDealNumber = '';
+                                stageDealDate = '';
+                        }
+                
+                        // Format datetime if present
+                        const formattedDate = stageDealDate ? new Date(stageDealDate).toLocaleString('en-GB', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: false
+                        }).replace(',', '') : '';
+                
+                        return `
+                            <div class="mb-3 border-bottom pb-2" style="max-width: 100% !important; padding: 7px 36px 4px 15px; box-sizing: border-box; margin-bottom: 10px; min-height: 70px; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1); background: #fff;">
+                                <h6 style="font-weight: 600; margin-bottom: 2px; text-wrap: wrap;">${task.deal_name || ''}</h6>
+                                <h4 style="color: #ff0000; margin-bottom: 2px; font-size: 1.2rem;">${stageDealNumber}</h4>
+                                ${formattedDate ? `<p style="margin-bottom: 2px; color: #555; font-size: 0.9rem;">Updated: ${formattedDate}</p>` : ''}
+                                <p style="margin-bottom: 2px; text-wrap: wrap;">${task.assign_notes || ''}</p>
+                                <p style="margin-bottom: 2px; text-wrap: wrap;">${task.account_name || ''}</p>
+                                <p style="margin-bottom: 2px;">${task.service_charge || ''}</p>
+                                <div class="mt-2">
+                                    <button onclick="window.location.href='<?= site_url('web/deal/details/'); ?>${task.id}'" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                
+                    return `
+                        <div class="col-md-3 d-inline-block" style="width: 350px; padding-right: 0px;">
+                            <div class="card bg-light" style="border: none; box-shadow: none; width: 100%;">
+                                <div class="card-header" style="background-color: ${headerColor}; margin: 0; padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; position: relative; color: #000;">
+                                    <h5 class="mb-0" style="font-size: 17px;">${key}</h5>
+                                    <div style="content: ''; position: absolute; height: 4px; background: ${beforeColor}; border-radius: 3px 3px 0 0; top: -1px; left: 0; right: 0;"></div>
+                                </div>
+                                <div class="card-body-wrapper" style="position: relative; height: 72vh; overflow-y: auto; overflow-x: hidden; padding-right: 0px; box-sizing: content-box;">
+                                    <div class="card-body" style="padding: 0; margin: 0;">
+                                        ${tasksHtml || '<div class="d-flex justify-content-center align-items-center"><p class="text-muted">No Jobs found.</p></div>'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                $('#dealsContainer').html(dealsHtml);
 
 				$('#dealsContainer').html(dealsHtml);
 			}
+
+			// Bind search to input (example, adjust based on your HTML)
+			// $('#searchInput').on('keyup', function() {
+			// 	searchDeals();
+			// });
 
 
 		});

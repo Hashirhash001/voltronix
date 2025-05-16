@@ -1,0 +1,116 @@
+void automation.syncDealAttachments(String dealId,String webAppApiUrl)
+{
+// Validate inputs
+if(dealId == null || dealId == "" || webAppApiUrl == null || webAppApiUrl == "")
+{
+	info "Invalid input: dealId or webAppApiUrl is missing";
+	return;
+}
+// Fetch deal details
+dealDetails = zoho.crm.getRecordById("Deals",dealId);
+info "Deal details fetched: " + dealDetails;
+assignedTo = "";
+if(dealDetails.contains("VZ_app_user") && dealDetails.get("VZ_app_user") != null)
+{
+	vzAppUser = dealDetails.get("VZ_app_user");
+	if(vzAppUser.contains("id"))
+	{
+		assignedTo = vzAppUser.get("id");
+	}
+}
+info "Assigned To (VZ_app_user): " + assignedTo;
+// Proceed only if VZ_app_user is assigned
+if(assignedTo == null || assignedTo == "")
+{
+	info "VZ App User is empty. Webhook not triggered.";
+	return;
+}
+// Get previously synced attachment IDs
+syncedAttachmentIds = List();
+if(dealDetails.contains("Synced_Attachment_IDs") && dealDetails.get("Synced_Attachment_IDs") != null && dealDetails.get("Synced_Attachment_IDs") != "")
+{
+	syncedAttachmentIds = dealDetails.get("Synced_Attachment_IDs").toList(",");
+}
+info "Previously synced attachment IDs: " + syncedAttachmentIds;
+// Fetch attachments with retry
+attachmentsList = List();
+try 
+{
+	attachmentsList = zoho.crm.getRelatedRecords("Attachments","Deals",dealId,1,200);
+	info "Attachments list fetched: " + attachmentsList;
+}
+catch (e)
+{
+	info "Error fetching attachments: " + e;
+	return;
+}
+// Handle case where no attachments exist
+if(attachmentsList.size() == 0)
+{
+	info "No attachments found for dealId: " + dealId;
+	return;
+}
+// Prepare attachment data for webhook (only new attachments)
+attachmentList = List();
+newSyncedAttachmentIds = List();
+for each  attachment in attachmentsList
+{
+	attachmentId = attachment.get("id");
+	if(!syncedAttachmentIds.contains(attachmentId))
+	{
+		attachmentInfo = Map();
+		attachmentInfo.put("attachment_id",attachmentId);
+		attachmentInfo.put("file_name",attachment.get("File_Name"));
+		attachmentInfo.put("file_size",attachment.get("Size"));
+		attachmentList.add(attachmentInfo);
+		newSyncedAttachmentIds.add(attachmentId);
+		info "New attachment added to payload: ID=" + attachmentId + ", Name=" + attachment.get("File_Name");
+	}
+	else
+	{
+		info "Attachment already synced, skipping: ID=" + attachmentId;
+	}
+}
+// If no new attachments, exit
+if(attachmentList.isEmpty())
+{
+	info "No new attachments to sync for dealId: " + dealId;
+	return;
+}
+// Prepare webhook payload
+webhookPayload = Map();
+webhookPayload.put("deal_id",dealId);
+webhookPayload.put("attachments",attachmentList);
+info "Webhook payload prepared: " + webhookPayload;
+// Trigger webhook to web app
+try 
+{
+	webhookResponse = invokeurl
+	[
+		url :webAppApiUrl
+		type :POST
+		parameters:webhookPayload.toString()
+		headers:{"Content-Type":"application/json"}
+	];
+	info "Webhook triggered successfully: " + webhookResponse;
+}
+catch (e)
+{
+	info "Error triggering webhook: " + e;
+	return;
+}
+// Update Synced_Attachment_IDs field
+updatedSyncedAttachmentIds = syncedAttachmentIds;
+updatedSyncedAttachmentIds.addAll(newSyncedAttachmentIds);
+updateMap = Map();
+updateMap.put("Synced_Attachment_IDs",updatedSyncedAttachmentIds.toString(","));
+try 
+{
+	updateResponse = zoho.crm.updateRecord("Deals",dealId,updateMap);
+	info "Updated Synced_Attachment_IDs: " + updateResponse;
+}
+catch (e)
+{
+	info "Error updating Synced_Attachment_IDs: " + e;
+}
+}

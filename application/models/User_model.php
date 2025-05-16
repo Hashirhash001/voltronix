@@ -108,14 +108,72 @@ class User_model extends CI_Model {
         return null; // Return null if no user is found
     }
 
-	public function get_assigned_deals($user_id) {
+	public function get_assigned_deals($user_id, $start_date, $end_date) {
 		$this->db->select('status, COUNT(id) as total');
 		$this->db->from('tasks');
 		$this->db->where('assigned_to', $user_id);
+		$this->db->where('status IS NOT NULL'); // Ensure status is not null
+	
+		// Apply date filters only if they are not NULL or empty
+		if ($start_date !== null && $start_date !== '') {
+			$this->db->where("created_at >= ", $start_date);
+		}
+		if ($end_date !== null && $end_date !== '') {
+			$this->db->where("created_at <= ", $end_date . " 23:59:59");
+		}
+	
 		$this->db->group_by('status');
 		
 		$query = $this->db->get();
-		return $query->result_array(); // Returns an array of deals grouped by status
+		return $query->result_array();
 	}
+
+	public function get_deal_progression_analytics($user_id, $start_date, $end_date, $page = 1, $per_page = 10) {
+		$this->db->select('
+			t.id,
+			t.deal_name,
+			t.status,
+			t.enq_number,
+			t.enq_deal_date,
+			t.qual_deal_number,
+			t.qual_deal_date,
+			t.site_deal_number,
+			t.site_deal_date,
+			t.quote_deal_number,
+			t.quote_deal_date,
+			t.job_deal_number,
+			t.job_deal_date,
+			t.lost_deal_number,
+			t.lost_deal_date,
+			t.account_name,
+			t.deal_number,
+			t.complaint_info,
+			t.service_charge
+		');
+		$this->db->from('tasks t');
+		$this->db->where('t.assigned_to', $user_id);
+		$this->db->where('t.status IS NOT NULL');
+	
+		// Apply date filters only if they are not NULL or empty
+		if ($start_date !== null && $start_date !== '') {
+			$this->db->where("t.created_at >= ", $start_date);
+		}
+		if ($end_date !== null && $end_date !== '') {
+			$this->db->where("t.created_at <= ", $end_date . " 23:59:59");
+		}
+	
+		$this->db->order_by('t.created_at', 'DESC');
+		$this->db->limit($per_page, ($page - 1) * $per_page);
+		
+		$query = $this->db->get();
+		return $query->result_array();
+	}
+
+    public function get_total_deals($user_id) {
+        $this->db->where('assigned_to', $user_id);
+        $this->db->from('tasks');
+		$this->db->where('status IS NOT NULL');
+        return $this->db->count_all_results();
+    }
 	
 }

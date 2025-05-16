@@ -62,8 +62,16 @@ class Dashboard extends CI_Controller {
 			return;
 		}
 	
-		// Log parsed data for debugging
-		log_message('debug', 'Parsed data: ' . json_encode($data));
+		// Check if a proposal already exists for this deal number in the tasks table
+		$task = $this->Task_model->get_task_by_deal_number($data['dealNumber']);
+		if ($task && !is_null($task->quote_number)) {
+			$this->output->set_status_header(409); // Conflict status code
+			echo json_encode([
+				'success' => false,
+				'error' => 'A proposal already exists for this deal number: ' . $data['dealNumber']
+			]);
+			return;
+		}
 	
 		// Set validation rules for required fields
 		$this->form_validation->set_data($data);
@@ -182,7 +190,7 @@ class Dashboard extends CI_Controller {
 	
 		// Step 2: Get the Deal ID using DealNumber
 		$deal_response = $this->execute_curl_request(
-			"https://www.zohoapis.com/crm/v2.1/Deals/search?criteria=(DealNumber:equals:$deal_number)",
+			"https://www.zohoapis.com/crm/v2.1/Deals/search?criteria=(QualDealNumber:equals:$deal_number)",
 			[
 				'Content-Type: application/json',
 				"Authorization: Zoho-oauthtoken " . $this->access_token
@@ -202,7 +210,7 @@ class Dashboard extends CI_Controller {
 				];
 	
 				$deal_response = $this->execute_curl_request(
-					"https://www.zohoapis.com/crm/v2.1/Deals/search?criteria=(DealNumber:equals:$deal_number)",
+					"https://www.zohoapis.com/crm/v2.1/Deals/search?criteria=(QualDealNumber:equals:$deal_number)",
 					$headers,
 					null,
 					'GET'
@@ -234,7 +242,10 @@ class Dashboard extends CI_Controller {
 	
 		// Step 3: Prepare data for Zoho Quote creation
 		$quoted_items = [];
+		$unitPrice = 0; // To calculate total unit price for deal amount
 		foreach ($proposal_data['items'] as $item) {
+			$item_total = (float)$item['unitPrice'] * (float)$item['quantity'];
+			$unitPrice += $item_total; // Accumulate total amount for the deal
 			$quoted_items[] = [
 				'Product_Name' => $item['itemName'],
 				'Quantity' => (float) $item['quantity'],
@@ -336,6 +347,7 @@ class Dashboard extends CI_Controller {
 				'brand' => $proposal_data['brand'],
 				'warranty' => $proposal_data['warranty'],
 				'delivery' => $proposal_data['delivery'],
+				'notes' => $proposal_data['notes'],
 				'valid_until' => $proposal_data['validUntil'],
 				// 'sub_total' => $proposal_data['subTotal'],
 				'discount' => $proposal_data['discount'],
@@ -365,6 +377,15 @@ class Dashboard extends CI_Controller {
 	
 			// Save items data to the database
 			$this->Proposal_model->save_proposal_items($items_data);
+			
+			// Step 6: Update Deal status to "Proposal" in Zoho CRM
+			$deal_update_result = $this->update_deal_in_zoho($deal_id, 'Proposal/Price Quote', $unitPrice);
+
+			if (isset($deal_update_result['error'])) {
+				log_message('error', 'Failed to update deal status: ' . $deal_update_result['error']);
+				// Optionally, you can decide whether to fail the entire request here or just log it
+				return ['error' => 'Failed to update deal status: ' . $deal_update_result['error']];
+			}
 	
 			return ['success' => true, 'quote_id' => $quote_id, 'id' => $id];
 		} else {
@@ -481,10 +502,15 @@ class Dashboard extends CI_Controller {
 		echo json_encode(['success' => true, 'message' => 'Proposal edited successfully.', 'id' => $result['id']]);
 	}
 
-	private function update_quote_in_zoho($quote_number, $proposal_data) {
+	private function update_quote_in_zoho($quote_deal_number, $proposal_data) {
 		ini_set('display_errors', 0); // Hide errors from being directly output to the client
 		ini_set('log_errors', 1);    // Enable error logging
+
+		// Transform QUOTE-1254 to VTNX-1254
+		$quote_number = str_replace("QUOTE", "VTNX", $quote_deal_number);
 	
+		print_r($quote_number);
+		
 		// Step 1: Fetch Quote ID using the Quote Number
 		$quote_response = $this->execute_curl_request(
 			"https://www.zohoapis.com/crm/v2/Quotes/search?criteria=(Quote_No:equals:$quote_number)",
@@ -523,7 +549,7 @@ class Dashboard extends CI_Controller {
 		}
 	
 		$quote_id = $quote_data['data'][0]['id'];
-		$deal_id = $quote_data['data'][0]['Deal_Name']['id'] ?? null; // Assuming Deal_Name is linked to the quote
+		$deal_id = $quote_data['data'][0]['Deal_Name']['id'] ?? null;
 	
 		// Step 2: Create or update contact in Zoho CRM
 		$contact_data = json_encode([
@@ -677,6 +703,7 @@ class Dashboard extends CI_Controller {
 				'brand' => $proposal_data['brand'],
 				'warranty' => $proposal_data['warranty'],
 				'delivery' => $proposal_data['delivery'],
+				'notes' => $proposal_data['notes'],
 				'valid_until' => $proposal_data['validUntil'],
 				'discount' => $proposal_data['discount'],
 				'adjustment' => $proposal_data['adjustment'],
@@ -732,17 +759,19 @@ class Dashboard extends CI_Controller {
 	
 			// Fetch main quote data
 			$quote_data = $this->Task_model->get_quote_by_number($quote_number, $user_id);
-	
+            
 			// If quote is not found, return error
 			if (empty($quote_data)) {
 				log_message('error', 'Quote not found for Quote Number: ' . $quote_number);
-				$this->output->set_status_header(404);
+				$this->output->set_status_header(200);
 				echo json_encode(['success' => false, 'error' => 'Quote not found.']);
 				return;
 			}
+
+			$task_id = $quote_data['id'];
 	
 			// Fetch associated items
-			$items = $this->Proposal_model->get_proposal_items_by_quote_number($quote_number);
+			$items = $this->Proposal_model->get_proposal_items_by_task_id($task_id);
 			if (empty($items)) {
 				$items = []; // Ensure items is always an array
 			}
@@ -815,55 +844,61 @@ class Dashboard extends CI_Controller {
 	}
 	
 	public function get_deal_number() {
-		// Get the raw POST data (since the data is sent as JSON)
-		$inputData = json_decode($this->input->raw_input_stream, true);
-		$dealId = isset($inputData['deal_id']) ? $inputData['deal_id'] : null;
-		log_message('debug', 'Deal ID: ' . $dealId);
-		
-		if (!$dealId) {
-			return $this->output->set_output(json_encode(['success' => false, 'message' => 'Deal ID is required.']));
-		}
-	
-		// Initial attempt to fetch deal details
-		$accessToken = $this->get_access_token(); // Retrieve the current access token
-		$url = "https://www.zohoapis.com/crm/v2.1/Deals/{$dealId}";
-	
-		// Function to execute the request with the provided access token
-		$dealResponse = $this->executeDealRequest($url, $accessToken);
-	
-		// Check if the response indicates an expired token
-		if ($dealResponse['http_code'] == 401) {
-			// Attempt to refresh the access token
-			if ($this->refresh_access_token()) {
-				// Retry the request with the new token
-				$accessToken = $this->get_access_token(); // Get the refreshed token
-				$dealResponse = $this->executeDealRequest($url, $accessToken);
-	
-				// Decode the refreshed response
-				$responseData = json_decode($dealResponse['body'], true);
-				log_message('debug', 'Fetched deal details: ' . print_r($responseData, true));
-	
-				if (isset($responseData['data'][0]['DealNumber'])) {
-					return $this->output->set_output(json_encode(['success' => true, 'DealNumber' => $responseData['data'][0]['DealNumber']]));
-				} else {
-					return $this->output->set_output(json_encode(['success' => false, 'message' => 'Deal number not found or failed to fetch after token refresh.']));
-				}
-			} else {
-				log_message('error', 'Failed to refresh access token for fetching deal number.');
-				return $this->output->set_output(json_encode(['success' => false, 'message' => 'Failed to refresh access token.']));
-			}
-		} else {
-			// Decode the response if the token was initially valid
-			$responseData = json_decode($dealResponse['body'], true);
-			log_message('debug', 'Fetched deal details: ' . print_r($responseData, true));
-	
-			if (isset($responseData['data'][0]['DealNumber'])) {
-				return $this->output->set_output(json_encode(['success' => true, 'DealNumber' => $responseData['data'][0]['DealNumber']]));
-			} else {
-				return $this->output->set_output(json_encode(['success' => false, 'message' => 'Deal number not found or failed to fetch.']));
-			}
-		}
-	}	
+        // Get the raw POST data (since the data is sent as JSON)
+        $inputData = json_decode($this->input->raw_input_stream, true);
+        $dealId = isset($inputData['deal_id']) ? $inputData['deal_id'] : null;
+        log_message('debug', 'Deal ID: ' . $dealId);
+        
+        if (!$dealId) {
+            return $this->output->set_output(json_encode(['success' => false, 'message' => 'Deal ID is required.']));
+        }
+    
+        // Initial attempt to fetch deal details
+        $accessToken = $this->get_access_token(); // Retrieve the current access token
+        $url = "https://www.zohoapis.com/crm/v2.1/Deals/{$dealId}";
+    
+        // Function to execute the request with the provided access token
+        $dealResponse = $this->executeDealRequest($url, $accessToken);
+    
+        // Check if the response indicates an expired token
+        if ($dealResponse['http_code'] == 401) {
+            // Attempt to refresh the access token
+            if ($this->refresh_access_token()) {
+                // Retry the request with the new token
+                $accessToken = $this->get_access_token(); // Get the refreshed token
+                $dealResponse = $this->executeDealRequest($url, $accessToken);
+    
+                // Decode the refreshed response
+                $responseData = json_decode($dealResponse['body'], true);
+                log_message('debug', 'Fetched deal details: ' . print_r($responseData, true));
+    
+                if (isset($responseData['data'][0]['DealNumber'])) {
+                    // Process the DealNumber to replace VTNX with DEAL
+                    $originalDealNumber = $responseData['data'][0]['DealNumber'];
+                    $newDealNumber = preg_replace('/^VTNX-/', 'DEAL-', $originalDealNumber);
+                    return $this->output->set_output(json_encode(['success' => true, 'DealNumber' => $newDealNumber]));
+                } else {
+                    return $this->output->set_output(json_encode(['success' => false, 'message' => 'Deal number not found or failed to fetch after token refresh.']));
+                }
+            } else {
+                log_message('error', 'Failed to refresh access token for fetching deal number.');
+                return $this->output->set_output(json_encode(['success' => false, 'message' => 'Failed to refresh access token.']));
+            }
+        } else {
+            // Decode the response if the token was initially valid
+            $responseData = json_decode($dealResponse['body'], true);
+            log_message('debug', 'Fetched deal details: ' . print_r($responseData, true));
+    
+            if (isset($responseData['data'][0]['DealNumber'])) {
+                // Process the DealNumber to replace VTNX with DEAL
+                $originalDealNumber = $responseData['data'][0]['DealNumber'];
+                $newDealNumber = preg_replace('/^VTNX-/', 'DEAL-', $originalDealNumber);
+                return $this->output->set_output(json_encode(['success' => true, 'DealNumber' => $newDealNumber]));
+            } else {
+                return $this->output->set_output(json_encode(['success' => false, 'message' => 'Deal number not found or failed to fetch.']));
+            }
+        }
+    }
 	
 	// Helper function to execute the cURL request with the current token
 	private function executeDealRequest($url, $accessToken) {
@@ -919,5 +954,144 @@ class Dashboard extends CI_Controller {
         
         $this->load->view('auth/myJobs', $data);
 	}
+
+	private function send_request($url, $headers, $payload = null) {
+        $ch = curl_init();
+    
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        if ($payload) {
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        }
+    
+        $response = curl_exec($ch);
+        $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+    
+        return [
+            'status_code' => $status_code,
+            'response' => json_decode($response, true)
+        ];
+    }
+
+	public function create_item_in_zoho() {
+		$content_type = $this->input->server('CONTENT_TYPE');
+		$data = strpos($content_type, 'application/json') !== false ? json_decode($this->input->raw_input_stream, true) : $this->input->post();
+	
+		if ($data === null) {
+			log_message('error', 'Invalid data format received.');
+			$this->output->set_status_header(400);
+			echo json_encode(['success' => false, 'error' => 'Invalid data format.']);
+			return;
+		}
+	
+		$this->form_validation->set_data($data);
+		$this->form_validation->set_rules('Product_Name', 'Item Name', 'required');
+		$this->form_validation->set_rules('Description', 'Description');
+		$this->form_validation->set_rules('VZ_app_user_id', 'VZ App User ID', 'required');
+	
+		if ($this->form_validation->run() == FALSE) {
+			log_message('error', 'Form validation failed: ' . json_encode($this->form_validation->error_array()));
+			$this->output->set_status_header(400);
+			echo json_encode(['success' => false, 'errors' => $this->form_validation->error_array()]);
+			return;
+		}
+	
+		$access_token = $this->get_access_token();
+		$headers = ["Authorization: Bearer $access_token", "Content-Type: application/json"];
+		$url = "https://www.zohoapis.com/crm/v2/Products";
+	
+		// Check if a product with the same name already exists
+		$product_name = $data['Product_Name'];
+		$encoded_product_name = urlencode($product_name);
+		$check_duplicate_url = "https://www.zohoapis.com/crm/v2/Products/search?criteria=(Product_Name:equals:$encoded_product_name)";
+		
+		log_message('error', 'Checking duplicate product name with URL: ' . $check_duplicate_url);
+	
+		$response = $this->send_request($check_duplicate_url, $headers);
+	
+		if ($response['status_code'] !== 200) {
+			log_message('error', 'Error while checking for duplicate product: ' . json_encode($response));
+		} else {
+			log_message('error', 'Duplicate check response: ' . json_encode($response['response']));
+		}
+	
+		if ($response['status_code'] === 200 && isset($response['response']['data']) && count($response['response']['data']) > 0) {
+			log_message('error', 'Duplicate product found with name: ' . $product_name);
+			$this->output->set_status_header(400);
+			echo json_encode(['success' => false, 'error' => 'An item with this name already exists. Please enter a unique name.']);
+			return;
+		}
+	
+		// Proceed with creating the item in Zoho CRM
+		$max_attempts = 5;
+		$attempt = 0;
+	
+		do {
+			$zoho_data = [
+				'Product_Name' => $data['Product_Name'],
+				'Description' => $data['Description'],
+				'VZ_app_user' => ['id' => $data['VZ_app_user_id']],
+				'Owner' => '5653678000000401001',
+				'Product_Active' => true
+			];
+	
+			$payload = json_encode(['data' => [$zoho_data]]);
+			log_message('error', 'Creating product attempt #' . ($attempt + 1) . ' with payload: ' . $payload);
+	
+			$response = $this->send_request($url, $headers, $payload);
+			$attempt++;
+	
+			if ($response['status_code'] !== 201) {
+				log_message('error', 'Create product response: ' . json_encode($response));
+			}
+		} while ($response['status_code'] === 200 && isset($response['response']['data'][0]['code']) && $response['response']['data'][0]['code'] === 'DUPLICATE_DATA' && $attempt < $max_attempts);
+	
+		if ($response['status_code'] === 201 && isset($response['response']['data'][0]['details']['id'])) {
+			$zoho_product_id = $response['response']['data'][0]['details']['id'];
+			log_message('error', 'Product created successfully with ID: ' . $zoho_product_id);
+			echo json_encode([
+				'success' => true,
+				'product_id' => $zoho_product_id,
+				'message' => 'Item created successfully in Zoho CRM'
+			]);
+		} elseif ($response['status_code'] === 401) {
+			log_message('error', 'Access token expired. Attempting to refresh.');
+			$access_token = $this->refresh_access_token();
+			if ($access_token) {
+				log_message('error', 'Access token refreshed successfully. Retrying...');
+				$this->create_item_in_zoho();
+			} else {
+				log_message('error', 'Failed to refresh access token.');
+				$this->output->set_status_header(401);
+				echo json_encode(['success' => false, 'error' => 'Failed to retrieve or refresh access token']);
+			}
+		} else {
+			log_message('error', 'Failed to create item in Zoho CRM: ' . json_encode($response));
+			$this->output->set_status_header(500);
+			echo json_encode([
+				'success' => false,
+				'error' => 'Failed to create item in Zoho CRM',
+				'details' => $response['response']
+			]);
+		}
+	}
+	
+    
+    /**
+     * Helper function to return error response
+     */
+    private function response_error($message, $status_code = 400, $details = null) {
+        $this->output->set_status_header($status_code);
+        echo json_encode([
+            'success' => false,
+            'error' => is_array($message) ? 'Validation errors occurred.' : $message,
+            'errors' => is_array($message) ? $message : null,
+            'details' => $details
+        ]);
+        return;
+    }
 			
 }

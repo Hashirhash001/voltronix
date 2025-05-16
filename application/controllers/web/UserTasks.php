@@ -48,7 +48,7 @@ class UserTasks extends CI_Controller
 		// Check if the current user is authorized
 		$current_user_id = $this->session->userdata('user_id');
 
-		if ($data['role'] != '1') {
+		if ($data['role'] !== '1') {
 			show_error('Unauthorized access', 403);
 			return;
 		}
@@ -65,7 +65,9 @@ class UserTasks extends CI_Controller
 	{
 		$current_user_id = $this->session->userdata('user_id');
 
-		if ($current_user_id != '5653678000013160085') {
+		$data['role'] = $this->session->userdata('role');
+        
+		if ($data['role'] != '1') {
 			show_error('Unauthorized access', 403);
 			return;
 		}

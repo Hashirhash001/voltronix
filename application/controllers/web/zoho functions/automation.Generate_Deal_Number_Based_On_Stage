@@ -1,0 +1,542 @@
+void automation.Generate_Deal_Number_Based_On_Stage(Int dealId,String Stage)
+{
+dealId = input.dealId;
+stage = input.Stage;
+// Define stage-based prefixes and corresponding field names
+stagePrefixes = Map();
+stagePrefixes.put("Qualification","DEAL");
+stagePrefixes.put("Site Visit","SITE");
+stagePrefixes.put("Proposal/Price Quote","QUOTE");
+stagePrefixes.put("Closed Won","JOB");
+stagePrefixes.put("Closed Lost","LOST");
+stagePrefixes.put("Competition","VTNX");
+stagePrefixes.put("Negotiation/Review","VTNX");
+stageFieldNames = Map();
+stageFieldNames.put("Qualification","QualDealNumber");
+stageFieldNames.put("Site Visit","SiteDealNumber");
+stageFieldNames.put("Proposal/Price Quote","QuoteDealNumber");
+stageFieldNames.put("Closed Won","JobDealNumber");
+stageFieldNames.put("Closed Lost","LostDealNumber");
+// Fetch the current deal details
+dealDetails = zoho.crm.getRecordById("Deals",dealId);
+info "Deal details fetched: " + dealDetails;
+// Get DealNumber from deal details
+DealNumber = "";
+if(dealDetails.contains("DealNumber") && dealDetails.get("DealNumber") != null)
+{
+	DealNumber = dealDetails.get("DealNumber");
+}
+info "Fetched DealNumber from record: " + DealNumber;
+// Determine the prefix and field name based on stage
+newPrefix = "DEAL";
+if(stagePrefixes.contains(stage))
+{
+	newPrefix = stagePrefixes.get(stage);
+}
+fieldName = stageFieldNames.get(stage);
+info "Stage: " + stage + ", Prefix: " + newPrefix + ", FieldName: " + fieldName;
+// Get current deal number
+currentDealNumber = "";
+if(dealDetails.contains(fieldName) && dealDetails.get(fieldName) != null)
+{
+	currentDealNumber = dealDetails.get(fieldName);
+}
+info "Current Deal Number: " + currentDealNumber;
+newDealNumber = currentDealNumber;
+// Initialize datetime for the current stage update
+stageUpdateDatetime = zoho.currenttime.toString("yyyy-MM-dd'T'HH:mm:ssXXX");
+// Special handling for Qualification stage
+if(stage == "Qualification")
+{
+	info "Entering Qualification stage logic";
+	info "Fetched DealNumber: " + DealNumber;
+	if(DealNumber != null && DealNumber.startsWith("VTNX-"))
+	{
+		info "DealNumber starts with VTNX-";
+		parts = DealNumber.toList("-");
+		info "Parts after split: " + parts;
+		if(parts.size() > 1)
+		{
+			uniqueNumber = parts.get(1);
+			newDealNumber = "DEAL-" + uniqueNumber;
+			info "Generated newDealNumber: " + newDealNumber;
+			updateMap = Map();
+			updateMap.put(fieldName,newDealNumber);
+			info "Update map: " + updateMap;
+			response = zoho.crm.updateRecord("Deals",dealId,updateMap);
+			info "Update response: " + response;
+			dealDetails = zoho.crm.getRecordById("Deals",dealId);
+			info "Updated deal details: " + dealDetails;
+		}
+		else
+		{
+			info "No number found after VTNX-";
+		}
+	}
+	else
+	{
+		info "DealNumber is null or doesn't start with VTNX-";
+	}
+}
+else if(currentDealNumber == "" || !currentDealNumber.startsWith(newPrefix))
+{
+	info "Entering other stages logic";
+	// Special handling for Proposal/Price Quote stage
+	if(stage == "Proposal/Price Quote")
+	{
+		quoteList = zoho.crm.getRelatedRecords("Quotes","Deals",dealId,1,1);
+		info "Quote list: " + quoteList;
+		if(quoteList.size() > 0)
+		{
+			latestQuote = quoteList.get(0);
+			if(latestQuote.contains("Quote_No") && latestQuote.get("Quote_No").startsWith("VTNX-"))
+			{
+				quoteNumber = latestQuote.get("Quote_No");
+				parts = quoteNumber.toList("-");
+				if(parts.size() > 1)
+				{
+					uniqueNumber = parts.get(1);
+					newDealNumber = "QUOTE-" + uniqueNumber;
+				}
+			}
+		}
+	}
+	if(newDealNumber == "" || !newDealNumber.startsWith(newPrefix))
+	{
+		dealsList = zoho.crm.getRecords("Deals",1,200);
+		// Set starting numbers based on stage
+		maxNumber = 1234;
+		// Default for other stages
+		if(stage == "Site Visit")
+		{
+			maxNumber = 3000;
+			// SITE starts from 3000
+		}
+		else if(stage == "Closed Won")
+		{
+			maxNumber = 5000;
+			// JOB starts from 5000
+		}
+		else if(stage == "Closed Lost")
+		{
+			maxNumber = 6000;
+			// LOST starts from 6000
+		}
+		for each  deal in dealsList
+		{
+			if(deal.contains(fieldName) && deal.get(fieldName) != null && deal.get(fieldName) != "")
+			{
+				dealNumber = deal.get(fieldName);
+				if(dealNumber.contains("-"))
+				{
+					parts = dealNumber.toList("-");
+					numPart = parts.get(parts.size() - 1).toNumber();
+					if(numPart > maxNumber)
+					{
+						maxNumber = numPart;
+					}
+				}
+			}
+		}
+		uniqueNumber = (maxNumber + 1).toString();
+		newDealNumber = newPrefix + "-" + uniqueNumber;
+	}
+	updateMap = Map();
+	updateMap.put(fieldName,newDealNumber);
+	response = zoho.crm.updateRecord("Deals",dealId,updateMap);
+	info "Other stage - Deal Number updated: " + newDealNumber;
+	dealDetails = zoho.crm.getRecordById("Deals",dealId);
+}
+// Fetch the latest note for the deal only on creation
+latestNoteContent = "";
+isNewDeal = false;
+if(dealDetails.contains("Created_Time") && dealDetails.contains("Modified_Time"))
+{
+	createdTime = dealDetails.get("Created_Time");
+	modifiedTime = dealDetails.get("Modified_Time");
+	// Log raw timestamps for debugging
+	info "Raw Created_Time: " + createdTime;
+	info "Raw Modified_Time: " + modifiedTime;
+	// Validate timestamp format (basic check for ISO 8601)
+	if(createdTime != null && modifiedTime != null && createdTime.contains("T") && modifiedTime.contains("T"))
+	{
+		try 
+		{
+			// Normalize timestamps by removing timezone offset and formatting
+			createdTimeNormalized = createdTime.subString(0,10) + " " + createdTime.subString(11,19);
+			modifiedTimeNormalized = modifiedTime.subString(0,10) + " " + modifiedTime.subString(11,19);
+			info "Normalized Created_Time: " + createdTimeNormalized;
+			info "Normalized Modified_Time: " + modifiedTimeNormalized;
+			// Parse normalized timestamps to extract components
+			createdParts = createdTimeNormalized.toList(" ");
+			modifiedParts = modifiedTimeNormalized.toList(" ");
+			if(createdParts.size() == 2 && modifiedParts.size() == 2)
+			{
+				createdDateParts = createdParts.get(0).toList("-");
+				createdTimeParts = createdParts.get(1).toList(":");
+				modifiedDateParts = modifiedParts.get(0).toList("-");
+				modifiedTimeParts = modifiedParts.get(1).toList(":");
+				if(createdDateParts.size() == 3 && createdTimeParts.size() == 3 && modifiedDateParts.size() == 3 && modifiedTimeParts.size() == 3)
+				{
+					createdYear = createdDateParts.get(0).toLong();
+					createdMonth = createdDateParts.get(1).toLong();
+					createdDay = createdDateParts.get(2).toLong();
+					createdHour = createdTimeParts.get(0).toLong();
+					createdMinute = createdTimeParts.get(1).toLong();
+					createdSecond = createdTimeParts.get(2).toLong();
+					modifiedYear = modifiedDateParts.get(0).toLong();
+					modifiedMonth = modifiedDateParts.get(1).toLong();
+					modifiedDay = modifiedDateParts.get(2).toLong();
+					modifiedHour = modifiedTimeParts.get(0).toLong();
+					modifiedMinute = modifiedTimeParts.get(1).toLong();
+					modifiedSecond = modifiedTimeParts.get(2).toLong();
+					// Calculate time difference in seconds
+					timeDiffSeconds = 0;
+					// Simplified: assume same day for small differences (within 10 seconds)
+					if(createdYear == modifiedYear && createdMonth == modifiedMonth && createdDay == modifiedDay)
+					{
+						timeDiffSeconds = (modifiedHour - createdHour) * 3600 + (modifiedMinute - createdMinute) * 60 + modifiedSecond - createdSecond;
+					}
+					else
+					{
+						// For different days, assume not new (too large a difference)
+						timeDiffSeconds = 9999;
+					}
+					info "Time difference (seconds): " + timeDiffSeconds;
+					// Consider deal as new if Modified_Time is within 10 seconds of Created_Time
+					if(timeDiffSeconds.abs() <= 10)
+					{
+						isNewDeal = true;
+					}
+				}
+				else
+				{
+					info "Invalid timestamp component format";
+				}
+			}
+			else
+			{
+				info "Invalid normalized timestamp format";
+			}
+		}
+		catch (e)
+		{
+			info "Error parsing timestamps: " + e;
+			info "Created_Time format: " + createdTime;
+			info "Modified_Time format: " + modifiedTime;
+			isNewDeal = false;
+		}
+	}
+	else
+	{
+		info "Invalid timestamp format detected";
+		info "Created_Time: " + createdTime;
+		info "Modified_Time: " + modifiedTime;
+	}
+}
+if(isNewDeal)
+{
+	notesList = zoho.crm.getRelatedRecords("Notes","Deals",dealId,1,1);
+	info "Notes list: " + notesList;
+	if(notesList.size() > 0)
+	{
+		latestNote = notesList.get(0);
+		if(latestNote.contains("Note_Content") && latestNote.get("Note_Content") != null)
+		{
+			latestNoteContent = latestNote.get("Note_Content");
+		}
+	}
+}
+info "Is New Deal: " + isNewDeal + ", Latest Note Content: " + latestNoteContent;
+// Ensure required fields are properly formatted
+ownerId = "";
+if(dealDetails.contains("Owner") && dealDetails.get("Owner") != null)
+{
+	ownerDetails = dealDetails.get("Owner");
+	if(ownerDetails.contains("id"))
+	{
+		ownerId = ownerDetails.get("id");
+	}
+}
+assignedTo = "";
+if(dealDetails.contains("VZ_app_user") && dealDetails.get("VZ_app_user") != null)
+{
+	vzAppUser = dealDetails.get("VZ_app_user");
+	if(vzAppUser.contains("id"))
+	{
+		assignedTo = vzAppUser.get("id");
+	}
+}
+dealName = "";
+if(dealDetails.contains("Deal_Name") && dealDetails.get("Deal_Name") != null)
+{
+	dealName = dealDetails.get("Deal_Name");
+}
+accountName = "";
+if(dealDetails.contains("Account_Name") && dealDetails.get("Account_Name") != null)
+{
+	accountDetails = dealDetails.get("Account_Name");
+	if(accountDetails.contains("name"))
+	{
+		accountName = accountDetails.get("name");
+	}
+}
+// Prepare the webhook payload
+webhookPayload = Map();
+// Set required fields
+webhookPayload.put("zoho_crm_id",dealId.toString());
+// Set "deal_number"
+if(dealDetails.contains("DealNumber") && dealDetails.get("DealNumber") != null)
+{
+	webhookPayload.put("deal_number",dealDetails.get("DealNumber"));
+}
+else
+{
+	webhookPayload.put("deal_number","");
+}
+// Set stage-specific deal numbers and their datetimes
+// Only include the deal number and datetime for the current stage if updated
+if(dealDetails.contains("EnquiryNumber") && dealDetails.get("EnquiryNumber") != null)
+{
+	webhookPayload.put("enq_number",dealDetails.get("EnquiryNumber"));
+	if(isNewDeal)
+	{
+		webhookPayload.put("enq_deal_date",stageUpdateDatetime);
+	}
+}
+else
+{
+	webhookPayload.put("enq_number","");
+}
+if(dealDetails.contains("QualDealNumber") && dealDetails.get("QualDealNumber") != null)
+{
+	webhookPayload.put("qual_deal_number",dealDetails.get("QualDealNumber"));
+	if(stage == "Qualification" && newDealNumber != currentDealNumber)
+	{
+		webhookPayload.put("qual_deal_date",stageUpdateDatetime);
+	}
+}
+else
+{
+	webhookPayload.put("qual_deal_number","");
+}
+if(dealDetails.contains("SiteDealNumber") && dealDetails.get("SiteDealNumber") != null)
+{
+	webhookPayload.put("site_deal_number",dealDetails.get("SiteDealNumber"));
+	if(stage == "Site Visit" && newDealNumber != currentDealNumber)
+	{
+		webhookPayload.put("site_deal_date",stageUpdateDatetime);
+	}
+}
+else
+{
+	webhookPayload.put("site_deal_number","");
+}
+if(dealDetails.contains("QuoteDealNumber") && dealDetails.get("QuoteDealNumber") != null)
+{
+	webhookPayload.put("quote_deal_number",dealDetails.get("QuoteDealNumber"));
+	if(stage == "Proposal/Price Quote" && newDealNumber != currentDealNumber)
+	{
+		webhookPayload.put("quote_deal_date",stageUpdateDatetime);
+	}
+}
+else
+{
+	webhookPayload.put("quote_deal_number","");
+}
+if(dealDetails.contains("JobDealNumber") && dealDetails.get("JobDealNumber") != null)
+{
+	webhookPayload.put("job_deal_number",dealDetails.get("JobDealNumber"));
+	if(stage == "Closed Won" && newDealNumber != currentDealNumber)
+	{
+		webhookPayload.put("job_deal_date",stageUpdateDatetime);
+	}
+}
+else
+{
+	webhookPayload.put("job_deal_number","");
+}
+if(dealDetails.contains("LostDealNumber") && dealDetails.get("LostDealNumber") != null)
+{
+	webhookPayload.put("lost_deal_number",dealDetails.get("LostDealNumber"));
+	if(stage == "Closed Lost" && newDealNumber != currentDealNumber)
+	{
+		webhookPayload.put("lost_deal_date",stageUpdateDatetime);
+	}
+}
+else
+{
+	webhookPayload.put("lost_deal_number","");
+}
+// Set "account_name"
+if(accountName != null && accountName != "")
+{
+	webhookPayload.put("account_name",accountName);
+}
+else
+{
+	webhookPayload.put("account_name","");
+}
+// Set "owner_id"
+if(ownerId != null && ownerId != "")
+{
+	webhookPayload.put("owner_id",ownerId);
+}
+else
+{
+	webhookPayload.put("owner_id","");
+}
+// Set "assigned_to"
+if(assignedTo != null && assignedTo != "")
+{
+	webhookPayload.put("assigned_to",assignedTo);
+}
+else
+{
+	webhookPayload.put("assigned_to","");
+}
+// Set "deal_name"
+if(dealName != null && dealName != "")
+{
+	webhookPayload.put("deal_name",dealName);
+}
+else
+{
+	webhookPayload.put("deal_name","");
+}
+// Set "complaint_info"
+if(dealDetails.contains("Description") && dealDetails.get("Description") != null)
+{
+	webhookPayload.put("complaint_info",dealDetails.get("Description"));
+}
+else
+{
+	webhookPayload.put("complaint_info","");
+}
+// Set "status"
+if(dealDetails.contains("VZ_App_Status") && dealDetails.get("VZ_App_Status") != null)
+{
+	webhookPayload.put("status",dealDetails.get("VZ_App_Status"));
+}
+else
+{
+	webhookPayload.put("status","");
+}
+// Set "customer_email"
+if(dealDetails.contains("Email") && dealDetails.get("Email") != null)
+{
+	webhookPayload.put("customer_email",dealDetails.get("Email"));
+}
+else
+{
+	webhookPayload.put("customer_email","");
+}
+// Set "customer_contact"
+if(dealDetails.contains("Phone") && dealDetails.get("Phone") != null)
+{
+	webhookPayload.put("customer_contact",dealDetails.get("Phone"));
+}
+else
+{
+	webhookPayload.put("customer_contact","");
+}
+// Set "address"
+if(dealDetails.contains("Address") && dealDetails.get("Address") != null)
+{
+	webhookPayload.put("address",dealDetails.get("Address"));
+}
+else
+{
+	webhookPayload.put("address","");
+}
+// Set "country"
+if(dealDetails.contains("Country") && dealDetails.get("Country") != null)
+{
+	webhookPayload.put("country",dealDetails.get("Country"));
+}
+else
+{
+	webhookPayload.put("country","");
+}
+// Set "state"
+if(dealDetails.contains("State") && dealDetails.get("State") != null)
+{
+	webhookPayload.put("state",dealDetails.get("State"));
+}
+else
+{
+	webhookPayload.put("state","");
+}
+// Set "city"
+if(dealDetails.contains("City") && dealDetails.get("City") != null)
+{
+	webhookPayload.put("city",dealDetails.get("City"));
+}
+else
+{
+	webhookPayload.put("city","");
+}
+// Set "street"
+if(dealDetails.contains("Street") && dealDetails.get("Street") != null)
+{
+	webhookPayload.put("street",dealDetails.get("Street"));
+}
+else
+{
+	webhookPayload.put("street","");
+}
+// Set "P.BOX"
+if(dealDetails.contains("P_BOX") && dealDetails.get("P_BOX") != null)
+{
+	webhookPayload.put("p_box",dealDetails.get("P_BOX"));
+}
+else
+{
+	webhookPayload.put("p_box","");
+}
+// Set "TRN"
+if(dealDetails.contains("TRN") && dealDetails.get("TRN") != null)
+{
+	webhookPayload.put("trn",dealDetails.get("TRN"));
+}
+else
+{
+	webhookPayload.put("trn","");
+}
+// Set "zip_code"
+if(dealDetails.contains("Zip_Code") && dealDetails.get("Zip_Code") != null)
+{
+	webhookPayload.put("zip_code",dealDetails.get("Zip_Code"));
+}
+else
+{
+	webhookPayload.put("zip_code","");
+}
+// Set "service_charge" with default to 0
+if(dealDetails.contains("Amount") && dealDetails.get("Amount") != null)
+{
+	webhookPayload.put("service_charge",dealDetails.get("Amount"));
+}
+else
+{
+	webhookPayload.put("service_charge",0);
+}
+// Set "assign_notes" only for new deals
+webhookPayload.put("assign_notes",latestNoteContent);
+// Trigger the webhook only if "VZ_app_user" has an ID
+if(assignedTo != null && assignedTo != "")
+{
+	webhookResponse = invokeurl
+	[
+		url :"https://app.voltronix.ae/voltronix/deal/create"
+		type :POST
+		parameters:toString(webhookPayload)
+		headers:{"Content-Type":"application/json"}
+	];
+	info "Webhook triggered: " + webhookResponse;
+}
+else
+{
+	info "VZ App User is empty. Webhook not triggered.";
+}
+}

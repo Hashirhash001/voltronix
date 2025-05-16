@@ -1,0 +1,154 @@
+string button.syncDealAttachments(String dealId,String webAppApiUrl)
+{
+// Validate inputs
+if(dealId == null || dealId == "" || webAppApiUrl == null || webAppApiUrl == "")
+{
+	info "Invalid input: dealId or webAppApiUrl is missing";
+	return "ERROR: Invalid input: dealId or webAppApiUrl is missing";
+}
+// Decode URL to handle encoded characters
+decodedUrl = webAppApiUrl.replaceAll("%3A",":").replaceAll("%2F","/").replaceAll("%2E",".");
+info "Original webAppApiUrl: " + webAppApiUrl;
+info "Decoded webAppApiUrl: " + decodedUrl;
+// Validate URL format
+if(!decodedUrl.startsWith("http://") && !decodedUrl.startsWith("https://"))
+{
+	info "Invalid URL format: " + decodedUrl;
+	return "ERROR: Invalid URL format: " + decodedUrl;
+}
+// Fetch deal details
+dealDetails = zoho.crm.getRecordById("Deals",dealId);
+info "Deal details fetched: " + dealDetails;
+assignedTo = "";
+if(dealDetails.contains("VZ_app_user") && dealDetails.get("VZ_app_user") != null)
+{
+	vzAppUser = dealDetails.get("VZ_app_user");
+	if(vzAppUser.contains("id"))
+	{
+		assignedTo = vzAppUser.get("id");
+	}
+}
+info "Assigned To (VZ_app_user): " + assignedTo;
+// Proceed only if VZ_app_user is assigned
+if(assignedTo == null || assignedTo == "")
+{
+	info "VZ App User is empty. Webhook not triggered.";
+	return "ERROR: VZ App User is empty. Webhook not triggered.";
+}
+// Get previously synced attachment IDs
+syncedAttachmentIds = List();
+if(dealDetails.contains("Synced_Attachment_IDs") && dealDetails.get("Synced_Attachment_IDs") != null && dealDetails.get("Synced_Attachment_IDs") != "")
+{
+	syncedAttachmentIds = dealDetails.get("Synced_Attachment_IDs").toList(",");
+}
+info "Previously synced attachment IDs: " + syncedAttachmentIds;
+// Fetch attachments with retry
+attachmentsList = List();
+try 
+{
+	attachmentsList = zoho.crm.getRelatedRecords("Attachments","Deals",dealId,1,200);
+	info "Attachments list fetched: " + attachmentsList;
+}
+catch (e)
+{
+	info "Error fetching attachments: " + e;
+	return "ERROR: Failed to fetch attachments: " + e;
+}
+// Handle case where no attachments exist
+if(attachmentsList.size() == 0)
+{
+	info "No attachments found for dealId: " + dealId;
+	return "INFO: No attachments found for dealId: " + dealId;
+}
+// Prepare attachment data for webhook (only new attachments)
+attachmentList = List();
+newSyncedAttachmentIds = List();
+for each  attachment in attachmentsList
+{
+	attachmentId = attachment.get("id");
+	if(!syncedAttachmentIds.contains(attachmentId))
+	{
+		attachmentInfo = Map();
+		attachmentInfo.put("attachment_id",attachmentId);
+		attachmentInfo.put("file_name",attachment.get("File_Name"));
+		attachmentInfo.put("file_size",attachment.get("Size"));
+		attachmentList.add(attachmentInfo);
+		newSyncedAttachmentIds.add(attachmentId);
+		info "New attachment added to payload: ID=" + attachmentId + ", Name=" + attachment.get("File_Name");
+	}
+	else
+	{
+		info "Attachment already synced, skipping: ID=" + attachmentId;
+	}
+}
+// If no new attachments, exit
+if(attachmentList.isEmpty())
+{
+	info "No new attachments to sync for dealId: " + dealId;
+	return "INFO: No new attachments to sync for dealId: " + dealId;
+}
+// Prepare webhook payload
+webhookPayload = Map();
+webhookPayload.put("deal_id",dealId);
+webhookPayload.put("attachments",attachmentList);
+// Convert payload to JSON string
+payloadJson = "{\"deal_id\":\"" + dealId + "\",\"attachments\":[" + attachmentList.toString() + "]}";
+// Log inputs for debugging
+info "Webhook Payload (Map): " + webhookPayload.toString();
+info "Webhook Payload (JSON): " + payloadJson;
+// Trigger webhook using decoded URL
+try 
+{
+	webhookResponse = invokeurl
+	[
+		url :decodedUrl
+		type :POST
+		parameters:payloadJson
+		headers:{"Content-Type":"application/json"}
+	];
+	// Log full response for debugging
+	info "Raw webhook response: " + webhookResponse.toString();
+	// Check response status
+	responseCode = webhookResponse.get("status_code");
+	isSuccess = webhookResponse.get("success") == true;
+	if(responseCode == null)
+	{
+		if(isSuccess)
+		{
+			responseCode = "200 (inferred)";
+		}
+		else
+		{
+			responseCode = "unknown";
+		}
+	}
+	if(!isSuccess || responseCode != 200 && responseCode != "200 (inferred)")
+	{
+		info "Webhook failed with status: " + responseCode + ", Response: " + webhookResponse.toString();
+		return "ERROR: Webhook failed with status: " + responseCode + ", Response: " + webhookResponse.toString();
+	}
+	info "Webhook triggered successfully: " + webhookResponse;
+}
+catch (e)
+{
+	info "Webhook error details: " + e.toString();
+	return "ERROR: Failed to trigger webhook: " + e.toString();
+}
+// Update Synced_Attachment_IDs field
+updatedSyncedAttachmentIds = syncedAttachmentIds;
+updatedSyncedAttachmentIds.addAll(newSyncedAttachmentIds);
+updateMap = Map();
+updateMap.put("Synced_Attachment_IDs",updatedSyncedAttachmentIds.toString(","));
+try 
+{
+	updateResponse = zoho.crm.updateRecord("Deals",dealId,updateMap);
+	info "Updated Synced_Attachment_IDs: " + updateResponse;
+}
+catch (e)
+{
+	info "Error updating Synced_Attachment_IDs: " + e;
+	return "ERROR: Failed to update Synced_Attachment_IDs: " + e;
+}
+// Return success message
+return "SUCCESS: Attachment sync completed successfully for dealId: " + dealId;
+}

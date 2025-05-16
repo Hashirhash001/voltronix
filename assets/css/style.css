@@ -63,7 +63,7 @@ body {
 
 
 .select2-container .select2-selection--single {
-	min-height: 60px;
+	min-height: 80px;
 }
 
 /* Ensure dropdown width and styling */
@@ -72,7 +72,7 @@ body {
 	white-space: normal;
 	/* Allow text wrap in the selected option */
 	line-height: 1.2;
-	min-height: 60px;
+	min-height: 80px;
 }
 
 .select2-dropdown {
@@ -151,6 +151,11 @@ body {
 .btn-check:focus+.btn, .btn:focus {
 	outline: none;
 	box-shadow: none !important;
+}	
+
+.btn-clear:focus {
+	outline: none;
+	box-shadow: rgba(9, 30, 66, 0.25) 0px 1px 1px, rgba(9, 30, 66, 0.13) 0px 0px 1px 1px !important;
 }	
 
 .dashboard-title {
@@ -466,3 +471,17 @@ input[type="number"] {
 .highcharts-description {
     margin: 0.3rem 10px;
 }
+
+.btn-custom-ok {
+    background-color: #dc3545 !important; /* Bootstrap danger color */
+    border-color: #dc3545 !important;
+    color: #fff !important; /* White text for contrast */
+    padding: 8px 16px !important;
+    border-radius: 4px !important;
+}
+
+.btn-custom-ok:hover {
+    background-color: #c82333 !important; /* Slightly darker shade for hover */
+    border-color: #bd2130 !important;
+}
+

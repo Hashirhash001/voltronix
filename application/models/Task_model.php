@@ -14,6 +14,14 @@ class Task_model extends CI_Model {
         return $query->row_array();
     }
 
+	public function get_task_items($id) {
+		$this->db->select('product_name, product_description, uom, quantity, service_charge');
+		$this->db->where('id', $id);
+		$this->db->where('product_name IS NOT NULL', null, false); // Ensure product_name exists
+		$query = $this->db->get('tasks');
+		return $query->result_array();
+	}
+
     public function update_task($id, $data) {
         $this->db->where('id', $id);
         $this->db->update('tasks', $data);
@@ -144,12 +152,59 @@ class Task_model extends CI_Model {
     
     public function get_quote_by_number($quote_number, $user_id) {
         $this->db->select('*');
-        $this->db->from('tasks'); // Replace 'quotes' with your actual table name
+        $this->db->from('tasks'); 
         $this->db->where('quote_number', $quote_number);
+		$this->db->or_where('quote_deal_number', $quote_number);
 		$this->db->where('assigned_to', $user_id);
         $query = $this->db->get();
 
         return $query->row_array(); // Return the first matching row as an associative array
+    }
+
+	public function search_tasks($user_id, $query = '') {
+        // Select specific columns
+		$this->db->select('id, deal_name, deal_number, complaint_info, status, qual_deal_number, qual_deal_date, site_deal_number, site_deal_date, quote_deal_number, quote_deal_date, job_deal_number, job_deal_date, lost_deal_number, lost_deal_date, account_name, service_charge, assign_notes');
+		$this->db->from('tasks');
+        $this->db->where('assigned_to', $user_id); // Fetch only tasks assigned to this user
+        $this->db->where('status IS NOT NULL'); // Exclude NULL status values
+        $this->db->order_by('created_at', 'DESC'); // Order by creation date, newest first
+
+        // Apply search filter if query is provided
+        if (!empty($query)) {
+            $this->db->group_start(); // Group LIKE conditions
+            $this->db->like('deal_name', $query);
+            $this->db->or_like('deal_number', $query);
+            $this->db->or_like('quote_number', $query);
+            $this->db->or_like('enq_number', $query);
+            $this->db->or_like('qual_deal_number', $query);
+            $this->db->or_like('site_deal_number', $query);
+            $this->db->or_like('quote_deal_number', $query);
+            $this->db->or_like('job_deal_number', $query);
+            $this->db->or_like('lost_deal_number', $query);
+            $this->db->group_end();
+        }
+
+        // Execute query and get results
+        $query = $this->db->get();
+
+        // Log the query for debugging
+        log_message('debug', 'Task_model::search_tasks Query: ' . $this->db->last_query());
+
+        // Check if query was successful
+        if ($query === FALSE) {
+            log_message('error', 'Database error in search_tasks: ' . $this->db->error()['message']);
+            return [];
+        }
+
+        return $query->result_array();
+    }
+
+    // Check if a task exists for a deal number and return it
+    public function get_task_by_deal_number($deal_number) {
+        $this->db->where('deal_number', $deal_number);
+		$this->db->or_where('qual_deal_number', $deal_number);
+        $query = $this->db->get('tasks');
+        return $query->row();
     }
 
 }

@@ -68,8 +68,8 @@
 						<!-- <button id="searchBtn" class="btn btn-primary d-flex align-items-center gap-2" style="    background: #d10908; border: none !important;">
 							<i class="bi bi-search"></i> <span>Search</span>
 						</button> -->
-						<button id="clearFiltersBtn" class="btn btn-outline-secondary d-flex align-items-center" style="box-shadow: rgba(9, 30, 66, 0.25) 0px 1px 1px, rgba(9, 30, 66, 0.13) 0px 0px 1px 1px; border: unset !important; padding: 4px 7px;">
-							<i class="bi bi-x-circle" style="font-size: 18px;"></i> <span></span>
+						<button id="clearFiltersBtn" class="btn btn-outline-secondary d-flex align-items-center btn-clear" style="box-shadow: rgba(9, 30, 66, 0.25) 0px 1px 1px, rgba(9, 30, 66, 0.13) 0px 0px 1px 1px; border: unset !important; padding: 6px 9px;">
+							<i class="bi bi-x-circle" style="font-size: 14px;"></i> <span></span>
 						</button>
 					</div>
 				</div>

@@ -80,6 +80,7 @@ $route['deal/qoute/(:num)'] = 'deals/download_quote_pdf/$1';
 //web
 $route['signin'] = 'web/Login/index';
 $route['web/dashboard'] = 'web/Analytics/index';
+$route['web/Analytics/get-paginated-deals'] = 'web/Analytics/getPaginatedDeals';
 $route['web/dealsAndProposals'] = 'web/Login/dealsAndProposals';
 $route['web/assignTask'] = 'web/UserTasks/assignTask';
 $route['web/assignTask/assign'] = 'web/UserTasks/assign';
@@ -93,10 +94,16 @@ $route['web/task/update'] = 'web/UserTasks/update';
 $route['ZohoAttachments/upload-attachment'] = 'web/ZohoAttachments/upload_attachment';
 $route['ZohoAttachments/get-attachments/(:num)'] = 'web/ZohoAttachments/get_attachments/$1';
 $route['ZohoAttachments/delete-attachment'] = 'web/ZohoAttachments/delete_attachment';
+$route['ZohoAttachments/add-note'] = 'web/ZohoAttachments/add_note';
+$route['ZohoAttachments/get-notes'] = 'web/ZohoAttachments/get_notes';
+$route['ZohoAttachments/update-note'] = 'web/ZohoAttachments/update_note';
+$route['ZohoAttachments/delete-note'] = 'web/ZohoAttachments/delete_note';
+$route['zohoattachments/sync_attachments'] = 'web/ZohoAttachments/sync_attachments';
 $route['web/logout'] = 'web/Login/logout';
 $route['web/deals'] = 'web/Login/fetch_tasks';
 $route['web/deal/search'] = 'web/Login/search';
 $route['deal/search'] = 'web/Login/search2';
 $route['web/deal/details/(:num)'] = 'web/Login/view_task/$1';
 $route['web/deal/download-quote/(:num)'] = 'web/Login/download_deal_pdf/$1';
+$route['web/deals/create_item_in_zoho'] = 'web/Dashboard/create_item_in_zoho';
 
