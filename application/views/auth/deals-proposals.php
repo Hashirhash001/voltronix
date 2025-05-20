@@ -834,7 +834,7 @@
 			let lastQuery = '';
 
 			// Function to initialize Select2 for a row
-			function initializeSelect2(row) {
+			function initializeSelect2(row, preloadedDescription = '') {
 				$(row).find('.itemName').select2({
 					placeholder: 'Search for an item...',
 					allowClear: true,
@@ -889,8 +889,11 @@
 						descriptionField.val('');
 						return;
 					}
-					const selectedDescription = productDetails[selectedItemId];
-					descriptionField.val(selectedDescription || '');
+					// Only update description if not preloaded (i.e., user manually selects an item)
+					if (!preloadedDescription) {
+						const selectedDescription = productDetails[selectedItemId] || '';
+						descriptionField.val(selectedDescription);
+					}
 					row.find('.product_id').val(selectedItemId);
 					row.find('.product_name').val($(this).find('option:selected').text());
 				});
@@ -982,7 +985,7 @@
 					</tr>
 				`;
 				$('#itemRows2 tbody').append(newRow);
-				initializeSelect2($('#itemRows2 tbody tr:last'));
+				initializeSelect2($('#itemRows2 tbody tr:last'), itemData.product_description || '');
 
 				// Pre-select item in Select2
 				if (itemData.product_id && itemData.product_name) {
@@ -1037,7 +1040,7 @@
 										addItemRow(item, includeDeleteButton);
 									});
 								} else {
-									addItemRow(); // Add a blank row if no items, no delete button by default
+									addItemRow({}, false); // Add a blank row if no items, no delete button
 								}
 
 								calculateTotals();
@@ -1192,7 +1195,7 @@
 							}).then(() => {
 								$('#editQuoteForm')[0].reset();
 								$('#itemRows2 tbody').empty();
-								addItemRow(); // Add a blank row without delete button
+								addItemRow({}, false); // Add a blank row without delete button
 							});
 						} else {
 							Swal.fire({

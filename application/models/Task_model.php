@@ -163,7 +163,7 @@ class Task_model extends CI_Model {
 
 	public function search_tasks($user_id, $query = '') {
         // Select specific columns
-		$this->db->select('id, deal_name, deal_number, complaint_info, status, qual_deal_number, qual_deal_date, site_deal_number, site_deal_date, quote_deal_number, quote_deal_date, job_deal_number, job_deal_date, lost_deal_number, lost_deal_date, account_name, service_charge, assign_notes');
+		$this->db->select('id, deal_name, deal_number, complaint_info, status, qual_deal_number, qual_deal_date, site_deal_number, site_deal_date, quote_deal_number, quote_deal_date, job_deal_number, job_deal_date, lost_deal_number, lost_deal_date, account_name, service_charge, assign_notes, account_name, customer_email, customer_contact');
 		$this->db->from('tasks');
         $this->db->where('assigned_to', $user_id); // Fetch only tasks assigned to this user
         $this->db->where('status IS NOT NULL'); // Exclude NULL status values
@@ -181,6 +181,9 @@ class Task_model extends CI_Model {
             $this->db->or_like('quote_deal_number', $query);
             $this->db->or_like('job_deal_number', $query);
             $this->db->or_like('lost_deal_number', $query);
+			$this->db->or_like('account_name', $query);
+			$this->db->or_like('customer_email', $query);
+			$this->db->or_like('customer_contact', $query);
             $this->db->group_end();
         }
 

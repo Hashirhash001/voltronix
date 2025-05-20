@@ -224,7 +224,7 @@
             // Estimate row height
             $description = $item['product_description'] ?? '';
             $descLines = substr_count($description, "\n") + count(array_filter(explode('•', $description))) + 1;
-            $rowHeight = 5 + ($descLines * 3);
+            $rowHeight = 5 + ($descLines * 3.6);
 
             // Check if the item fits on the current page
             if (($currentHeight + $rowHeight) > ($maxHeight - $totalsHeight - $bankDetailsHeight) && $currentHeight > $headerHeight) {
@@ -289,43 +289,28 @@
             if (!empty($description)) {
                 // Split the description into lines
                 $lines = preg_split('/\n|\r\n?/', trim($description));
-                $inSpecifications = false;
                 foreach ($lines as $line) {
                     $trimmedLine = trim($line);
                     if (empty($trimmedLine)) {
                         continue;
                     }
-                    // Check if line is the Specifications header
-                    if (preg_match('/^Specifications:/i', $trimmedLine)) {
-                        $inSpecifications = true;
-                        echo '<p style="font-size: 12px; margin: 0; padding-left: 20px;">' . htmlspecialchars($trimmedLine) . '</p>';
-                        continue;
-                    }
                     // Check if line is the Note
                     if (preg_match('/^Note:/i', $trimmedLine)) {
-                        $inSpecifications = false;
                         $trimmedLine = rtrim($trimmedLine, '.');
                         echo '<p style="font-size: 12px; margin: 0; padding-left: 20px;">' . htmlspecialchars($trimmedLine) . '</p>';
                         continue;
                     }
-                    // Handle specification points or other lines
-                    if ($inSpecifications) {
-                        // Retain bullet points
-                        $trimmedLine = rtrim($trimmedLine, '.');
-                        if (!empty($trimmedLine)) {
-                            echo '<p style="font-size: 12px; margin: 0; padding-left: 40px;">' . htmlspecialchars($trimmedLine) . '</p>';
-                        }
-                    } else {
-                        // Handle non-specification lines (e.g., repeated note or other text)
-                        $trimmedLine = rtrim($trimmedLine, '.');
-                        if (!empty($trimmedLine) && !preg_match('/^Any kind of faulty parts/i', $trimmedLine)) {
-                            echo '<p style="font-size: 12px; margin: 0; padding-left: 20px;">' . htmlspecialchars($trimmedLine) . '</p>';
-                        }
+                    // Replace numbering (e.g., "1.", "2.") with bold bullet point
+                    $displayLine = preg_replace('/^\d+\.\s*/', '&bull; ', $trimmedLine);
+                    // Handle lines with or without numbering
+                    if (!empty($displayLine) && !preg_match('/^Any kind of faulty parts/i', $trimmedLine)) {
+                        $padding = preg_match('/^<b>&bull;<\/b>/', $displayLine) ? '40px' : '20px';
+                        echo '<p style="font-size: 12px; margin: 0; padding-left: ' . $padding . ';">' . htmlspecialchars($displayLine, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', false) . '</p>';
                     }
                 }
             }
             echo '</td>
-                <td style="text-align: center; border: none; border-left: 0.3px solid #000;">' . htmlspecialchars($item['quantity'] ?? '') . ' ' . htmlspecialchars($item['uom'] ?? '') . '</td>
+                <td style="text-align: center; border: none; border-left: 0.3px solid #000;">' . htmlspecialchars(number_format((float)($item['quantity'] ?? 0), 0)) . ' ' . htmlspecialchars($item['uom'] ?? '') . '</td>
                 <td style="text-align: right; border: none; border-left: 0.3px solid #000;">' . number_format($serviceCharge, 2) . '</td>
                 <td style="text-align: center; border: none; border-left: 0.3px solid #000;">5%</td>
                 <td style="text-align: center; border: none; border-left: 0.3px solid #000;">' . number_format($discountPercent, 2) . '</td>

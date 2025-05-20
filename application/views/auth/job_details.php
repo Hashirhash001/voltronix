@@ -156,7 +156,7 @@
 
 									<div class="mt-3">
 										<label for="image" class="form-label">Upload Image:</label>
-										<input type="file" class="form-control" name="photos[]" id="image" accept="image/*">
+										<input type="file" class="form-control" name="photos[]" id="image" accept=".pdf,.xlsx,.xls,.png,.jpg,.jpeg,.webp">
 									</div>
 								</div>
 
