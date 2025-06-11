@@ -185,7 +185,7 @@
 		<table class="bank-details">
 			<tbody>
 				<tr>
-					<td style="width: 22%; border: none; border-left: 0.3px solid #000; border-top: 0.3px solid #000; border-bottom: 0.3px solid #000; padding: 0; padding-left: 5px; padding-top: 2px; vertical-align: top; min-height: 80px;" rowspan="4">Note if any: ' . htmlspecialchars($task['notes'] ?? '') . '
+					<td style="width: 22%; border: none; border-left: 0.3px solid #000; border-top: 0.3px solid #000; border-bottom: 0.3px solid #000; padding: 0; padding-left: 5px; padding-top: 2px; vertical-align: top;" rowspan="4">Note if any: ' . htmlspecialchars($task['notes'] ?? '') . '
 					</td>
 					<td style="width: 26%; border: none; border-top: 0.3px solid #000; border-left: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px;"></td>
 					<td style="width: 40%; text-align: right; border: none; border-right: 0.3px solid #000; border-top: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px; padding-top: 2px;">for <strong>Voltronix Switchgear LLC</strong></td>
