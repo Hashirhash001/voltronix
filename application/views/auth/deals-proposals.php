@@ -297,42 +297,42 @@
 									<!-- Additional Details -->
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="kind_attention">Kind Attention:</label>
-										<input type="text" name="kind_attention" class="form-control" id="kind_attention" placeholder="Enter Kind Attention" required>
+										<input type="text" name="kind_attention" class="form-control" id="kind_attention" placeholder="Enter Kind Attention">
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="project">Project:</label>
-										<input type="text" name="project" class="form-control" id="project" placeholder="Enter Project Name" required>
+										<input type="text" name="project" class="form-control" id="project" placeholder="Enter Project Name">
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="terms-of-payment">Terms of Payment:</label>
-										<input type="text" name="termsOfPayment" class="form-control" id="terms-of-payment" placeholder="Enter Payment Terms" required>
+										<input type="text" name="termsOfPayment" class="form-control" id="terms-of-payment" placeholder="Enter Payment Terms">
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="specification">Specification:</label>
-										<textarea class="form-control" name="specification" id="specification" rows="3" placeholder="Enter Specifications" required></textarea>
+										<textarea class="form-control" name="specification" id="specification" rows="3" placeholder="Enter Specifications"></textarea>
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="general-exclusion">General Exclusion:</label>
-										<textarea class="form-control" name="generalExclusion" id="general-exclusion" rows="3" placeholder="Enter General Exclusion" required></textarea>
+										<textarea class="form-control" name="generalExclusion" id="general-exclusion" rows="3" placeholder="Enter General Exclusion"></textarea>
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="brand">Brand:</label>
-										<input type="text" class="form-control" name="brand" id="brand" placeholder="Enter brand" required>
+										<input type="text" class="form-control" name="brand" id="brand" placeholder="Enter brand">
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="warranty">Warranty:</label>
-										<input type="text" class="form-control" name="warranty" id="warranty" placeholder="Enter Warranty" required>
+										<input type="text" class="form-control" name="warranty" id="warranty" placeholder="Enter Warranty">
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="delivery">Delivery:</label>
-										<input type="text" class="form-control" name="delivery" id="delivery" placeholder="Enter Delivery" required>
+										<input type="text" class="form-control" name="delivery" id="delivery" placeholder="Enter Delivery">
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
@@ -342,7 +342,7 @@
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="valid-until">Valid Until:</label>
-										<input type="date" class="form-control" name="validUntil" id="valid-until" placeholder="Enter Valid Until" required>
+										<input type="date" class="form-control" name="validUntil" id="valid-until" placeholder="Enter Valid Until">
 										<div class="error-message"></div>
 									</div>
 

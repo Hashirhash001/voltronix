@@ -1,4 +1,4 @@
-<br /><br /><br /><br />
+
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 <style>
     body {
@@ -21,17 +21,31 @@
     .page-break {
         page-break-before: always;
     }
+
+	.no-break-section {
+        page-break-inside: avoid; /* Prevent page breaks within this section */
+        page-break-before: auto; /* Allow section to start on current or new page */
+        margin-top: 10px;
+    }
 </style>
 <div style="color: #000; font-family: 'Roboto', sans-serif;">
     <p style="text-align: center; font-size: 23px; margin-top: -70px !important; font-weight: bold;">QUOTATION</p>
-    <p style="text-align: center; margin: 0 !important; font-size: 11px; padding-bottom: 10px;">
+    <!-- <p style="text-align: center; margin: 0 !important; font-size: 11px; padding-bottom: 10px;">
         <b><span style="border-bottom: 1px solid #000;">Kind Attention: <?= htmlspecialchars($task['kind_attention'] ?? '') ?></span></b>
-    </p>
+    </p> -->
 
     <table style="width: 100%;">
         <tr>
             <td style="width: 50%;">
                 <table style="width: 100%;">
+                    <tr>
+                        <td style="font-weight: bold; font-size: 11px;">Attn:</td>
+                        <td style="font-size: 11px;"><b><?= htmlspecialchars($task['kind_attention'] ?? '') ?></b></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; font-size: 11px;">Company:</td>
+                        <td style="font-size: 11px;"><b><?= htmlspecialchars($task['account_name'] ?? '') ?></b></td>
+                    </tr>
                     <tr>
                         <td style="font-weight: bold; font-size: 11px;">Subject:</td>
                         <td style="font-size: 11px;"><b><?= htmlspecialchars($task['subject'] ?? '') ?></b></td>
@@ -40,10 +54,7 @@
                         <td style="font-weight: bold; font-size: 11px;">Project:</td>
                         <td style="font-size: 11px;"><b><?= htmlspecialchars($task['project_name'] ?? '') ?></b></td>
                     </tr>
-                    <tr>
-                        <td style="font-weight: bold; font-size: 11px;">Sales Person:</td>
-                        <td style="font-size: 11px;"><b><?= htmlspecialchars(ucfirst($username ?? '')) ?></b></td>
-                    </tr>
+                    
                 </table>
             </td>
             <td style="width: 50%; padding: 0px 0;">
@@ -59,6 +70,10 @@
                     <tr>
                         <td style="font-weight: bold; font-size: 11px; text-align: right;">Valid Till:</td>
                         <td style="text-align: right; font-size: 11px;"><b><?= htmlspecialchars(date('M j, Y', strtotime($task['valid_until']))) ?></b></td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; font-size: 11px; text-align: right;">Sales Person:</td>
+                        <td style="text-align: right; font-size: 11px;"><b><?= htmlspecialchars(ucfirst($username ?? '')) ?></b></td>
                     </tr>
                 </table>
             </td>
@@ -174,43 +189,45 @@
 		</tr>
 	</table>
 
-    <p style="font-size: 12px; margin: 0 !important; padding-bottom: 13px; padding-right: 5px; padding-top: 10px;"><b>2. <span style="border-bottom: 1px solid #000;">PAYMENT TERMS</span>: </b><?= htmlspecialchars($task['terms_of_payment'] ?? '') ?></p>
-    <p style="font-size: 12px; margin: 0 !important; padding-bottom: 13px; padding-right: 5px;"><b>3. <span style="border-bottom: 1px solid #000;">PRICE</span>: AED <?= number_format($grandTotal, 2) ?> - Incl. VAT</b></p>
-    <p style="font-size: 12px; margin: 0 !important; padding-bottom: 13px; padding-right: 5px;"><b>4. <span style="border-bottom: 1px solid #000;">GENERAL EXCLUSION</span>: </b></p>
-    <span>
-        <?php
-        $general_exclusion = $task['general_exclusion'] ?? '';
-        if (!empty(trim($general_exclusion))) {
-            $lines = preg_split('/\r\n|\r|\n/', trim($general_exclusion));
-            foreach ($lines as $line) {
-                $line = trim($line);
-                if (stripos($line, 'Note:') === 0 || stripos($line, 'Note-') === 0 || stripos($line, 'Notes-') === 0) {
-                    $noteContent = substr($line, strpos($line, ':') + 1);
-                    echo "<p style='font-size: 12px; margin: 0; padding-left: 20px; font-style: italic;'>Note: " . htmlspecialchars($noteContent) . "</p><br>";
-                } elseif (!empty($line)) {
-                    echo "<p style='font-size: 12px; margin: 0; padding-left: 20px;'>" . htmlspecialchars($line) . "</p>";
-                }
-            }
-        } else {
-            echo "<p style='font-size: 12px; padding-left: 20px;'>No exclusions specified.</p>";
-        }
-        ?>
-    </span>
+    <div class="no-break-section">
+		<p style="font-size: 12px; margin: 0 !important; padding-bottom: 13px; padding-right: 5px; padding-top: 10px;"><b>2. <span style="border-bottom: 1px solid #000;">PAYMENT TERMS</span>: </b><?= htmlspecialchars($task['terms_of_payment'] ?? '') ?></p>
+		<p style="font-size: 12px; margin: 0 !important; padding-bottom: 13px; padding-right: 5px;"><b>3. <span style="border-bottom: 1px solid #000;">PRICE</span>: AED <?= number_format($grandTotal, 2) ?> - Incl. VAT</b></p>
+		<p style="font-size: 12px; margin: 0 !important; padding-bottom: 13px; padding-right: 5px;"><b>4. <span style="border-bottom: 1px solid #000;">GENERAL EXCLUSION</span>: </b></p>
+		<span>
+			<?php
+			$general_exclusion = $task['general_exclusion'] ?? '';
+			if (!empty(trim($general_exclusion))) {
+				$lines = preg_split('/\r\n|\r|\n/', trim($general_exclusion));
+				foreach ($lines as $line) {
+					$line = trim($line);
+					if (stripos($line, 'Note:') === 0 || stripos($line, 'Note-') === 0 || stripos($line, 'Notes-') === 0) {
+						$noteContent = substr($line, strpos($line, ':') + 1);
+						echo "<p style='font-size: 12px; margin: 0; padding-left: 20px; font-style: italic;'>Note: " . htmlspecialchars($noteContent) . "</p><br>";
+					} elseif (!empty($line)) {
+						echo "<p style='font-size: 12px; margin: 0; padding-left: 20px;'>" . htmlspecialchars($line) . "</p>";
+					}
+				}
+			} else {
+				echo "<p style='font-size: 12px; padding-left: 20px;'>No exclusions specified.</p>";
+			}
+			?>
+		</span>
 
-    <p style="font-size: 12px; margin: 0; padding-top: 20px;">We trust the above offer is in line with your requirements and look forward to receiving your valued order.</p>
-    <p style="margin: 0px; padding-bottom: 15px; font-size: 12px;">Yours faithfully,</p>
-    <p style="padding-bottom: 10px; font-size: 12px; margin: 0;"><b>For VOLTRONIX CONTRACTING LLC,</b></p>
-    <table style="width: 45%; margin: 0px; padding: 0px;">
-        <tr>
-            <td style="width: 25%;">
-                <div style="margin: 0px; padding: 0px; display: flex;">
-                    <img src="<?= base_url('assets/photos/logo/sign.jpg') ?>" alt="Stamp" style="width: 100px;">
-                </div>
-                <p style="font-size: 14px;"><b>Marieswaran</b><br>Managing Partner<br>Mobile: 0502420957</p>
-            </td>
-            <td style="text-align: center; width: 20%;">
-                <img src="<?= base_url('assets/photos/logo/stamp.jpg') ?>" alt="Stamp" style="width: 130px;">
-            </td>
-        </tr>
-    </table>
+		<p style="font-size: 12px; margin: 0; padding-top: 20px;">We trust the above offer is in line with your requirements and look forward to receiving your valued order.</p>
+		<p style="margin: 0px; padding-bottom: 15px; font-size: 12px;">Yours faithfully,</p>
+		<p style="padding-bottom: 10px; font-size: 12px; margin: 0;"><b>For VOLTRONIX CONTRACTING LLC,</b></p>
+		<table style="width: 45%; margin: 0px; padding: 0px;">
+			<tr>
+				<td style="width: 25%;">
+					<div style="margin: 0px; padding: 0px; display: flex;">
+						<img src="<?= base_url('assets/photos/logo/sign.jpg') ?>" alt="Stamp" style="width: 100px;">
+					</div>
+					<p style="font-size: 14px;"><b>Marieswaran</b><br>Managing Partner<br>Mobile: 0502420957</p>
+				</td>
+				<td style="text-align: center; width: 20%;">
+					<img src="<?= base_url('assets/photos/logo/stamp.jpg') ?>" alt="Stamp" style="width: 130px;">
+				</td>
+			</tr>
+		</table>
+	</div>
 </div>

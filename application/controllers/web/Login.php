@@ -258,8 +258,8 @@ class Login extends CI_Controller {
 		// Configure mPDF based on company
 		if ($company === 'VOLTRONIX CONTRACTING LLC') {
 			$mpdf = new \Mpdf\Mpdf([
-				'margin_top' => 0,
-				'margin_bottom' => 0,
+				'margin_top' => 35,
+				'margin_bottom' => 20,
 				'margin_left' => 4,
 				'margin_right' => 4,
 				'default_font' => 'yorkten',

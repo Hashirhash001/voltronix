@@ -77,15 +77,15 @@ class Dashboard extends CI_Controller {
 		$this->form_validation->set_data($data);
 		$this->form_validation->set_rules('dealNumber', 'Deal Number', 'required');
 		$this->form_validation->set_rules('subject', 'Subject', 'required');
-		$this->form_validation->set_rules('kind_attention', 'Kind Attention', 'required');
-		$this->form_validation->set_rules('project', 'Project Name', 'required');
-		$this->form_validation->set_rules('termsOfPayment', 'Terms of Payment', 'required');
-		$this->form_validation->set_rules('specification', 'Specification', 'required');
-		$this->form_validation->set_rules('generalExclusion', 'General Exclusion', 'required');
-		$this->form_validation->set_rules('brand', 'Brand', 'required');
-		$this->form_validation->set_rules('warranty', 'Warranty', 'required');
-		$this->form_validation->set_rules('delivery', 'Delivery', 'required');
-		$this->form_validation->set_rules('validUntil', 'Valid Until', 'required');
+		// $this->form_validation->set_rules('kind_attention', 'Kind Attention', 'required');
+		// $this->form_validation->set_rules('project', 'Project Name', 'required');
+		// $this->form_validation->set_rules('termsOfPayment', 'Terms of Payment', 'required');
+		// $this->form_validation->set_rules('specification', 'Specification', 'required');
+		// $this->form_validation->set_rules('generalExclusion', 'General Exclusion', 'required');
+		// $this->form_validation->set_rules('brand', 'Brand', 'required');
+		// $this->form_validation->set_rules('warranty', 'Warranty', 'required');
+		// $this->form_validation->set_rules('delivery', 'Delivery', 'required');
+		// $this->form_validation->set_rules('validUntil', 'Valid Until', 'required');
 	
 		// Validate each item in the items array
 		if (!empty($data['items'])) {
@@ -136,12 +136,19 @@ class Dashboard extends CI_Controller {
 	private function add_proposal_to_zoho($deal_number, $proposal_data) {
 		ini_set('display_errors', 0); // Hide errors from being directly output to the client
 		ini_set('log_errors', 1); // Enable error logging
+
+		// Step 1: Create a new contact in Zoho CRM
+		$contact_name = !empty(trim($proposal_data['kind_attention'] ?? '')) ? trim($proposal_data['kind_attention']) : 'Default Contact';
+		if (!preg_match('/^[a-zA-Z\s]+$/', $contact_name)) {
+			$contact_name = 'Default Contact'; // Fallback to default if invalid characters
+		}
 	
 		// Step 1: Create a new contact in Zoho CRM
 		$contact_data = json_encode([
 			'data' => [
 				[
-					'Last_Name' => $proposal_data['kind_attention'] ?? 'Default Last Name',
+					'Last_Name' => $contact_name,
+					'First_Name' => '', // Optional, can be set if needed
 				]
 			]
 		]);
@@ -352,6 +359,7 @@ class Dashboard extends CI_Controller {
 				// 'sub_total' => $proposal_data['subTotal'],
 				'discount' => $proposal_data['discount'],
 				'adjustment' => $proposal_data['adjustment'],
+				'updated_at' => $modified_time
 				// 'grand_total' => $proposal_data['grandTotal'],
 			];
 	

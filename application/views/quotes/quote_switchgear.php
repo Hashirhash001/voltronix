@@ -88,13 +88,15 @@
 
         // Predefined heights
         $headerHeight = 40;
-        $totalsHeight = 30;
+        $totalsHeight = 40; // Increased to account for new rows (Discount, Adjustment)
         $bankDetailsHeight = 30;
         $spacerHeight = 2.8;
 
         // Initialize totals
         $totalAmount = 0; // Sum of discounted item totals
         $vatRate = 0.05;  // 5% VAT
+        $discount = (float)($task['discount'] ?? 8.00); // Additional discount from Zoho CRM
+        $adjustment = (float)($task['adjustment'] ?? 33.00); // Adjustment from Zoho CRM
 
         // First pass: Estimate total pages
         $tempHeight = $headerHeight;
@@ -112,98 +114,96 @@
             $totalPages++;
         }
 
-		// In the PHP section, before the $header definition, add this calculation
-		$validUntilTimestamp = strtotime($task['valid_until'] ?? '');
-		$currentTimestamp = time();
-		$daysLeft = ($validUntilTimestamp > $currentTimestamp) ? ceil(($validUntilTimestamp - $currentTimestamp) / (24 * 60 * 60)) : 0;
+        // Calculate validity days
+        $validUntilTimestamp = strtotime($task['valid_until'] ?? '');
+        $currentTimestamp = time();
+        $daysLeft = ($validUntilTimestamp > $currentTimestamp) ? ceil(($validUntilTimestamp - $currentTimestamp) / (24 * 60 * 60)) : 0;
 
         // Header HTML
         $header = '
-		<tr class="header-row" style="border: none;">
-			<th colspan="7"><h2 class="invoice-title">SALES QUOTATION</h2></th>
-		</tr>
-		<tr class="header-row">
-			<td colspan="2" style="width: 50%; border: none; border-left: 0.3px solid #000; border-top: 0.3px solid #000; padding: 0 0 0 5px;">To: <br>
-			</td>
-			<td colspan="3" style="width: 25%;">Quote Ref: ' . htmlspecialchars($task['quote_deal_number'] ?? '') . '</td>
-			<td colspan="2" style="width: 25%;">Date: ' . htmlspecialchars(date('d-m-Y', strtotime($task['updated_at']))) . '</td>
-		</tr>
-		<tr class="header-row">
-			<td colspan="2" style="width: 50%; border: none; border-left: 0.3px solid #000; padding: 0 0 0 5px;">
-				<strong>Contact: </strong>' . htmlspecialchars($task['deal_name'] ?? '') . '  <br>
-				<strong>Customer: </strong>' . htmlspecialchars($task['account_name'] ?? '') . '
-			</td>
-			<td colspan="3" style="width: 25%; vertical-align: middle;">Validity: ' . $daysLeft . ' days</td>
-			<td colspan="2" style="width: 25%; vertical-align: middle;">Currency: AED</td>
-		</tr>
-		<tr class="header-row">
-			<td colspan="2" style="width: 50%; border: none; border-left: 0.3px solid #000; vertical-align: top; padding: 0 0 0 5px;">
-				<strong>Address: </strong>' . htmlspecialchars($task['address'] ?? '') . ' <br>
-			</td>
-			<td colspan="3" style="width: 25%;">Payment: CDC/CASH</td>
-			<td colspan="2" style="width: 25%;">Sales By: ' . htmlspecialchars(ucfirst($username ?? '')) . '</td>
-		</tr>
-		<tr class="header-row">
-			<td colspan="2" style="width: 49%; border: none; border-left: 0.3px solid #000; padding: 0; vertical-align: top; margin: 0;">
-				<table style="width: 100%;">
-					<tr>
-						<td style="width: 40%; border: none; padding: 0 0 0 5px; vertical-align: middle;">
-							<strong>P.O Box: </strong>' . htmlspecialchars($task['p_box'] ?? '') . '
-						</td>
-						<td style="width: 60%; border: none; padding: 0 0 0 5px; vertical-align: middle;">
-							<strong>TRN: </strong>' . htmlspecialchars($task['trn'] ?? '') . '
-						</td>
-					</tr>
-					<tr>
-						<td style="width: 40%; border: none; padding: 0 0 0 5px; vertical-align: middle;">
-							<strong>TEL: </strong>' . htmlspecialchars($task['customer_contact'] ?? '') . '
-						</td>
-						<td style="width: 60%; border: none; padding: 0 0 0 5px; vertical-align: middle;">
-							<strong>Email: </strong>' . htmlspecialchars($task['customer_email'] ?? '') . '
-						</td>
-					</tr>
-				</table>
-			</td>
-			<td colspan="3" rowspan="2" style="width: 25%; vertical-align: middle; border-bottom: 0.3px solid #000;">TRN: 104900827700003</td>
-			<td colspan="2" rowspan="2" style="width: 25%; vertical-align: middle; border-bottom: 0.3px solid #000;">Delivery Terms: ' . htmlspecialchars($task['delivery'] ?? '') . '</td>
-		</tr>
-		<tr class="header-row">
-			<!-- Empty row to account for rowspan="2" of TRN and Delivery Terms -->
-		</tr>
-		<tr class="header-row">
-			<th style="width: 5%; font-weight: normal; padding-right: 2px; padding-left: 2px;">S.No.</th>
-			<th style="width: 44%; font-weight: normal;">Description</th>
-			<th style="width: 12%; font-weight: normal;">Quantity</th>
-			<th style="width: 11%; font-weight: normal;">Rate</th>
-			<th style="width: 6%; font-weight: normal;">Tax%</th>
-			<th style="width: 7%; font-weight: normal;">Disc.%</th>
-			<th style="width: 16%; font-weight: normal;">Amount</th>
-		</tr>';
+        <tr class="header-row" style="border: none;">
+            <th colspan="7"><h2 class="invoice-title">SALES QUOTATION</h2></th>
+        </tr>
+        <tr class="header-row">
+            <td colspan="2" style="width: 50%; border: none; border-left: 0.3px solid #000; border-top: 0.3px solid #000; padding: 0 0 0 5px;">To: <br>
+            </td>
+            <td colspan="3" style="width: 25%;">Quote Ref: ' . htmlspecialchars($task['quote_deal_number'] ?? '') . '</td>
+            <td colspan="2" style="width: 25%;">Date: ' . htmlspecialchars(date('d-m-Y', strtotime($task['updated_at']))) . '</td>
+        </tr>
+        <tr class="header-row">
+            <td colspan="2" style="width: 50%; border: none; border-left: 0.3px solid #000; padding: 0 0 0 5px;">
+                <strong>Contact: </strong>' . htmlspecialchars($task['deal_name'] ?? '') . '  <br>
+                <strong>Customer: </strong>' . htmlspecialchars($task['account_name'] ?? '') . '
+            </td>
+            <td colspan="3" style="width: 25%; vertical-align: middle;">Validity: ' . $daysLeft . ' days</td>
+            <td colspan="2" style="width: 25%; vertical-align: middle;">Currency: AED</td>
+        </tr>
+        <tr class="header-row">
+            <td colspan="2" style="width: 50%; border: none; border-left: 0.3px solid #000; vertical-align: top; padding: 0 0 0 5px;">
+                <strong>Address: </strong>' . htmlspecialchars($task['address'] ?? '') . ' <br>
+            </td>
+            <td colspan="3" style="width: 25%;">Payment: CDC/CASH</td>
+            <td colspan="2" style="width: 25%;">Sales By: ' . htmlspecialchars(ucfirst($username ?? '')) . '</td>
+        </tr>
+        <tr class="header-row">
+            <td colspan="2" style="width: 49%; border: none; border-left: 0.3px solid #000; padding: 0; vertical-align: top; margin: 0;">
+                <table style="width: 100%;">
+                    <tr>
+                        <td style="width: 40%; border: none; padding: 0 0 0 5px; vertical-align: middle;">
+                            <strong>P.O Box: </strong>' . htmlspecialchars($task['p_box'] ?? '') . '
+                        </td>
+                        <td style="width: 60%; border: none; padding: 0 0 0 5px; vertical-align: middle;">
+                            <strong>TRN: </strong>' . htmlspecialchars($task['trn'] ?? '') . '
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 40%; border: none; padding: 0 0 0 5px; vertical-align: middle;">
+                            <strong>TEL: </strong>' . htmlspecialchars($task['customer_contact'] ?? '') . '
+                        </td>
+                        <td style="width: 60%; border: none; padding: 0 0 0 5px; vertical-align: middle;">
+                            <strong>Email: </strong>' . htmlspecialchars($task['customer_email'] ?? '') . '
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td colspan="3" rowspan="2" style="width: 25%; vertical-align: middle; border-bottom: 0.3px solid #000;">TRN: 104900827700003</td>
+            <td colspan="2" rowspan="2" style="width: 25%; vertical-align: middle; border-bottom: 0.3px solid #000;">Delivery Terms: ' . htmlspecialchars($task['delivery'] ?? '') . '</td>
+        </tr>
+        <tr class="header-row">
+            <!-- Empty row to account for rowspan="2" of TRN and Delivery Terms -->
+        </tr>
+        <tr class="header-row">
+            <th style="width: 5%; font-weight: normal; padding-right: 2px; padding-left: 2px;">S.No.</th>
+            <th style="width: 44%; font-weight: normal;">Description</th>
+            <th style="width: 12%; font-weight: normal;">Quantity</th>
+            <th style="width: 11%; font-weight: normal;">Rate</th>
+            <th style="width: 6%; font-weight: normal;">Tax%</th>
+            <th style="width: 7%; font-weight: normal;">Disc.%</th>
+            <th style="width: 16%; font-weight: normal;">Amount</th>
+        </tr>';
 
         // Bank Details HTML
-		$bankDetails = '
-		<table class="bank-details">
-			<tbody>
-				<tr>
-					<td style="width: 22%; border: none; border-left: 0.3px solid #000; border-top: 0.3px solid #000; border-bottom: 0.3px solid #000; padding: 0; padding-left: 5px; padding-top: 2px; vertical-align: top;" rowspan="4">Note if any: ' . htmlspecialchars($task['notes'] ?? '') . '
-					</td>
-					<td style="width: 26%; border: none; border-top: 0.3px solid #000; border-left: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px;"></td>
-					<td style="width: 40%; text-align: right; border: none; border-right: 0.3px solid #000; border-top: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px; padding-top: 2px;">for <strong>Voltronix Switchgear LLC</strong></td>
-				</tr>
-				<tr>
-					<td style="border: none; border-left: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px; height: 20px;"></td>
-					<td style="border: none; border-right: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px;"></td>
-				</tr>
-				<tr>
-					<td style="border: none; border-left: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px; height: 20px;"></td>
-					<td style="border: none; border-right: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px;"></td>
-				</tr>
-				<tr>
-					<td style="border: none; border-left: 0.3px solid #000; border-bottom: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px;">Received By:</td>
-					<td style="text-align: right; border: none; border-right: 0.3px solid #000; border-bottom: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px; padding-bottom: 2px;">Authorized Signatory</td>
-				</tr>
-			</tbody>
-		</table>';
+        $bankDetails = '
+        <table class="bank-details">
+            <tbody>
+                <tr>
+                    <td style="height: px; width: 22%; border: none; border-left: 0.3px solid #000; border-top: 0.3px solid #000; padding: 0; padding-left: 5px; padding-top: 2px; vertical-align: top;" >
+                        Note if any: ' . htmlspecialchars($task['notes'] ?? '') . '
+                    </td>
+                    <td style="height: px; width: 26%; border: none; border-top: 0.3px solid #000; border-left: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px;"></td>
+                    <td style="width: 40%; text-align: right; border: none; border-right: 0.3px solid #000; border-top: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px; padding-top: 2px;">for <strong>Voltronix Switchgear LLC</strong></td>
+                </tr>
+                <tr>
+                    <td style="border: none; border-left: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px; height: 30px; border-bottom: 0.3px solid #000;" rowspan="2">Warranty: ' . htmlspecialchars($task['warranty'] ?? '') . '</td>
+                    <td style="border: none; border-left: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px; height: 30px;"></td>
+                    <td style="border: none; border-right: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px;"></td>
+                </tr>
+                <tr>
+                    <td style="border: none; border-left: 0.3px solid #000; border-bottom: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px;">Received By:</td>
+                    <td style="text-align: right; border: none; border-right: 0.3px solid #000; border-bottom: 0.3px solid #000; padding: 0; padding-left: 5px; padding-right: 5px; padding-bottom: 2px;">Authorized Signatory</td>
+                </tr>
+            </tbody>
+        </table>';
 
         // Start rendering
         echo '<table class="invoice-info"><tbody>';
@@ -255,7 +255,15 @@
                         <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000; border-top: 0.3px solid #000;"></td>
                     </tr>
                     <tr>
+                        <td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Discount</td>
+                        <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
+                    </tr>
+                    <tr>
                         <td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Vat 5%</td>
+                        <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Adjustment</td>
                         <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
                     </tr>
                     <tr>
@@ -301,10 +309,10 @@
                         continue;
                     }
                     // Replace numbering (e.g., "1.", "2.") with bold bullet point
-                    $displayLine = preg_replace('/^\d+\.\s*/', '&bull; ', $trimmedLine);
+                    $displayLine = preg_replace('/^\d+\.\s*/', '• ', $trimmedLine);
                     // Handle lines with or without numbering
                     if (!empty($displayLine) && !preg_match('/^Any kind of faulty parts/i', $trimmedLine)) {
-                        $padding = preg_match('/^<b>&bull;<\/b>/', $displayLine) ? '40px' : '20px';
+                        $padding = preg_match('/^<b>•<\/b>/', $displayLine) ? '40px' : '20px';
                         echo '<p style="font-size: 12px; margin: 0; padding-left: ' . $padding . ';">' . htmlspecialchars($displayLine, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', false) . '</p>';
                     }
                 }
@@ -322,8 +330,9 @@
         }
 
         // Calculate final totals
-        $vatAmount = $totalAmount * $vatRate;
-        $grandTotal = $totalAmount + $vatAmount;
+        $vatAmount = (float)($task['tax_total'] ?? ($totalAmount * $vatRate)); // Use Zoho CRM VAT if available
+        $subtotalAfterDiscount = $totalAmount - $discount;
+        $grandTotal = $subtotalAfterDiscount + $vatAmount + $adjustment;
 
         // Fill remaining space on the final page
         $remainingHeight = $maxHeight - ($currentHeight + $totalsHeight + $bankDetailsHeight);
@@ -343,12 +352,13 @@
             }
         }
 
-        // Final page totals with discounts applied
+        // Final page totals with discount and adjustment
         $totalsFinal = '
             <tr>
                 <td colspan="6" style="text-align: right; border: none; border-top: 0.3px solid #000; border-left: 0.3px solid #000;">Total Amount</td>
                 <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000; border-top: 0.3px solid #000;">' . number_format($totalAmount, 2) . '</td>
             </tr>
+        
             <tr>
                 <td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Vat 5%</td>
                 <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;">' . number_format($vatAmount, 2) . '</td>
