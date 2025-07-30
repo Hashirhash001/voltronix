@@ -197,6 +197,8 @@ class Login extends CI_Controller {
 			show_error('User not found', 404);
 			return;
 		}
+
+		$sale_name = isset($user['sale_name']) ? $user['sale_name'] : null;
 	
 		$company = isset($user['company']) ? $user['company'] : null;
 	
@@ -247,6 +249,7 @@ class Login extends CI_Controller {
 		$data['grandTotal'] = $grandTotal;
 	
 		$data['username'] = $username;
+		$data['sale_name'] = $sale_name;
 	
 		// Select view based on company
 		$company_views = [

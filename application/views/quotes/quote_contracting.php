@@ -73,7 +73,7 @@
                     </tr>
                     <tr>
                         <td style="font-weight: bold; font-size: 11px; text-align: right;">Sales Person:</td>
-                        <td style="text-align: right; font-size: 11px;"><b><?= htmlspecialchars(ucfirst($username ?? '')) ?></b></td>
+                        <td style="text-align: right; font-size: 11px;"><b><?= htmlspecialchars($sale_name ?? ucfirst($username ?? '')) ?></b></td>
                     </tr>
                 </table>
             </td>

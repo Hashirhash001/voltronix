@@ -36,6 +36,8 @@ class Auth extends CI_Controller {
 		$this->form_validation->set_rules('status', 'Status');
 		$this->form_validation->set_rules('department', 'Status');
 		$this->form_validation->set_rules('role', 'Role');
+		$this->form_validation->set_rules('company', 'Company');
+		$this->form_validation->set_rules('sale_name', 'Sale Name');
 	
 		if ($this->form_validation->run() === FALSE) {
 			echo json_encode(array("status" => "error", "message" => validation_errors()));
@@ -52,7 +54,9 @@ class Auth extends CI_Controller {
 				'status' => $data['status'],
 				'department' => $data['department'],
 				'quote_access' => $data['quote_access'],
-				'role' => $data['role']
+				'role' => $data['role'],
+				'company' => $data['company'],
+				'sale_name' => $data['sale_name'],
 			);
 	
 			// Check if the user already exists by email or user_id

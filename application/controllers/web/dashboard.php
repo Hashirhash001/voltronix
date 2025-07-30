@@ -1,6 +1,6 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-
+require FCPATH.'vendor/autoload.php';
 /**
  * Tasks Controller
  *
@@ -30,6 +30,7 @@ class Dashboard extends CI_Controller {
 		$this->load->model('Access_token_model');
 		$this->load->model('Proposal_model');
 		$this->load->helper(['url', 'json_input', 'form']);
+		$this->load->helper('NumberToWords_helper');
 		$this->output->set_content_type('application/json');
 
 		$this->client_id = '1000.0V519TDSRC8AYUHXMU2SYCAGN9UP3L';
@@ -262,6 +263,16 @@ class Dashboard extends CI_Controller {
 				'Description' => $item['itemDescription'],
 			];
 		}
+
+		// Calculate totals
+        $subTotal = (float) ($proposal_data['subTotal'] ?? $unitPrice);
+        $discount = (float) ($proposal_data['discount'] ?? 0);
+        $vatAmount = (float) (($subTotal - $discount) * 0.05); // 5% VAT
+        $adjustment = (float) ($proposal_data['adjustment'] ?? 0);
+        $grandTotal = (float) ($subTotal - $discount + $vatAmount + $adjustment);
+    
+        // Convert grand total to words
+        $totalInWords = $this->convert_number_to_words($grandTotal);
 	
 		$data = json_encode([
 			'data' => [
@@ -287,11 +298,13 @@ class Dashboard extends CI_Controller {
 						]
 					],
 					'Adjustment' => (float) ($proposal_data['adjustment'] ?? 0),
+					'Total_in_Words' => strtoupper($totalInWords),
 					'Grand_Total' => (float) ($proposal_data['grandTotal'] ?? 0),
 					'Contact_Name' => [
 						'id' => $contact_id,
 					],
 					'Quoted_Items' => $quoted_items,
+					'Quote_Notes' => $proposal_data['notes'],
 				]
 			]
 		]);
@@ -511,246 +524,448 @@ class Dashboard extends CI_Controller {
 	}
 
 	private function update_quote_in_zoho($quote_deal_number, $proposal_data) {
-		ini_set('display_errors', 0); // Hide errors from being directly output to the client
-		ini_set('log_errors', 1);    // Enable error logging
+        ini_set('display_errors', 0);
+        ini_set('log_errors', 1);
+    
+        // Transform QUOTE-1254 to VTNX-1254
+        $quote_number = str_replace("QUOTE", "VTNX", $quote_deal_number);
+    
+        // Step 1: Fetch Quote ID using the Quote Number
+        $quote_response = $this->execute_curl_request(
+            "https://www.zohoapis.com/crm/v2/Quotes/search?criteria=(Quote_No:equals:$quote_number)",
+            [
+                'Content-Type: application/json',
+                "Authorization: Zoho-oauthtoken " . $this->access_token
+            ],
+            null,
+            'GET'
+        );
+    
+        $quote_data = json_decode($quote_response['body'], true);
+    
+        if ($quote_response['http_code'] == 401) {
+            if ($this->refresh_access_token()) {
+                $this->access_token = $this->get_access_token();
+                $quote_response = $this->execute_curl_request(
+                    "https://www.zohoapis.com/crm/v2/Quotes/search?criteria=(Quote_No:equals:$quote_number)",
+                    [
+                        'Content-Type: application/json',
+                        "Authorization: Zoho-oauthtoken " . $this->access_token
+                    ],
+                    null,
+                    'GET'
+                );
+                $quote_data = json_decode($quote_response['body'], true);
+            } else {
+                log_message('error', 'Failed to refresh access token while searching for Quote Number.');
+                return ['error' => 'Failed to refresh access token.'];
+            }
+        }
+    
+        if (!isset($quote_data['data'][0]['id'])) {
+            log_message('error', 'Quote not found for Quote Number: ' . $quote_number);
+            return ['error' => 'Quote not found.'];
+        }
+    
+        $quote_id = $quote_data['data'][0]['id'];
+        $deal_id = $quote_data['data'][0]['Deal_Name']['id'] ?? null;
+    
+        if (!$deal_id) {
+            log_message('error', 'Deal ID not found for Quote Number: ' . $quote_number);
+            return ['error' => 'Deal ID not found.'];
+        }
+    
+        // Step 2: Check for existing contact or create a new one
+        $contact_name = !empty(trim($proposal_data['kind_attention'] ?? '')) ? trim($proposal_data['kind_attention']) : 'Default Contact';
+        if (!preg_match('/^[a-zA-Z\s]+$/', $contact_name)) {
+            $contact_name = 'Default Contact';
+        }
+    
+        // Search for existing contact by Last_Name
+        $contact_search_response = $this->execute_curl_request(
+            "https://www.zohoapis.com/crm/v2.1/Contacts/search?criteria=(Last_Name:equals:$contact_name)",
+            [
+                'Content-Type: application/json',
+                "Authorization: Zoho-oauthtoken " . $this->access_token
+            ],
+            null,
+            'GET'
+        );
+    
+        $contact_search_data = json_decode($contact_search_response['body'], true);
+    
+        if ($contact_search_response['http_code'] == 401) {
+            if ($this->refresh_access_token()) {
+                $this->access_token = $this->get_access_token();
+                $contact_search_response = $this->execute_curl_request(
+                    "https://www.zohoapis.com/crm/v2.1/Contacts/search?criteria=(Last_Name:equals:$contact_name)",
+                    [
+                        'Content-Type: application/json',
+                        "Authorization: Zoho-oauthtoken " . $this->access_token
+                    ],
+                    null,
+                    'GET'
+                );
+                $contact_search_data = json_decode($contact_search_response['body'], true);
+            } else {
+                log_message('error', 'Failed to refresh access token for contact search.');
+                return ['error' => 'Failed to refresh access token.'];
+            }
+        }
+    
+        $contact_id = null;
+        if (isset($contact_search_data['data'][0]['id'])) {
+            $contact_id = $contact_search_data['data'][0]['id'];
+        } else {
+            // Create new contact if none exists
+            $contact_data = json_encode([
+                'data' => [
+                    [
+                        'Last_Name' => $contact_name,
+                        'First_Name' => '',
+                    ]
+                ]
+            ]);
+    
+            $contact_response = $this->execute_curl_request(
+                "https://www.zohoapis.com/crm/v2.1/Contacts",
+                [
+                    'Content-Type: application/json',
+                    "Authorization: Zoho-oauthtoken " . $this->access_token
+                ],
+                $contact_data,
+                'POST'
+            );
+    
+            $contact_response_body = json_decode($contact_response['body'], true);
+    
+            if ($contact_response['http_code'] != 201) {
+                if ($contact_response['http_code'] == 401) {
+                    if ($this->refresh_access_token()) {
+                        $this->access_token = $this->get_access_token();
+                        $contact_response = $this->execute_curl_request(
+                            "https://www.zohoapis.com/crm/v2.1/Contacts",
+                            [
+                                'Content-Type: application/json',
+                                "Authorization: Zoho-oauthtoken " . $this->access_token
+                            ],
+                            $contact_data,
+                            'POST'
+                        );
+                        $contact_response_body = json_decode($contact_response['body'], true);
+                    } else {
+                        log_message('error', 'Failed to refresh access token for contact creation.');
+                        return ['error' => 'Failed to refresh access token.'];
+                    }
+                }
+                if ($contact_response['http_code'] != 201) {
+                    $error_message = $contact_response_body['data'][0]['message'] ?? 'Unknown error';
+                    log_message('error', "Failed to create contact in Zoho CRM: HTTP {$contact_response['http_code']} - {$error_message}");
+                    return ['error' => "Failed to create contact: $error_message"];
+                }
+            }
+    
+            $contact_id = $contact_response_body['data'][0]['details']['id'] ?? null;
+            if (!$contact_id) {
+                log_message('error', 'Contact ID not found in Zoho response: ' . print_r($contact_response_body, true));
+                return ['error' => 'Contact ID not found in Zoho response.'];
+            }
+        }
+    
+        // Step 3: Prepare quoted items
+        $quoted_items = [];
+        $unitPrice = 0;
+        foreach ($proposal_data['items'] as $item) {
+            $item_total = (float)$item['unitPrice'] * (float)$item['quantity'];
+            $unitPrice += $item_total;
+            $quoted_items[] = [
+                'Product_Name' => [
+                    'id' => $item['product_id'] ?? $item['itemName'], // Use product_id if available
+                    'name' => $item['product_name'] ?? $item['itemName']
+                ],
+                'Quantity' => (float)$item['quantity'],
+                'List_Price' => (float)$item['unitPrice'],
+                'ItemDiscount' => (float)($item['itemDiscount'] ?? 0),
+                'U_O_M' => $item['uom'] ?? 'N/A',
+                'Description' => $item['itemDescription'] ?? ''
+            ];
+        }
+        
+        // Calculate totals
+        $subTotal = (float) ($proposal_data['subTotal'] ?? $unitPrice);
+        $discount = (float) ($proposal_data['discount'] ?? 0);
+        $vatAmount = (float) (($subTotal - $discount) * 0.05); // 5% VAT
+        $adjustment = (float) ($proposal_data['adjustment'] ?? 0);
+        $grandTotal = (float) ($subTotal - $discount + $vatAmount + $adjustment);
+    
+        // Convert grand total to words
+        $totalInWords = $this->convert_number_to_words($grandTotal);
+    
+        // Step 4: Prepare data for updating the quote in Zoho
+        $data = json_encode([
+            'data' => [
+                [
+                    'Subject' => $proposal_data['subject'] ?? 'Default Subject',
+                    'Project' => $proposal_data['project'] ?? 'N/A',
+                    'Terms_of_Payment' => $proposal_data['termsOfPayment'] ?? 'N/A',
+                    'Specification' => $proposal_data['specification'] ?? 'N/A',
+                    'General_Exclusion' => $proposal_data['generalExclusion'] ?? 'N/A',
+                    'Brand' => $proposal_data['brand'] ?? 'N/A',
+                    'Warranty' => $proposal_data['warranty'] ?? 'N/A',
+                    'Delivery' => $proposal_data['delivery'] ?? 'N/A',
+                    'Valid_Till' => $proposal_data['validUntil'] ?? null,
+                    'Sub_Total' => (float)($proposal_data['subTotal'] ?? $unitPrice),
+                    'Discount' => (float)($proposal_data['discount'] ?? 0),
+                    'line_tax' => [
+                        [
+                            'percentage' => 5,
+                            'name' => 'VAT',
+                            'id' => '5653678000000021003',
+                            'value' => (float)((($proposal_data['subTotal'] ?? $unitPrice) - ($proposal_data['discount'] ?? 0)) * 0.05)
+                        ]
+                    ],
+                    'Adjustment' => (float)($proposal_data['adjustment'] ?? 0),
+                    'Total_in_Words' => strtoupper($totalInWords),
+                    'Grand_Total' => (float)($proposal_data['grandTotal'] ?? ($unitPrice - ($proposal_data['discount'] ?? 0) + (($proposal_data['subTotal'] ?? $unitPrice) - ($proposal_data['discount'] ?? 0)) * 0.05 + ($proposal_data['adjustment'] ?? 0))),
+                    'Contact_Name' => [
+                        'id' => $contact_id,
+                        'name' => $contact_name
+                    ],
+                    'Quoted_Items' => $quoted_items,
+                    'Quote_Notes' => $proposal_data['notes'],
+                ]
+            ]
+        ]);
+    
+        // Step 5: Update the quote in Zoho CRM
+        $response = $this->execute_curl_request(
+            "https://www.zohoapis.com/crm/v2.1/Quotes/$quote_id",
+            [
+                'Content-Type: application/json',
+                "Authorization: Zoho-oauthtoken " . $this->access_token
+            ],
+            $data,
+            'PUT' // Changed to PUT for full update
+        );
+    
+        $response_body = json_decode($response['body'], true);
+    
+        if (isset($response_body['data'][0]['code']) && $response_body['data'][0]['code'] === 'SUCCESS') {
+            // Fetch updated quote details
+            $quote_details_response = $this->execute_curl_request(
+                "https://www.zohoapis.com/crm/v2.1/Quotes/$quote_id",
+                [
+                    'Content-Type: application/json',
+                    "Authorization: Zoho-oauthtoken " . $this->access_token
+                ],
+                null,
+                'GET'
+            );
+    
+            $quote_details = json_decode($quote_details_response['body'], true);
+            $quote_number = $quote_details['data'][0]['Quote_No'] ?? null;
+            $modified_time = $quote_details['data'][0]['Modified_Time'] ?? null;
+    
+            if (!$quote_number) {
+                log_message('error', 'Quote number missing from Zoho CRM response: ' . print_r($quote_details, true));
+                return ['error' => 'Quote number not found in Zoho CRM response.'];
+            }
+    
+            // Fetch task ID using quote_id
+            $id = $this->Task_model->get_id_by_quote_id($quote_id);
+    
+            if (!$id) {
+                log_message('error', 'No task found for Quote ID: ' . $quote_id);
+                return ['error' => 'No task found for the provided quote ID.'];
+            }
+    
+            // Prepare quote data for database update
+            $quote_data = [
+                'quote_id' => $quote_id,
+                'quote_number' => $quote_number,
+                'subject' => $proposal_data['subject'] ?? 'Default Subject',
+                'project_name' => $proposal_data['project'] ?? 'N/A',
+                'terms_of_payment' => $proposal_data['termsOfPayment'] ?? 'N/A',
+                'kind_attention' => $contact_name,
+                'specification' => $proposal_data['specification'] ?? 'N/A',
+                'general_exclusion' => $proposal_data['generalExclusion'] ?? 'N/A',
+                'brand' => $proposal_data['brand'] ?? 'N/A',
+                'warranty' => $proposal_data['warranty'] ?? 'N/A',
+                'delivery' => $proposal_data['delivery'] ?? 'N/A',
+                'notes' => $proposal_data['notes'] ?? null,
+                'valid_until' => $proposal_data['validUntil'] ?? null,
+                'discount' => $proposal_data['discount'] ?? 0,
+                'adjustment' => $proposal_data['adjustment'] ?? 0,
+                'updated_at' => $modified_time
+            ];
+    
+            // Save quote data to the database
+            if (!$this->Task_model->save_proposal_data($quote_data, $id)) {
+                log_message('error', 'Failed to update Task_model with data: ' . print_r($quote_data, true));
+                return ['error' => 'Failed to update quote data in database.'];
+            }
+    
+            // Prepare and save items data to the database
+            $items_data = [];
+            foreach ($proposal_data['items'] as $item) {
+                $items_data[] = [
+                    'task_id' => $id,
+                    'quote_number' => $quote_number,
+                    'product_id' => $item['product_id'] ?? null,
+                    'product_name' => $item['product_name'] ?? $item['itemName'],
+                    'product_description' => $item['itemDescription'] ?? '',
+                    'uom' => $item['uom'] ?? 'N/A',
+                    'quantity' => $item['quantity'],
+                    'service_charge' => $item['unitPrice'],
+                    'item_discount' => $item['itemDiscount'] ?? 0,
+                    'total' => $item['total'] ?? ((float)$item['quantity'] * (float)$item['unitPrice'] * (1 - ((float)($item['itemDiscount'] ?? 0) / 100)))
+                ];
+            }
+    
+            // Delete existing items and save updated items
+            $this->Proposal_model->delete_proposal_items_by_quote_number($quote_number);
+            $this->Proposal_model->save_proposal_items($items_data);
+    
+            return ['success' => true, 'quote_id' => $quote_id, 'id' => $id];
+        } else {
+            $error_message = $response_body['data'][0]['message'] ?? 'Unknown error';
+            log_message('error', "Failed to update quote in Zoho CRM: HTTP {$response['http_code']} - {$error_message}");
+            return ['error' => "Failed to update quote: $error_message"];
+        }
+    }
 
-		// Transform QUOTE-1254 to VTNX-1254
-		$quote_number = str_replace("QUOTE", "VTNX", $quote_deal_number);
-	
-		print_r($quote_number);
-		
-		// Step 1: Fetch Quote ID using the Quote Number
-		$quote_response = $this->execute_curl_request(
-			"https://www.zohoapis.com/crm/v2/Quotes/search?criteria=(Quote_No:equals:$quote_number)",
-			[
-				'Content-Type: application/json',
-				"Authorization: Zoho-oauthtoken " . $this->access_token
-			],
-			null,
-			'GET'
-		);
-	
-		$quote_data = json_decode($quote_response['body'], true);
-	
-		if ($quote_response['http_code'] == 401) {
-			if ($this->refresh_access_token()) {
-				$this->access_token = $this->get_access_token();
-				$quote_response = $this->execute_curl_request(
-					"https://www.zohoapis.com/crm/v2/Quotes/search?criteria=(Quote_No:equals:$quote_number)",
-					[
-						'Content-Type: application/json',
-						"Authorization: Zoho-oauthtoken " . $this->access_token
-					],
-					null,
-					'GET'
-				);
-				$quote_data = json_decode($quote_response['body'], true);
-			} else {
-				log_message('error', 'Failed to refresh access token while searching for Quote Number.');
-				return ['error' => 'Failed to refresh access token.'];
-			}
-		}
-	
-		if (!isset($quote_data['data'][0]['id'])) {
-			log_message('error', 'Quote not found for Quote Number: ' . $quote_number);
-			return ['error' => 'Quote not found.'];
-		}
-	
-		$quote_id = $quote_data['data'][0]['id'];
-		$deal_id = $quote_data['data'][0]['Deal_Name']['id'] ?? null;
-	
-		// Step 2: Create or update contact in Zoho CRM
-		$contact_data = json_encode([
-			'data' => [
-				[
-					'Last_Name' => $proposal_data['kind_attention'] ?? 'Default Last Name',
-				]
-			]
-		]);
-	
-		$contact_response = $this->execute_curl_request(
-			"https://www.zohoapis.com/crm/v2.1/Contacts",
-			[
-				'Content-Type: application/json',
-				"Authorization: Zoho-oauthtoken " . $this->access_token
-			],
-			$contact_data,
-			'POST'
-		);
-	
-		$contact_response_body = json_decode($contact_response['body'], true);
-	
-		if ($contact_response['http_code'] == 401) {
-			if ($this->refresh_access_token()) {
-				$this->access_token = $this->get_access_token();
-				$contact_response = $this->execute_curl_request(
-					"https://www.zohoapis.com/crm/v2.1/Contacts",
-					[
-						'Content-Type: application/json',
-						"Authorization: Zoho-oauthtoken " . $this->access_token
-					],
-					$contact_data,
-					'POST'
-				);
-				$contact_response_body = json_decode($contact_response['body'], true);
-			} else {
-				log_message('error', 'Failed to refresh access token for contact creation.');
-				return ['error' => 'Failed to refresh access token.'];
-			}
-		}
-	
-		if (isset($contact_response_body['data'][0]['details']['id'])) {
-			$contact_id = $contact_response_body['data'][0]['details']['id'];
-			$contact_name = $proposal_data['kind_attention'];
-		} else {
-			log_message('error', 'Failed to create contact in Zoho CRM: ' . print_r($contact_response_body, true));
-			return ['error' => 'Failed to create contact.'];
-		}
-	
-		// Step 3: Prepare quoted items from $proposal_data['items']
-		$quoted_items = [];
-		foreach ($proposal_data['items'] as $item) {
-			$quoted_items[] = [
-				'Product_Name' => [
-					'id' => $item['itemName'], // Assuming itemName is the product ID
-					'name' => $item['product_name'] // Human-readable name
-				],
-				'Quantity' => (float) $item['quantity'],
-				'List_Price' => (float) $item['unitPrice'],
-				'Discount' => (float) $item['itemDiscount'],
-				'U_O_M' => $item['uom'],
-				'Description' => $item['itemDescription'] ?? ''
-			];
-		}
-	
-		// Step 4: Prepare data for updating the quote in Zoho
-		$data = json_encode([
-			'data' => [
-				[
-					'Subject' => $proposal_data['subject'] ?? 'Default Subject',
-					'Project' => $proposal_data['project'] ?? 'na',
-					'Terms_of_Payment' => $proposal_data['termsOfPayment'] ?? 'na',
-					'Specification' => $proposal_data['specification'] ?? 'na',
-					'General_Exclusion' => $proposal_data['generalExclusion'] ?? 'na',
-					'Brand' => $proposal_data['brand'] ?? 'na',
-					'Warranty' => $proposal_data['warranty'] ?? 'na',
-					'Delivery' => $proposal_data['delivery'] ?? 'na',
-					'Valid_Till' => $proposal_data['validUntil'] ?? null,
-					'Sub_Total' => (float) ($proposal_data['subTotal'] ?? 0),
-					'Discount' => (float) ($proposal_data['discount'] ?? 0),
-					'line_tax' => [
-						[
-							'percentage' => 5,
-							'name' => 'Vat',
-							'id' => '5653678000000021003',
-							'value' => (float) (((float) $proposal_data['subTotal'] - (float) $proposal_data['discount']) * 5 / 100)
-						]
-					],
-					'Adjustment' => (float) ($proposal_data['adjustment'] ?? 0),
-					'Grand_Total' => (float) ($proposal_data['grandTotal'] ?? 0),
-					'Contact_Name' => [
-						'id' => $contact_id,
-						'name' => $contact_name
-					],
-					'Quoted_Items' => $quoted_items
-				]
-			]
-		]);
-	
-		// Step 5: Update the quote in Zoho CRM
-		$headers = [
-			'Content-Type: application/json',
-			"Authorization: Zoho-oauthtoken " . $this->access_token
-		];
-	
-		$response = $this->execute_curl_request(
-			"https://www.zohoapis.com/crm/v2.1/Quotes/$quote_id",
-			$headers,
-			$data,
-			'PATCH'
-		);
-	
-		$response_body = json_decode($response['body'], true);
-	
-		if (isset($response_body['data'][0]['code']) && $response_body['data'][0]['code'] === 'SUCCESS') {
-			// Fetch updated quote details
-			$quote_details_response = $this->execute_curl_request(
-				"https://www.zohoapis.com/crm/v2/Quotes/$quote_id",
-				$headers,
-				null,
-				'GET'
-			);
-	
-			$quote_details = json_decode($quote_details_response['body'], true);
-			$quote_number = $quote_details['data'][0]['Quote_No'] ?? null;
-			$modified_time = $quote_details['data'][0]['Modified_Time'] ?? null;
-	
-			if (!$quote_number) {
-				log_message('error', 'Quote number missing from Zoho CRM response: ' . print_r($quote_details, true));
-				return ['error' => 'Quote number not found in Zoho CRM response.'];
-			}
-	
-			// Fetch task ID using quote_id (assuming Task_model method exists)
-			$id = $this->Task_model->get_id_by_quote_id($quote_id);
-	
-			if (!$id) {
-				log_message('error', 'No task found for Quote ID: ' . $quote_id);
-				return ['error' => 'No task found for the provided quote ID.'];
-			}
-	
-			// Prepare quote data for database update
-			$quote_data = [
-				'quote_id' => $quote_id,
-				'quote_number' => $quote_number,
-				'subject' => $proposal_data['subject'],
-				'project_name' => $proposal_data['project'],
-				'terms_of_payment' => $proposal_data['termsOfPayment'],
-				'kind_attention' => $proposal_data['kind_attention'],
-				'specification' => $proposal_data['specification'],
-				'general_exclusion' => $proposal_data['generalExclusion'],
-				'brand' => $proposal_data['brand'],
-				'warranty' => $proposal_data['warranty'],
-				'delivery' => $proposal_data['delivery'],
-				'notes' => $proposal_data['notes'],
-				'valid_until' => $proposal_data['validUntil'],
-				'discount' => $proposal_data['discount'],
-				'adjustment' => $proposal_data['adjustment'],
-				'updated_at' => $modified_time
-			];
-	
-			// Save quote data to the database
-			if (!$this->Task_model->save_proposal_data($quote_data, $id)) {
-				log_message('error', 'Failed to update Task_model with data: ' . print_r($quote_data, true));
-				return ['error' => 'Failed to update quote data in database.'];
-			}
-	
-			// Prepare and save items data to the database
-			$items_data = [];
-			foreach ($proposal_data['items'] as $item) {
-				$items_data[] = [
-					'task_id' => $id,
-					'quote_number' => $quote_number,
-					'product_id' => $item['product_id'],
-					'product_name' => $item['product_name'],
-					'product_description' => $item['itemDescription'],
-					'uom' => $item['uom'],
-					'quantity' => $item['quantity'],
-					'service_charge' => $item['unitPrice'],
-					'item_discount' => $item['itemDiscount'],
-					'total' => $item['total']
-				];
-			}
-	
-			// Delete existing items and save updated items (to sync with Zoho)
-			$this->Proposal_model->delete_proposal_items_by_quote_number($quote_number); // Add this method if not exists
-			$this->Proposal_model->save_proposal_items($items_data);
-	
-			return ['success' => true, 'quote_id' => $quote_id, 'id' => $id];
-		} else {
-			log_message('error', 'Failed to update quote in Zoho CRM: ' . print_r($response_body, true));
-			return ['error' => 'Failed to update quote in Zoho CRM.'];
-		}
-	}
+	// Helper function to convert number to words
+    private function convert_integer_to_words($num, $dictionary, $hyphen, $conjunction, $separator) {
+        if ($num == 0) {
+            return $dictionary[0];
+        }
+    
+        $string = '';
+    
+        switch (true) {
+            case $num < 21:
+                $string = $dictionary[$num];
+                break;
+            case $num < 100:
+                $tens = ((int) ($num / 10)) * 10;
+                $units = $num % 10;
+                $string = $dictionary[$tens];
+                if ($units) {
+                    $string .= $hyphen . $dictionary[$units];
+                }
+                break;
+            case $num < 1000:
+                $hundreds = (int) ($num / 100);
+                $remainder = $num % 100;
+                $string = $dictionary[$hundreds] . ' ' . $dictionary[100];
+                if ($remainder) {
+                    $string .= $conjunction . $this->convert_integer_to_words($remainder, $dictionary, $hyphen, $conjunction, $separator);
+                }
+                break;
+            default:
+                $baseUnit = 0;
+                foreach ($dictionary as $base => $word) {
+                    if ($base > 100 && $num >= $base) {
+                        $baseUnit = $base;
+                    }
+                }
+                if ($baseUnit) {
+                    $numBaseUnits = (int) ($num / $baseUnit);
+                    $remainder = $num % $baseUnit;
+                    $string = $this->convert_integer_to_words($numBaseUnits, $dictionary, $hyphen, $conjunction, $separator) . ' ' . $dictionary[$baseUnit];
+                    if ($remainder) {
+                        $string .= $remainder < 100 ? $conjunction : $separator;
+                        $string .= $this->convert_integer_to_words($remainder, $dictionary, $hyphen, $conjunction, $separator);
+                    }
+                }
+                break;
+        }
+    
+        return $string;
+    }
+    
+    private function convert_number_to_words($number) {
+        $hyphen = '-';
+        $conjunction = ' and ';
+        $separator = ', ';
+        $negative = 'negative ';
+        $decimal = ' point ';
+        $dictionary = [
+            0 => 'zero',
+            1 => 'one',
+            2 => 'two',
+            3 => 'three',
+            4 => 'four',
+            5 => 'five',
+            6 => 'six',
+            7 => 'seven',
+            8 => 'eight',
+            9 => 'nine',
+            10 => 'ten',
+            11 => 'eleven',
+            12 => 'twelve',
+            13 => 'thirteen',
+            14 => 'fourteen',
+            15 => 'fifteen',
+            16 => 'sixteen',
+            17 => 'seventeen',
+            18 => 'eighteen',
+            19 => 'nineteen',
+            20 => 'twenty',
+            30 => 'thirty',
+            40 => 'forty',
+            50 => 'fifty',
+            60 => 'sixty',
+            70 => 'seventy',
+            80 => 'eighty',
+            90 => 'ninety',
+            100 => 'hundred',
+            1000 => 'thousand',
+            1000000 => 'million',
+            1000000000 => 'billion',
+            1000000000000 => 'trillion',
+            1000000000000000 => 'quadrillion',
+            1000000000000000000 => 'quintillion'
+        ];
+    
+        if (!is_numeric($number)) {
+            return false;
+        }
+    
+        // Handle negative numbers
+        if ($number < 0) {
+            return $negative . $this->convert_number_to_words(abs($number));
+        }
+    
+        // Split into integer and decimal parts
+        $number = (float) $number;
+        $integerPart = (int) $number;
+        $decimalPart = round(($number - $integerPart) * 100); // Convert to fils (2 decimal places)
+    
+        // Convert the integer part
+        $string = $this->convert_integer_to_words($integerPart, $dictionary, $hyphen, $conjunction, $separator);
+    
+        // Prepend "DIRHAMS" only once
+        $string = 'DIRHAMS ' . ucfirst($string);
+    
+        // Handle decimal part (fils)
+        if ($decimalPart > 0) {
+            $decimalString = '';
+            if ($decimalPart < 21) {
+                $decimalString = $dictionary[$decimalPart];
+            } else {
+                $tens = ((int) ($decimalPart / 10)) * 10;
+                $units = $decimalPart % 10;
+                $decimalString = $dictionary[$tens];
+                if ($units) {
+                    $decimalString .= $hyphen . $dictionary[$units];
+                }
+            }
+            $string .= $decimal . $decimalString . ' FILS';
+        }
+    
+        return $string;
+    }
 	
 	public function get_quote_details() {
 		// Get the JSON data from the POST request

@@ -67,7 +67,7 @@
 										</div>
 
 										<div class="form-row mb-3">
-											<div class="col-md-6">
+										    <div class="col-md-6">
 												<label for="address" class="form-label">Address:</label>
 												<textarea class="form-control shadow-sm" id="address" name="complaint_info" placeholder="Enter Address" rows="3" required></textarea>
 											</div>
@@ -88,7 +88,7 @@
 							</div>
 						</div>
 					</div>
-
+					
 					<!-- Create New Item -->
 					<div class="card shadow-sm">
 						<div class="card-header text-white" id="headingFour" style="background-color: #d10908;">
@@ -129,7 +129,7 @@
 						</div>
 					</div>
 
-					<!-- Re-Proposal Section -->
+					<!-- Proposal Section -->
 					<div class="card shadow-sm pt-4">
 						<div class="card-header text-white" id="headingTwo" style="background-color: #d10908;">
 							<h2 class="mb-0">
@@ -192,7 +192,7 @@
 													<td style="min-width: 130px;">
 														<select class="form-control uom" name="uom[]" required>
 															<option value="">-None-</option>
-															<option value="NOS">NOS</option>
+															<option value="NOS" selected>NOS</option>
 															<option value="PCS">PCS</option>
 															<option value="LS">LS</option>
 															<option value="BAG">BAG</option>
@@ -235,15 +235,15 @@
 														<div class="error-message"></div>
 													</td>
 													<td style="min-width: 100px;">
-														<input type="number" name="quantity[]" class="form-control quantity" placeholder="Quantity" required>
+														<input type="number" name="quantity[]" value="1" class="form-control quantity" placeholder="Quantity" required>
 														<div class="error-message"></div>
 													</td>
 													<td style="min-width: 100px;">
-														<input type="number" name="unitPrice[]" class="form-control unitPrice" placeholder="Unit Price" required>
+														<input type="number" name="unitPrice[]" value="0" class="form-control unitPrice" placeholder="Unit Price" required>
 														<div class="error-message"></div>
 													</td>
 													<td style="min-width: 100px;">
-														<input type="number" name="itemDiscount[]" class="form-control no-arrows itemDiscount" placeholder="Discount" required>
+														<input type="number" name="itemDiscount[]" value="0" class="form-control no-arrows itemDiscount" placeholder="Discount" required>
 														<div class="error-message"></div>
 													</td>
 													<td style="min-width: 100px;">
@@ -342,7 +342,7 @@
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="valid-until">Valid Until:</label>
-										<input type="date" class="form-control" name="validUntil" id="valid-until" placeholder="Enter Valid Until">
+										<input type="date" class="form-control" name="validUntil" id="valid-until" placeholder="Enter Valid Until" onclick="this.showPicker()">
 										<div class="error-message"></div>
 									</div>
 
@@ -450,42 +450,42 @@
 									<!-- Additional Details -->
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="kind_attention">Kind Attention:</label>
-										<input type="text" name="kind_attention" class="form-control" id="kind_attention2" placeholder="Enter Kind Attention" required>
+										<input type="text" name="kind_attention" class="form-control" id="kind_attention2" placeholder="Enter Kind Attention">
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="project">Project:</label>
-										<input type="text" name="project" class="form-control" id="project2" placeholder="Enter Project Name" required>
+										<input type="text" name="project" class="form-control" id="project2" placeholder="Enter Project Name">
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="terms-of-payment">Terms of Payment:</label>
-										<input type="text" name="termsOfPayment" class="form-control" id="terms-of-payment2" placeholder="Enter Payment Terms" required>
+										<input type="text" name="termsOfPayment" class="form-control" id="terms-of-payment2" placeholder="Enter Payment Terms">
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="specification">Specification:</label>
-										<textarea class="form-control" name="specification" id="specification2" rows="3" placeholder="Enter Specifications" required></textarea>
+										<textarea class="form-control" name="specification" id="specification2" rows="3" placeholder="Enter Specifications"></textarea>
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="general-exclusion">General Exclusion:</label>
-										<textarea class="form-control" name="generalExclusion" id="general-exclusion2" rows="3" placeholder="Enter General Exclusion" required></textarea>
+										<textarea class="form-control" name="generalExclusion" id="general-exclusion2" rows="3" placeholder="Enter General Exclusion"></textarea>
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="brand">Brand:</label>
-										<input type="text" class="form-control" name="brand" id="brand2" placeholder="Enter brand" required>
+										<input type="text" class="form-control" name="brand" id="brand2" placeholder="Enter brand">
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="warranty">Warranty:</label>
-										<input type="text" class="form-control" name="warranty" id="warranty2" placeholder="Enter Warranty" required>
+										<input type="text" class="form-control" name="warranty" id="warranty2" placeholder="Enter Warranty">
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="delivery">Delivery:</label>
-										<input type="text" class="form-control" name="delivery" id="delivery2" placeholder="Enter Delivery" required>
+										<input type="text" class="form-control" name="delivery" id="delivery2" placeholder="Enter Delivery">
 										<div class="error-message"></div>
 									</div>
 									<div class="form-group">
@@ -495,7 +495,7 @@
 									</div>
 									<div class="form-group">
 										<label class="form-label" style="color: #000;" for="valid-until">Valid Until:</label>
-										<input type="date" class="form-control" name="validUntil" id="valid-until2" placeholder="Enter Valid Until" required>
+										<input type="date" class="form-control" name="validUntil" id="valid-until2" placeholder="Enter Valid Until" onclick="this.showPicker()">
 										<div class="error-message"></div>
 									</div>
 
@@ -640,7 +640,7 @@
 						<td>
 							<select class="form-control uom" name="uom[]" required>
 								<option value="">-None-</option>
-								<option value="NOS">NOS</option>
+								<option value="NOS" selected>NOS</option>
 								<option value="PCS">PCS</option>
 								<option value="LS">LS</option>
 								<option value="BAG">BAG</option>
@@ -683,15 +683,15 @@
 							<div class="error-message"></div>
 						</td>
 						<td>
-							<input type="number" name="quantity[]" class="form-control quantity" placeholder="Quantity" required>
+							<input type="number" name="quantity[]" value="1" class="form-control quantity" placeholder="Quantity" required>
 							<div class="error-message"></div>
 						</td>
 						<td>
-							<input type="number" name="unitPrice[]" class="form-control unitPrice" placeholder="Unit Price" required>
+							<input type="number" name="unitPrice[]" value="0" class="form-control unitPrice" placeholder="Unit Price" required>
 							<div class="error-message"></div>
 						</td>
 						<td style="min-width: 100px;">
-							<input type="number" name="itemDiscount[]" class="form-control no-arrows itemDiscount" placeholder="Discount" required>
+							<input type="number" name="itemDiscount[]" value="0" class="form-control no-arrows itemDiscount" placeholder="Discount" required>
 							<div class="error-message"></div>
 						</td>
 						<td>
@@ -795,7 +795,7 @@
 			$("#collapseTwo").on("hidden.bs.collapse", function () {
 				$("#addProposalIcon").removeClass("bi-dash-circle").addClass("bi-plus-circle");
 			});
-
+			
 			// Collapse Four
 			$("#collapseFour").on("shown.bs.collapse", function () {
 				$("#addItemIcon").removeClass("bi-plus-circle").addClass("bi-dash-circle");
@@ -827,411 +827,411 @@
 
 		// Fetch item names2 from the API and quote details for editing a quote
 		$(document).ready(function () {
-			const productDetails = {};
-			let loading = false;
-			let hasMoreRecords = true;
-			let page = 1;
-			let lastQuery = '';
-
-			// Function to initialize Select2 for a row
-			function initializeSelect2(row, preloadedDescription = '') {
-				$(row).find('.itemName').select2({
-					placeholder: 'Search for an item...',
-					allowClear: true,
-					width: '100%',
-					ajax: {
-						transport: function (params, success, failure) {
-							const query = params.data.q || '';
-							if (query !== lastQuery) {
-								page = 1;
-								hasMoreRecords = true;
-								lastQuery = query;
-								success({ results: [] });
-							}
-							if (loading || !hasMoreRecords) return;
-							loading = true;
-							fetch(`https://app.voltronix.ae/voltronix/deal/products?page=${page}&per_page=20&q=${encodeURIComponent(query)}`)
-								.then((response) => response.json())
-								.then((data) => {
-									const results = [];
-									if (data.success && Array.isArray(data.products)) {
-										data.products.forEach((product) => {
-											productDetails[product.id] = product.description || '';
-											results.push({ id: product.id, text: product.name });
-										});
-										hasMoreRecords = data.more_records;
-										page++;
-										success({ results, pagination: { more: hasMoreRecords } });
-									} else {
-										hasMoreRecords = false;
-										success({ results: [], pagination: { more: false } });
-									}
-								})
-								.catch((error) => {
-									console.error('Error fetching products:', error);
-									failure(error);
-								})
-								.finally(() => {
-									loading = false;
-								});
-						},
-						processResults: function (data) {
-							return data;
-						},
-						delay: 250,
-					},
-				});
-
-				$(row).find('.itemName').on('change', function () {
-					const selectedItemId = $(this).val();
-					const descriptionField = $(row).find('.itemDescription');
-					if (!selectedItemId) {
-						descriptionField.val('');
-						return;
-					}
-					// Only update description if not preloaded (i.e., user manually selects an item)
-					if (!preloadedDescription) {
-						const selectedDescription = productDetails[selectedItemId] || '';
-						descriptionField.val(selectedDescription);
-					}
-					row.find('.product_id').val(selectedItemId);
-					row.find('.product_name').val($(this).find('option:selected').text());
-				});
-			}
-
-			// Function to add a new row with pre-filled data
-			function addItemRow(itemData = {}, includeDeleteButton = true) {
-				const rowCount = $('#itemRows2 tbody tr').length + 1;
-				const newRow = `
-					<tr class="item-row">
-						<td>${rowCount}</td>
-						<td style="min-width: 300px;">
-							<input type="hidden" class="product_id" name="product_id[]" value="${itemData.product_id || ''}">
-							<input type="hidden" class="product_name" name="product_name[]" value="${itemData.product_name || ''}">
-							<select class="form-control itemName" name="itemName[]" style="width: 100%;" required>
-								<option value="">-None-</option>
-							</select>
-							<textarea name="itemDescription[]" class="itemDescription" cols="30" rows="3" style="width: 100%; border: 1px solid #ced4da;">${itemData.product_description || ''}</textarea>
-							<div class="error-message"></div>
-						</td>
-						<td style="min-width: 130px;">
-							<select class="form-control uom" name="uom[]" required>
-								<option value="">-None-</option>
-								<option value="NOS" ${itemData.uom === 'NOS' ? 'selected' : ''}>NOS</option>
-								<option value="PCS" ${itemData.uom === 'PCS' ? 'selected' : ''}>PCS</option>
-								<option value="LS" ${itemData.uom === 'LS' ? 'selected' : ''}>LS</option>
-								<option value="BAG" ${itemData.uom === 'BAG' ? 'selected' : ''}>BAG</option>
-								<option value="BKT" ${itemData.uom === 'BKT' ? 'selected' : ''}>BKT</option>
-								<option value="BND" ${itemData.uom === 'BND' ? 'selected' : ''}>BND</option>
-								<option value="BOWL" ${itemData.uom === 'BOWL' ? 'selected' : ''}>BOWL</option>
-								<option value="BX" ${itemData.uom === 'BX' ? 'selected' : ''}>BX</option>
-								<option value="CRD" ${itemData.uom === 'CRD' ? 'selected' : ''}>CRD</option>
-								<option value="CM" ${itemData.uom === 'CM' ? 'selected' : ''}>CM</option>
-								<option value="CS" ${itemData.uom === 'CS' ? 'selected' : ''}>CS</option>
-								<option value="CTN" ${itemData.uom === 'CTN' ? 'selected' : ''}>CTN</option>
-								<option value="DZ" ${itemData.uom === 'DZ' ? 'selected' : ''}>DZ</option>
-								<option value="EA" ${itemData.uom === 'EA' ? 'selected' : ''}>EA</option>
-								<option value="FT" ${itemData.uom === 'FT' ? 'selected' : ''}>FT</option>
-								<option value="GAL" ${itemData.uom === 'GAL' ? 'selected' : ''}>GAL</option>
-								<option value="GROSS" ${itemData.uom === 'GROSS' ? 'selected' : ''}>GROSS</option>
-								<option value="IN" ${itemData.uom === 'IN' ? 'selected' : ''}>IN</option>
-								<option value="KIT" ${itemData.uom === 'KIT' ? 'selected' : ''}>KIT</option>
-								<option value="LOT" ${itemData.uom === 'LOT' ? 'selected' : ''}>LOT</option>
-								<option value="M" ${itemData.uom === 'M' ? 'selected' : ''}>M</option>
-								<option value="MM" ${itemData.uom === 'MM' ? 'selected' : ''}>MM</option>
-								<option value="PC" ${itemData.uom === 'PC' ? 'selected' : ''}>PC</option>
-								<option value="PK" ${itemData.uom === 'PK' ? 'selected' : ''}>PK</option>
-								<option value="PK100" ${itemData.uom === 'PK100' ? 'selected' : ''}>PK100</option>
-								<option value="PK50" ${itemData.uom === 'PK50' ? 'selected' : ''}>PK50</option>
-								<option value="PR" ${itemData.uom === 'PR' ? 'selected' : ''}>PR</option>
-								<option value="RACK" ${itemData.uom === 'RACK' ? 'selected' : ''}>RACK</option>
-								<option value="RL" ${itemData.uom === 'RL' ? 'selected' : ''}>RL</option>
-								<option value="SET" ${itemData.uom === 'SET' ? 'selected' : ''}>SET</option>
-								<option value="SET3" ${itemData.uom === 'SET3' ? 'selected' : ''}>SET3</option>
-								<option value="SET4" ${itemData.uom === 'SET4' ? 'selected' : ''}>SET4</option>
-								<option value="SET5" ${itemData.uom === 'SET5' ? 'selected' : ''}>SET5</option>
-								<option value="SGL" ${itemData.uom === 'SGL' ? 'selected' : ''}>SGL</option>
-								<option value="SHT" ${itemData.uom === 'SHT' ? 'selected' : ''}>SHT</option>
-								<option value="SQFT" ${itemData.uom === 'SQFT' ? 'selected' : ''}>SQFT</option>
-								<option value="TUBE" ${itemData.uom === 'TUBE' ? 'selected' : ''}>TUBE</option>
-								<option value="YD" ${itemData.uom === 'YD' ? 'selected' : ''}>YD</option>
-								<option value="SQM" ${itemData.uom === 'SQM' ? 'selected' : ''}>SQM</option>
-							</select>
-							<div class="error-message"></div>
-						</td>
-						<td style="min-width: 100px;">
-							<input type="number" name="quantity[]" class="form-control no-arrows quantity" placeholder="Quantity" value="${itemData.quantity || ''}" required>
-							<div class="error-message"></div>
-						</td>
-						<td style="min-width: 100px;">
-							<input type="number" name="unitPrice[]" class="form-control no-arrows unitPrice" placeholder="Unit Price" value="${itemData.service_charge || ''}" required>
-							<div class="error-message"></div>
-						</td>
-						<td style="min-width: 100px;">
-							<input type="number" name="itemDiscount[]" class="form-control no-arrows itemDiscount" placeholder="Discount" value="${itemData.item_discount || '0'}" required>
-							<div class="error-message"></div>
-						</td>
-						<td style="min-width: 100px;">
-							<input type="number" name="total[]" class="form-control total" placeholder="Total" value="${itemData.total || ''}" readonly>
-							<div class="error-message"></div>
-						</td>
-						<td>
-							${includeDeleteButton ? `
-								<button type="button" class="btn btn-danger btn-sm remove-row">
-									<i class="bi bi-trash"></i>
-								</button>
-							` : ''}
-						</td>
-					</tr>
-				`;
-				$('#itemRows2 tbody').append(newRow);
-				initializeSelect2($('#itemRows2 tbody tr:last'), itemData.product_description || '');
-
-				// Pre-select item in Select2
-				if (itemData.product_id && itemData.product_name) {
-					const $select = $('#itemRows2 tbody tr:last .itemName');
-					$select.append(new Option(itemData.product_name, itemData.product_id, true, true)).trigger('change');
-				}
-			}
-
-			// Fetch quote details on Enter key press
-			$('#QuoteNumber').on('keypress', function (e) {
-				if (e.which === 13) { // Enter key
-					e.preventDefault();
-					const quoteNumber = $(this).val();
-					if (quoteNumber.trim() === '') return;
-
-					$.ajax({
-						url: '<?php echo site_url('web/dashboard/get_quote_details'); ?>',
-						type: 'POST',
-						dataType: 'json',
-						contentType: 'application/json',
-						data: JSON.stringify({ QuoteNumber: quoteNumber }),
-						success: function (response) {
-							if (response.success) {
-								const data = response.data;
-								const items = response.items || [];
-
-								// Populate static fields
-								$('#subject2').val(data.subject || '');
-								$('#kind_attention2').val(data.kind_attention || '');
-								$('#project2').val(data.project_name || '');
-								$('#specification2').val(data.specification || '');
-								$('#general-exclusion2').val(data.general_exclusion || '');
-								$('#brand2').val(data.brand || '');
-								$('#warranty2').val(data.warranty || '');
-								$('#delivery2').val(data.delivery || '');
-								$('#notes2').val(data.notes || '');
-								$('#terms-of-payment2').val(data.terms_of_payment || '');
-								$('#valid-until2').val(data.valid_until || '');
-								$('#sub-total2').val(data.sub_total || '');
-								$('#discount2').val(data.discount || '');
-								$('#adjustment2').val(data.adjustment || '');
-								$('#grand-total2').val(data.grand_total || '');
-
-								// Clear existing rows
-								$('#itemRows2 tbody').empty();
-
-								// Populate item rows
-								if (items.length > 0) {
-									items.forEach((item, index) => {
-										// First row (index 0) should not have a delete button
-										const includeDeleteButton = index !== 0;
-										addItemRow(item, includeDeleteButton);
-									});
-								} else {
-									addItemRow({}, false); // Add a blank row if no items, no delete button
-								}
-
-								calculateTotals();
-							} else {
-								console.error('API Error:', response.error || 'Failed to fetch quote details.');
-								Swal.fire({
-									icon: 'error',
-									title: 'Error',
-									text: response.error || 'Failed to fetch quote details.',
-								});
-							}
-						},
-						error: function () {
-							console.error('AJAX Error: Error fetching quote details.');
-							Swal.fire({
-								icon: 'error',
-								title: 'Error',
-								text: 'An unexpected error occurred while fetching quote details.',
-							});
-						}
-					});
-				}
-			});
-
-			// Add new row on button click
-			$('#addItem2').on('click', function () {
-				addItemRow(); // Default behavior includes delete button for manually added rows
-			});
-
-			// Remove row
-			$('#itemRows2').on('click', '.remove-row', function () {
-				$(this).closest('tr').remove();
-				updateRowNumbers();
-				calculateTotals();
-			});
-
-			// Update row numbers
-			function updateRowNumbers() {
-				$('#itemRows2 tbody tr').each(function (index) {
-					$(this).find('td:first').text(index + 1);
-				});
-			}
-
-			// Calculate totals
-			function calculateTotals() {
-				let subTotal = 0;
-				$('.item-row').each(function () {
-					const quantity = parseFloat($(this).find('.quantity').val()) || 0;
-					const unitPrice = parseFloat($(this).find('.unitPrice').val()) || 0;
-					const discountPercentage = parseFloat($(this).find('.itemDiscount').val()) || 0;
-					const baseTotal = quantity * unitPrice;
-					const discountFactor = 1 - (discountPercentage / 100);
-					const discountedTotal = baseTotal * discountFactor;
-					$(this).find('.total').val(discountedTotal.toFixed(2));
-					subTotal += discountedTotal;
-				});
-				$('#sub-total2').val(subTotal.toFixed(2));
-				const discountAmount = parseFloat($('#discount2').val()) || 0;
-				const subTotalAfterDiscount = Math.max(0, subTotal - discountAmount);
-				const vatPercentage = 5;
-				const vat = (vatPercentage / 100) * subTotalAfterDiscount;
-				const adjustment = parseFloat($('#adjustment2').val()) || 0;
-				const grandTotal = subTotalAfterDiscount + vat + adjustment;
-				$('#grand-total2').val(grandTotal.toFixed(2));
-			}
-
-			// Handle form submission
-			$('#editQuoteForm').submit(function (e) {
-				e.preventDefault();
-				$('.error-message').empty();
-
-				const formData = {
-					QuoteNumber: $('#QuoteNumber').val(),
-					subject: $('#subject2').val(),
-					kind_attention: $('#kind_attention2').val(),
-					project: $('#project2').val(),
-					termsOfPayment: $('#terms-of-payment2').val(),
-					specification: $('#specification2').val(),
-					generalExclusion: $('#general-exclusion2').val(),
-					brand: $('#brand2').val(),
-					warranty: $('#warranty2').val(),
-					delivery: $('#delivery2').val(),
-					notes: $('#notes2').val(),
-					validUntil: $('#valid-until2').val(),
-					subTotal: $('#sub-total2').val(),
-					discount: $('#discount2').val(),
-					adjustment: $('#adjustment2').val(),
-					grandTotal: $('#grand-total2').val(),
-					items: []
-				};
-
-				let hasErrors = false;
-				$('#itemRows2 tbody tr').each(function () {
-					const item = {
-						product_id: $(this).find('.product_id').val(),
-						product_name: $(this).find('.product_name').val(),
-						itemName: $(this).find('.itemName').val(),
-						itemDescription: $(this).find('.itemDescription').val(),
-						uom: $(this).find('.uom').val(),
-						quantity: $(this).find('.quantity').val(),
-						itemDiscount: $(this).find('.itemDiscount').val(),
-						unitPrice: $(this).find('.unitPrice').val(),
-						total: $(this).find('.total').val()
-					};
-					if (!item.itemName) {
-						$(this).find('.error-message').text('Item Name is required.');
-						hasErrors = true;
-						return false; // Break the .each loop
-					}
-					formData.items.push(item);
-				});
-
-				if (hasErrors) {
-					return; // Stop submission if there are validation errors
-				}
-
-				// Show SweetAlert loading spinner
-				Swal.fire({
-					title: 'Submitting...',
-					text: 'Please wait while your proposal is being updated.',
-					allowOutsideClick: false,
-					allowEscapeKey: false,
-					didOpen: () => {
-						Swal.showLoading();
-					}
-				});
-
-				$.ajax({
-					url: 'dashboard/edit_proposal',
-					type: 'POST',
-					data: JSON.stringify(formData),
-					contentType: 'application/json',
-					dataType: 'json',
-					success: function (response) {
-						if (response.success) {
-							Swal.fire({
-								icon: 'success',
-								title: 'Proposal Edited!',
-								html: `
-									<p>${response.message}</p>
-									<a href="<?= site_url('web/deal/download-quote/') ?>${response.id}"
-									class="btn btn-success btn-sm" 
-									title="Download Quote" target="_blank" 
-									rel="noopener noreferrer">
-										<i class="bi bi-download"></i> Download Quote
-									</a>
-								`,
-								showConfirmButton: true,
-								customClass: {
-									confirmButton: 'btn-custom-ok'
-								}
-							}).then(() => {
-								$('#editQuoteForm')[0].reset();
-								$('#itemRows2 tbody').empty();
-								addItemRow({}, false); // Add a blank row without delete button
-							});
-						} else {
-							Swal.fire({
-								icon: 'error',
-								title: 'Error',
-								text: response.error || 'Failed to edit proposal.',
-								showConfirmButton: true,
-								customClass: {
-									confirmButton: 'btn-custom-ok'
-								}
-							});
-						}
-					},
-					error: function (xhr) {
-						const errorMessage = xhr.responseJSON?.error || 'An unexpected error occurred.';
-						Swal.fire({
-							icon: 'error',
-							title: 'Form Submission Error',
-							text: errorMessage,
-							showConfirmButton: true,
-							customClass: {
-								confirmButton: 'btn-custom-ok'
-							}
-						});
-					}
-				});
-			});
-
-			// Recalculate totals on input change
-			$('#itemRows2').on('input', '.quantity, .unitPrice, .itemDiscount, #discount2, #adjustment2', function () {
-				calculateTotals();
-			});
-
-			// Initial blank row (no delete button by default)
-			addItemRow({}, false);
-		});
+            const productDetails = {};
+            let loading = false;
+            let hasMoreRecords = true;
+            let page = 1;
+            let lastQuery = '';
+        
+            // Function to initialize Select2 for a row
+            function initializeSelect2(row, preloadedDescription = '') {
+                $(row).find('.itemName').select2({
+                    placeholder: 'Search for an item...',
+                    allowClear: true,
+                    width: '100%',
+                    ajax: {
+                        transport: function (params, success, failure) {
+                            const query = params.data.q || '';
+                            if (query !== lastQuery) {
+                                page = 1;
+                                hasMoreRecords = true;
+                                lastQuery = query;
+                                success({ results: [] });
+                            }
+                            if (loading || !hasMoreRecords) return;
+                            loading = true;
+                            fetch(`https://app.voltronix.ae/voltronix/deal/products?page=${page}&per_page=20&q=${encodeURIComponent(query)}`)
+                                .then((response) => response.json())
+                                .then((data) => {
+                                    const results = [];
+                                    if (data.success && Array.isArray(data.products)) {
+                                        data.products.forEach((product) => {
+                                            productDetails[product.id] = product.description || '';
+                                            results.push({ id: product.id, text: product.name });
+                                        });
+                                        hasMoreRecords = data.more_records;
+                                        page++;
+                                        success({ results, pagination: { more: hasMoreRecords } });
+                                    } else {
+                                        hasMoreRecords = false;
+                                        success({ results: [], pagination: { more: false } });
+                                    }
+                                })
+                                .catch((error) => {
+                                    console.error('Error fetching products:', error);
+                                    failure(error);
+                                })
+                                .finally(() => {
+                                    loading = false;
+                                });
+                        },
+                        processResults: function (data) {
+                            return data;
+                        },
+                        delay: 250,
+                    },
+                });
+        
+                $(row).find('.itemName').on('change', function () {
+                    const selectedItemId = $(this).val();
+                    const descriptionField = $(row).find('.itemDescription');
+                    if (!selectedItemId) {
+                        descriptionField.val('');
+                        return;
+                    }
+                    // Only update description if not preloaded (i.e., user manually selects an item)
+                    if (!preloadedDescription) {
+                        const selectedDescription = productDetails[selectedItemId] || '';
+                        descriptionField.val(selectedDescription);
+                    }
+                    row.find('.product_id').val(selectedItemId);
+                    row.find('.product_name').val($(this).find('option:selected').text());
+                });
+            }
+        
+            // Function to add a new row with pre-filled data
+            function addItemRow(itemData = {}, includeDeleteButton = true) {
+                const rowCount = $('#itemRows2 tbody tr').length + 1;
+                const newRow = `
+                    <tr class="item-row">
+                        <td>${rowCount}</td>
+                        <td style="min-width: 300px;">
+                            <input type="hidden" class="product_id" name="product_id[]" value="${itemData.product_id || ''}">
+                            <input type="hidden" class="product_name" name="product_name[]" value="${itemData.product_name || ''}">
+                            <select class="form-control itemName" name="itemName[]" style="width: 100%;" required>
+                                <option value="">-None-</option>
+                            </select>
+                            <textarea name="itemDescription[]" class="itemDescription" cols="30" rows="3" style="width: 100%; border: 1px solid #ced4da;">${itemData.product_description || ''}</textarea>
+                            <div class="error-message"></div>
+                        </td>
+                        <td style="min-width: 130px;">
+                            <select class="form-control uom" name="uom[]" required>
+                                <option value="">-None-</option>
+                                <option value="NOS" ${itemData.uom === 'NOS' ? 'selected' : ''}>NOS</option>
+                                <option value="PCS" ${itemData.uom === 'PCS' ? 'selected' : ''}>PCS</option>
+                                <option value="LS" ${itemData.uom === 'LS' ? 'selected' : ''}>LS</option>
+                                <option value="BAG" ${itemData.uom === 'BAG' ? 'selected' : ''}>BAG</option>
+                                <option value="BKT" ${itemData.uom === 'BKT' ? 'selected' : ''}>BKT</option>
+                                <option value="BND" ${itemData.uom === 'BND' ? 'selected' : ''}>BND</option>
+                                <option value="BOWL" ${itemData.uom === 'BOWL' ? 'selected' : ''}>BOWL</option>
+                                <option value="BX" ${itemData.uom === 'BX' ? 'selected' : ''}>BX</option>
+                                <option value="CRD" ${itemData.uom === 'CRD' ? 'selected' : ''}>CRD</option>
+                                <option value="CM" ${itemData.uom === 'CM' ? 'selected' : ''}>CM</option>
+                                <option value="CS" ${itemData.uom === 'CS' ? 'selected' : ''}>CS</option>
+                                <option value="CTN" ${itemData.uom === 'CTN' ? 'selected' : ''}>CTN</option>
+                                <option value="DZ" ${itemData.uom === 'DZ' ? 'selected' : ''}>DZ</option>
+                                <option value="EA" ${itemData.uom === 'EA' ? 'selected' : ''}>EA</option>
+                                <option value="FT" ${itemData.uom === 'FT' ? 'selected' : ''}>FT</option>
+                                <option value="GAL" ${itemData.uom === 'GAL' ? 'selected' : ''}>GAL</option>
+                                <option value="GROSS" ${itemData.uom === 'GROSS' ? 'selected' : ''}>GROSS</option>
+                                <option value="IN" ${itemData.uom === 'IN' ? 'selected' : ''}>IN</option>
+                                <option value="KIT" ${itemData.uom === 'KIT' ? 'selected' : ''}>KIT</option>
+                                <option value="LOT" ${itemData.uom === 'LOT' ? 'selected' : ''}>LOT</option>
+                                <option value="M" ${itemData.uom === 'M' ? 'selected' : ''}>M</option>
+                                <option value="MM" ${itemData.uom === 'MM' ? 'selected' : ''}>MM</option>
+                                <option value="PC" ${itemData.uom === 'PC' ? 'selected' : ''}>PC</option>
+                                <option value="PK" ${itemData.uom === 'PK' ? 'selected' : ''}>PK</option>
+                                <option value="PK100" ${itemData.uom === 'PK100' ? 'selected' : ''}>PK100</option>
+                                <option value="PK50" ${itemData.uom === 'PK50' ? 'selected' : ''}>PK50</option>
+                                <option value="PR" ${itemData.uom === 'PR' ? 'selected' : ''}>PR</option>
+                                <option value="RACK" ${itemData.uom === 'RACK' ? 'selected' : ''}>RACK</option>
+                                <option value="RL" ${itemData.uom === 'RL' ? 'selected' : ''}>RL</option>
+                                <option value="SET" ${itemData.uom === 'SET' ? 'selected' : ''}>SET</option>
+                                <option value="SET3" ${itemData.uom === 'SET3' ? 'selected' : ''}>SET3</option>
+                                <option value="SET4" ${itemData.uom === 'SET4' ? 'selected' : ''}>SET4</option>
+                                <option value="SET5" ${itemData.uom === 'SET5' ? 'selected' : ''}>SET5</option>
+                                <option value="SGL" ${itemData.uom === 'SGL' ? 'selected' : ''}>SGL</option>
+                                <option value="SHT" ${itemData.uom === 'SHT' ? 'selected' : ''}>SHT</option>
+                                <option value="SQFT" ${itemData.uom === 'SQFT' ? 'selected' : ''}>SQFT</option>
+                                <option value="TUBE" ${itemData.uom === 'TUBE' ? 'selected' : ''}>TUBE</option>
+                                <option value="YD" ${itemData.uom === 'YD' ? 'selected' : ''}>YD</option>
+                                <option value="SQM" ${itemData.uom === 'SQM' ? 'selected' : ''}>SQM</option>
+                            </select>
+                            <div class="error-message"></div>
+                        </td>
+                        <td style="min-width: 100px;">
+                            <input type="number" name="quantity[]" class="form-control no-arrows quantity" placeholder="Quantity" value="${itemData.quantity || ''}" required>
+                            <div class="error-message"></div>
+                        </td>
+                        <td style="min-width: 100px;">
+                            <input type="number" name="unitPrice[]" class="form-control no-arrows unitPrice" placeholder="Unit Price" value="${itemData.service_charge || ''}" required>
+                            <div class="error-message"></div>
+                        </td>
+                        <td style="min-width: 100px;">
+                            <input type="number" name="itemDiscount[]" class="form-control no-arrows itemDiscount" placeholder="Discount" value="${itemData.item_discount || '0'}" required>
+                            <div class="error-message"></div>
+                        </td>
+                        <td style="min-width: 100px;">
+                            <input type="number" name="total[]" class="form-control total" placeholder="Total" value="${itemData.total || ''}" readonly>
+                            <div class="error-message"></div>
+                        </td>
+                        <td>
+                            ${includeDeleteButton ? `
+                                <button type="button" class="btn btn-danger btn-sm remove-row">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `;
+                $('#itemRows2 tbody').append(newRow);
+                initializeSelect2($('#itemRows2 tbody tr:last'), itemData.product_description || '');
+        
+                // Pre-select item in Select2
+                if (itemData.product_id && itemData.product_name) {
+                    const $select = $('#itemRows2 tbody tr:last .itemName');
+                    $select.append(new Option(itemData.product_name, itemData.product_id, true, true)).trigger('change');
+                }
+            }
+        
+            // Fetch quote details on Enter key press
+            $('#QuoteNumber').on('keypress', function (e) {
+                if (e.which === 13) { // Enter key
+                    e.preventDefault();
+                    const quoteNumber = $(this).val();
+                    if (quoteNumber.trim() === '') return;
+        
+                    $.ajax({
+                        url: '<?php echo site_url('web/dashboard/get_quote_details'); ?>',
+                        type: 'POST',
+                        dataType: 'json',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ QuoteNumber: quoteNumber }),
+                        success: function (response) {
+                            if (response.success) {
+                                const data = response.data;
+                                const items = response.items || [];
+        
+                                // Populate static fields
+                                $('#subject2').val(data.subject || '');
+                                $('#kind_attention2').val(data.kind_attention || '');
+                                $('#project2').val(data.project_name || '');
+                                $('#specification2').val(data.specification || '');
+                                $('#general-exclusion2').val(data.general_exclusion || '');
+                                $('#brand2').val(data.brand || '');
+                                $('#warranty2').val(data.warranty || '');
+                                $('#delivery2').val(data.delivery || '');
+                                $('#notes2').val(data.notes || '');
+                                $('#terms-of-payment2').val(data.terms_of_payment || '');
+                                $('#valid-until2').val(data.valid_until || '');
+                                $('#sub-total2').val(data.sub_total || '');
+                                $('#discount2').val(data.discount || '');
+                                $('#adjustment2').val(data.adjustment || '');
+                                $('#grand-total2').val(data.grand_total || '');
+        
+                                // Clear existing rows
+                                $('#itemRows2 tbody').empty();
+        
+                                // Populate item rows
+                                if (items.length > 0) {
+                                    items.forEach((item, index) => {
+                                        // First row (index 0) should not have a delete button
+                                        const includeDeleteButton = index !== 0;
+                                        addItemRow(item, includeDeleteButton);
+                                    });
+                                } else {
+                                    addItemRow({}, false); // Add a blank row if no items, no delete button
+                                }
+        
+                                calculateTotals();
+                            } else {
+                                console.error('API Error:', response.error || 'Failed to fetch quote details.');
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: response.error || 'Failed to fetch quote details.',
+                                });
+                            }
+                        },
+                        error: function () {
+                            console.error('AJAX Error: Error fetching quote details.');
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'An unexpected error occurred while fetching quote details.',
+                            });
+                        }
+                    });
+                }
+            });
+        
+            // Add new row on button click
+            $('#addItem2').on('click', function () {
+                addItemRow(); // Default behavior includes delete button for manually added rows
+            });
+        
+            // Remove row
+            $('#itemRows2').on('click', '.remove-row', function () {
+                $(this).closest('tr').remove();
+                updateRowNumbers();
+                calculateTotals();
+            });
+        
+            // Update row numbers
+            function updateRowNumbers() {
+                $('#itemRows2 tbody tr').each(function (index) {
+                    $(this).find('td:first').text(index + 1);
+                });
+            }
+        
+            // Calculate totals
+            function calculateTotals() {
+                let subTotal = 0;
+                $('.item-row').each(function () {
+                    const quantity = parseFloat($(this).find('.quantity').val()) || 0;
+                    const unitPrice = parseFloat($(this).find('.unitPrice').val()) || 0;
+                    const discountPercentage = parseFloat($(this).find('.itemDiscount').val()) || 0;
+                    const baseTotal = quantity * unitPrice;
+                    const discountFactor = 1 - (discountPercentage / 100);
+                    const discountedTotal = baseTotal * discountFactor;
+                    $(this).find('.total').val(discountedTotal.toFixed(2));
+                    subTotal += discountedTotal;
+                });
+                $('#sub-total2').val(subTotal.toFixed(2));
+                const discountAmount = parseFloat($('#discount2').val()) || 0;
+                const subTotalAfterDiscount = Math.max(0, subTotal - discountAmount);
+                const vatPercentage = 5;
+                const vat = (vatPercentage / 100) * subTotalAfterDiscount;
+                const adjustment = parseFloat($('#adjustment2').val()) || 0;
+                const grandTotal = subTotalAfterDiscount + vat + adjustment;
+                $('#grand-total2').val(grandTotal.toFixed(2));
+            }
+        
+            // Handle form submission
+            $('#editQuoteForm').submit(function (e) {
+                e.preventDefault();
+                $('.error-message').empty();
+        
+                const formData = {
+                    QuoteNumber: $('#QuoteNumber').val(),
+                    subject: $('#subject2').val(),
+                    kind_attention: $('#kind_attention2').val(),
+                    project: $('#project2').val(),
+                    termsOfPayment: $('#terms-of-payment2').val(),
+                    specification: $('#specification2').val(),
+                    generalExclusion: $('#general-exclusion2').val(),
+                    brand: $('#brand2').val(),
+                    warranty: $('#warranty2').val(),
+                    delivery: $('#delivery2').val(),
+                    notes: $('#notes2').val(),
+                    validUntil: $('#valid-until2').val(),
+                    subTotal: $('#sub-total2').val(),
+                    discount: $('#discount2').val(),
+                    adjustment: $('#adjustment2').val(),
+                    grandTotal: $('#grand-total2').val(),
+                    items: []
+                };
+        
+                let hasErrors = false;
+                $('#itemRows2 tbody tr').each(function () {
+                    const item = {
+                        product_id: $(this).find('.product_id').val(),
+                        product_name: $(this).find('.product_name').val(),
+                        itemName: $(this).find('.itemName').val(),
+                        itemDescription: $(this).find('.itemDescription').val(),
+                        uom: $(this).find('.uom').val(),
+                        quantity: $(this).find('.quantity').val(),
+                        itemDiscount: $(this).find('.itemDiscount').val(),
+                        unitPrice: $(this).find('.unitPrice').val(),
+                        total: $(this).find('.total').val()
+                    };
+                    if (!item.itemName) {
+                        $(this).find('.error-message').text('Item Name is required.');
+                        hasErrors = true;
+                        return false; // Break the .each loop
+                    }
+                    formData.items.push(item);
+                });
+        
+                if (hasErrors) {
+                    return; // Stop submission if there are validation errors
+                }
+        
+                // Show SweetAlert loading spinner
+                Swal.fire({
+                    title: 'Submitting...',
+                    text: 'Please wait while your proposal is being updated.',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+        
+                $.ajax({
+                    url: 'dashboard/edit_proposal',
+                    type: 'POST',
+                    data: JSON.stringify(formData),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Proposal Edited!',
+                                html: `
+                                    <p>${response.message}</p>
+                                    <a href="<?= site_url('web/deal/download-quote/') ?>${response.id}"
+                                    class="btn btn-success btn-sm" 
+                                    title="Download Quote" target="_blank" 
+                                    rel="noopener noreferrer">
+                                        <i class="bi bi-download"></i> Download Quote
+                                    </a>
+                                `,
+                                showConfirmButton: true,
+                                customClass: {
+                                    confirmButton: 'btn-custom-ok'
+                                }
+                            }).then(() => {
+                                $('#editQuoteForm')[0].reset();
+                                $('#itemRows2 tbody').empty();
+                                addItemRow({}, false); // Add a blank row without delete button
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: response.error || 'Failed to edit proposal.',
+                                showConfirmButton: true,
+                                customClass: {
+                                    confirmButton: 'btn-custom-ok'
+                                }
+                            });
+                        }
+                    },
+                    error: function (xhr) {
+                        const errorMessage = xhr.responseJSON?.error || 'An unexpected error occurred.';
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Form Submission Error',
+                            text: errorMessage,
+                            showConfirmButton: true,
+                            customClass: {
+                                confirmButton: 'btn-custom-ok'
+                            }
+                        });
+                    }
+                });
+            });
+        
+            // Recalculate totals on input change
+            $('#itemRows2').on('input', '.quantity, .unitPrice, .itemDiscount, #discount2, #adjustment2', function () {
+                calculateTotals();
+            });
+        
+            // Initial blank row (no delete button by default)
+            addItemRow({}, false);
+        });
 
 		// Handle logout
 		$(document).ready(function() {
@@ -1582,7 +1582,7 @@
 			});
 
 		});
-
+		
 		// Item Form Submission
 		document.getElementById('ItemForm').addEventListener('submit', function(e) {
 			e.preventDefault();

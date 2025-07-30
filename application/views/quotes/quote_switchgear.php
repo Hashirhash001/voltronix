@@ -81,7 +81,7 @@
         $itemCount = count($items);
         $rowCount = 1;
         $currentHeight = 0;
-        $maxHeight = 200; // Usable height in mm
+        $maxHeight = 180; // Usable height in mm
         $pageItems = [];
         $currentPage = 1;
         $totalPages = 0;
@@ -95,8 +95,8 @@
         // Initialize totals
         $totalAmount = 0; // Sum of discounted item totals
         $vatRate = 0.05;  // 5% VAT
-        $discount = (float)($task['discount'] ?? 8.00); // Additional discount from Zoho CRM
-        $adjustment = (float)($task['adjustment'] ?? 33.00); // Adjustment from Zoho CRM
+        $discount = (float)($task['discount'] ?? 0); // Additional discount from Zoho CRM, default to 0
+        $adjustment = (float)($task['adjustment'] ?? 0); // Adjustment from Zoho CRM, default to 0
 
         // First pass: Estimate total pages
         $tempHeight = $headerHeight;
@@ -143,7 +143,7 @@
                 <strong>Address: </strong>' . htmlspecialchars($task['address'] ?? '') . ' <br>
             </td>
             <td colspan="3" style="width: 25%;">Payment: CDC/CASH</td>
-            <td colspan="2" style="width: 25%;">Sales By: ' . htmlspecialchars(ucfirst($username ?? '')) . '</td>
+            <td colspan="2" style="width: 25%;">Sales By: ' . htmlspecialchars($sale_name ?? ucfirst($username ?? '')) . '</td>
         </tr>
         <tr class="header-row">
             <td colspan="2" style="width: 49%; border: none; border-left: 0.3px solid #000; padding: 0; vertical-align: top; margin: 0;">
@@ -245,39 +245,50 @@
                     }
                 }
 
-                // Add totals for non-final page (without final values)
                 $totalsNonFinal = '
-                    <tr>
-                        <td colspan="7" class="continue-text">Continue to next page Page ' . $currentPage . '/' . $totalPages . '</td>
-                    </tr>
-                    <tr>
-                        <td colspan="6" style="text-align: right; border: none; border-top: 0.3px solid #000; border-left: 0.3px solid #000;">Total Amount</td>
-                        <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000; border-top: 0.3px solid #000;"></td>
-                    </tr>
-                    <tr>
-                        <td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Discount</td>
-                        <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
-                    </tr>
-                    <tr>
-                        <td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Vat 5%</td>
-                        <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
-                    </tr>
-                    <tr>
-                        <td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Adjustment</td>
-                        <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
-                    </tr>
-                    <tr>
-                        <td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Grand Total Amount Included VAT</td>
-                        <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
-                    </tr>
-                    <tr>
-                        <td colspan="6" style="vertical-align: bottom; border: none; border-left: 0.3px solid #000; border-top: 0.3px solid #000; padding-bottom: 2px; padding-top: 2px;"></td>
-                        <td style="text-align: right; vertical-align: top; border: none; border-top: 0.3px solid #000; border-right: 0.3px solid #000; padding-top: 2px;">E.&O.E</td>
-                    </tr>
-                    <tr>
-                        <td colspan="6" style="vertical-align: bottom; border: none; border-left: 0.3px solid #000; padding-bottom: 2px; padding-top: 2px;">Amount (In words)</td>
-                        <td style="text-align: right; vertical-align: top; border: none; border-right: 0.3px solid #000;"></td>
-                    </tr>';
+					<tr>
+						<td colspan="7" class="continue-text">Continue to next page Page ' . $currentPage . '/' . $totalPages . '</td>
+					</tr>
+					<tr>
+						<td colspan="6" style="text-align: right; border: none; border-top: 0.3px solid #000; border-left: 0.3px solid #000;">Total Amount</td>
+						<td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000; border-top: 0.3px solid #000;"></td>
+					</tr>';
+
+				if ($discount != 0 && !is_null($discount)) {
+					$totalsNonFinal .= '
+					<tr>
+						<td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Discount</td>
+						<td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
+					</tr>';
+				}
+
+				$totalsNonFinal .= '
+					<tr>
+						<td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Vat 5%</td>
+						<td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
+					</tr>';
+
+				if ($adjustment != 0 && !is_null($adjustment)) {
+					$totalsNonFinal .= '
+					<tr>
+						<td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Adjustment</td>
+						<td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
+					</tr>';
+				}
+
+				$totalsNonFinal .= '
+					<tr>
+						<td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Grand Total Amount Included VAT</td>
+						<td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
+					</tr>
+					<tr>
+						<td colspan="6" style="vertical-align: bottom; border: none; border-left: 0.3px solid #000; border-top: 0.3px solid #000; padding-bottom: 2px; padding-top: 2px;"></td>
+						<td style="text-align: right; vertical-align: top; border: none; border-top: 0.3px solid #000; border-right: 0.3px solid #000; padding-top: 2px;">E.&O.E</td>
+					</tr>
+					<tr>
+						<td colspan="6" style="vertical-align: bottom; border: none; border-left: 0.3px solid #000; padding-bottom: 2px; padding-top: 2px;">Amount (In words)</td>
+						<td style="text-align: right; vertical-align: top; border: none; border-right: 0.3px solid #000;"></td>
+					</tr>';
 
                 echo $totalsNonFinal;
                 echo '</tbody></table>';
@@ -293,30 +304,32 @@
             echo '<tr>
                 <td style="text-align: center; border: none; border-left: 0.3px solid #000;">' . $rowCount++ . '</td>
                 <td class="description" style="border: none; border-left: 0.3px solid #000;"><b style="font-size: 12px;">' . htmlspecialchars($item['product_name'] ?? '') . '</b>:';
-            $description = $item['product_description'] ?? '';
-            if (!empty($description)) {
-                // Split the description into lines
-                $lines = preg_split('/\n|\r\n?/', trim($description));
-                foreach ($lines as $line) {
-                    $trimmedLine = trim($line);
-                    if (empty($trimmedLine)) {
-                        continue;
+                    $description = $item['product_description'] ?? '';
+                    if (!empty($description)) {
+                        // Split the description into lines
+                        $lines = preg_split('/\n|\r\n?/', trim($description));
+                        $inNoteSection = false;
+                        foreach ($lines as $line) {
+                            $trimmedLine = trim($line);
+                            if (empty($trimmedLine)) {
+                                continue;
+                            }
+                            // Check if line starts the Note section
+                            if (preg_match('/^Note:/i', $trimmedLine)) {
+                                $inNoteSection = true;
+                                $trimmedLine = rtrim($trimmedLine, '.');
+                                echo '<p style="font-size: 12px; margin: 0; padding-left: 20px;"><b>' . htmlspecialchars($trimmedLine) . '</b></p>';
+                                continue;
+                            }
+                            // Replace numbering (e.g., "1.", "2.") with bold bullet point for all lines
+                            $displayLine = preg_replace('/^\d+\.\s*/', ' ', $trimmedLine);
+                            // Handle lines with or without numbering
+                            if (!empty($displayLine) && !preg_match('/^Any kind of faulty parts/i', $trimmedLine)) {
+                                $padding = ($inNoteSection || preg_match('/^<b>•<\/b>/', $displayLine)) ? '40px' : '20px';
+                                echo '<p style="font-size: 12px; margin: 0; padding-left: ' . $padding . ';">' . htmlspecialchars($displayLine, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', false) . '</p>';
+                            }
+                        }
                     }
-                    // Check if line is the Note
-                    if (preg_match('/^Note:/i', $trimmedLine)) {
-                        $trimmedLine = rtrim($trimmedLine, '.');
-                        echo '<p style="font-size: 12px; margin: 0; padding-left: 20px;">' . htmlspecialchars($trimmedLine) . '</p>';
-                        continue;
-                    }
-                    // Replace numbering (e.g., "1.", "2.") with bold bullet point
-                    $displayLine = preg_replace('/^\d+\.\s*/', '• ', $trimmedLine);
-                    // Handle lines with or without numbering
-                    if (!empty($displayLine) && !preg_match('/^Any kind of faulty parts/i', $trimmedLine)) {
-                        $padding = preg_match('/^<b>•<\/b>/', $displayLine) ? '40px' : '20px';
-                        echo '<p style="font-size: 12px; margin: 0; padding-left: ' . $padding . ';">' . htmlspecialchars($displayLine, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', false) . '</p>';
-                    }
-                }
-            }
             echo '</td>
                 <td style="text-align: center; border: none; border-left: 0.3px solid #000;">' . htmlspecialchars(number_format((float)($item['quantity'] ?? 0), 0)) . ' ' . htmlspecialchars($item['uom'] ?? '') . '</td>
                 <td style="text-align: right; border: none; border-left: 0.3px solid #000;">' . number_format($serviceCharge, 2) . '</td>
@@ -331,8 +344,8 @@
 
         // Calculate final totals
         $vatAmount = (float)($task['tax_total'] ?? ($totalAmount * $vatRate)); // Use Zoho CRM VAT if available
-        $subtotalAfterDiscount = $totalAmount - $discount;
-        $grandTotal = $subtotalAfterDiscount + $vatAmount + $adjustment;
+        $subtotalAfterDiscount = $totalAmount - ($discount != 0 && !is_null($discount) ? $discount : 0);
+        $grandTotal = $subtotalAfterDiscount + $vatAmount + ($adjustment != 0 && !is_null($adjustment) ? $adjustment : 0);
 
         // Fill remaining space on the final page
         $remainingHeight = $maxHeight - ($currentHeight + $totalsHeight + $bankDetailsHeight);
@@ -352,17 +365,38 @@
             }
         }
 
-        // Final page totals with discount and adjustment
+        // Final page totals with conditional discount and adjustment
         $totalsFinal = '
             <tr>
                 <td colspan="6" style="text-align: right; border: none; border-top: 0.3px solid #000; border-left: 0.3px solid #000;">Total Amount</td>
                 <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000; border-top: 0.3px solid #000;">' . number_format($totalAmount, 2) . '</td>
-            </tr>
-        
+            </tr>';
+
+        // Conditionally add Discount row
+        if ($discount != 0 && !is_null($discount)) {
+            $totalsFinal .= '
+            <tr>
+                <td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Discount</td>
+                <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;">' . number_format($discount, 2) . '</td>
+            </tr>';
+        }
+
+        $totalsFinal .= '
             <tr>
                 <td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Vat 5%</td>
                 <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;">' . number_format($vatAmount, 2) . '</td>
-            </tr>
+            </tr>';
+
+        // Conditionally add Adjustment row
+        if ($adjustment != 0 && !is_null($adjustment)) {
+            $totalsFinal .= '
+            <tr>
+                <td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Adjustment</td>
+                <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;">' . number_format($adjustment, 2) . '</td>
+            </tr>';
+        }
+
+        $totalsFinal .= '
             <tr>
                 <td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Grand Total Amount Included VAT</td>
                 <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;">' . number_format($grandTotal, 2) . '</td>
