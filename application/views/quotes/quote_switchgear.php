@@ -88,9 +88,9 @@
 
         // Predefined heights
         $headerHeight = 40;
-        $totalsHeight = 40; // Increased to account for new rows (Discount, Adjustment)
         $bankDetailsHeight = 30;
         $spacerHeight = 2.8;
+        $rowHeightTotals = 5; // Approximate height per row in totals section
 
         // Initialize totals
         $totalAmount = 0; // Sum of discounted item totals
@@ -98,12 +98,28 @@
         $discount = (float)($task['discount'] ?? 0); // Additional discount from Zoho CRM, default to 0
         $adjustment = (float)($task['adjustment'] ?? 0); // Adjustment from Zoho CRM, default to 0
 
+        // Calculate dynamic totals height based on conditional rows
+        $baseTotalsHeight = 20; // Base height for "Total Amount", "Vat 5%", "Grand Total", "E.&O.E", "Amount (In words)" (4 rows * 5mm)
+        $totalsHeight = $baseTotalsHeight;
+        if ($discount != 0 && !is_null($discount)) {
+            $totalsHeight += $rowHeightTotals; // Add height for Discount row
+        }
+        if ($adjustment != 0 && !is_null($adjustment)) {
+            $totalsHeight += $rowHeightTotals; // Add height for Adjustment row
+        }
+
         // First pass: Estimate total pages
         $tempHeight = $headerHeight;
         foreach ($items as $item) {
             $descLines = substr_count($item['product_description'] ?? '', "\n") + count(array_filter(explode('•', $item['product_description'] ?? ''))) + 1;
-            $rowHeight = 5 + ($descLines * 3);
+            $rowHeight = 5 + ($descLines * 3.6);
             if (($tempHeight + $rowHeight) > ($maxHeight - $totalsHeight - $bankDetailsHeight)) {
+                // Calculate spacer rows for the previous page
+                $remainingHeight = $maxHeight - ($tempHeight + $totalsHeight + $bankDetailsHeight);
+                if ($remainingHeight > 0) {
+                    $spacerCount = floor($remainingHeight / $spacerHeight);
+                    $tempHeight += $spacerCount * $spacerHeight;
+                }
                 $totalPages++;
                 $tempHeight = $headerHeight + $rowHeight;
             } else {
@@ -111,6 +127,12 @@
             }
         }
         if ($tempHeight > $headerHeight) {
+            // Calculate spacer rows for the final page
+            $remainingHeight = $maxHeight - ($tempHeight + $totalsHeight + $bankDetailsHeight);
+            if ($remainingHeight > 0) {
+                $spacerCount = floor($remainingHeight / $spacerHeight);
+                $tempHeight += $spacerCount * $spacerHeight;
+            }
             $totalPages++;
         }
 
@@ -245,55 +267,59 @@
                     }
                 }
 
+                // Add totals for non-final page (without final values)
                 $totalsNonFinal = '
-					<tr>
-						<td colspan="7" class="continue-text">Continue to next page Page ' . $currentPage . '/' . $totalPages . '</td>
-					</tr>
-					<tr>
-						<td colspan="6" style="text-align: right; border: none; border-top: 0.3px solid #000; border-left: 0.3px solid #000;">Total Amount</td>
-						<td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000; border-top: 0.3px solid #000;"></td>
-					</tr>';
+                    <tr>
+                        <td colspan="7" class="continue-text">Continue to next page Page ' . $currentPage . '/' . $totalPages . '</td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="text-align: right; border: none; border-top: 0.3px solid #000; border-left: 0.3px solid #000;">Total Amount</td>
+                        <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000; border-top: 0.3px solid #000;"></td>
+                    </tr>';
 
-				if ($discount != 0 && !is_null($discount)) {
-					$totalsNonFinal .= '
-					<tr>
-						<td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Discount</td>
-						<td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
-					</tr>';
-				}
+                if ($discount != 0 && !is_null($discount)) {
+                    $totalsNonFinal .= '
+                    <tr>
+                        <td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Discount</td>
+                        <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
+                    </tr>';
+                }
 
-				$totalsNonFinal .= '
-					<tr>
-						<td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Vat 5%</td>
-						<td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
-					</tr>';
+                $totalsNonFinal .= '
+                    <tr>
+                        <td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Vat 5%</td>
+                        <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
+                    </tr>';
 
-				if ($adjustment != 0 && !is_null($adjustment)) {
-					$totalsNonFinal .= '
-					<tr>
-						<td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Adjustment</td>
-						<td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
-					</tr>';
-				}
+                if ($adjustment != 0 && !is_null($adjustment)) {
+                    $totalsNonFinal .= '
+                    <tr>
+                        <td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Adjustment</td>
+                        <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
+                    </tr>';
+                }
 
-				$totalsNonFinal .= '
-					<tr>
-						<td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Grand Total Amount Included VAT</td>
-						<td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
-					</tr>
-					<tr>
-						<td colspan="6" style="vertical-align: bottom; border: none; border-left: 0.3px solid #000; border-top: 0.3px solid #000; padding-bottom: 2px; padding-top: 2px;"></td>
-						<td style="text-align: right; vertical-align: top; border: none; border-top: 0.3px solid #000; border-right: 0.3px solid #000; padding-top: 2px;">E.&O.E</td>
-					</tr>
-					<tr>
-						<td colspan="6" style="vertical-align: bottom; border: none; border-left: 0.3px solid #000; padding-bottom: 2px; padding-top: 2px;">Amount (In words)</td>
-						<td style="text-align: right; vertical-align: top; border: none; border-right: 0.3px solid #000;"></td>
-					</tr>';
+                $totalsNonFinal .= '
+                    <tr>
+                        <td colspan="6" style="text-align: right; border: none; border-left: 0.3px solid #000;">Grand Total Amount Included VAT</td>
+                        <td style="text-align: right; border: none; border-left: 0.3px solid #000; border-right: 0.3px solid #000;"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="vertical-align: bottom; border: none; border-left: 0.3px solid #000; border-top: 0.3px solid #000; padding-bottom: 2px; padding-top: 2px;"></td>
+                        <td style="text-align: right; vertical-align: top; border: none; border-top: 0.3px solid #000; border-right: 0.3px solid #000; padding-top: 2px;">E.&O.E</td>
+                    </tr>
+                    <tr>
+                        <td colspan="6" style="vertical-align: bottom; border: none; border-left: 0.3px solid #000; padding-bottom: 2px; padding-top: 2px;">Amount (In words)</td>
+                        <td style="text-align: right; vertical-align: top; border: none; border-right: 0.3px solid #000;"></td>
+                    </tr>';
 
                 echo $totalsNonFinal;
                 echo '</tbody></table>';
                 echo $bankDetails;
                 echo '<pagebreak />';
+
+                // Increment current page after page break
+                $currentPage++;
 
                 echo '<table class="invoice-info"><tbody>';
                 echo $header;
