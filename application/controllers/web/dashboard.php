@@ -576,10 +576,10 @@ class Dashboard extends CI_Controller {
         }
     
         // Step 2: Check for existing contact or create a new one
-        $contact_name = !empty(trim($proposal_data['kind_attention'] ?? '')) ? trim($proposal_data['kind_attention']) : 'Default Contact';
-        if (!preg_match('/^[a-zA-Z\s]+$/', $contact_name)) {
-            $contact_name = 'Default Contact';
-        }
+        // $contact_name = !empty(trim($proposal_data['kind_attention'] ?? '')) ? trim($proposal_data['kind_attention']) : 'Default Contact';
+        // if (!preg_match('/^[a-zA-Z\s]+$/', $contact_name)) {
+        //     $contact_name = 'Default Contact';
+        // }
     
         // Search for existing contact by Last_Name
         $contact_search_response = $this->execute_curl_request(

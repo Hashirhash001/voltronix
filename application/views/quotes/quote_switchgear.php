@@ -81,7 +81,7 @@
         $itemCount = count($items);
         $rowCount = 1;
         $currentHeight = 0;
-        $maxHeight = 180; // Usable height in mm
+        $maxHeight = 165; // Usable height in mm
         $pageItems = [];
         $currentPage = 1;
         $totalPages = 0;
@@ -188,8 +188,8 @@
                     </tr>
                 </table>
             </td>
-            <td colspan="3" rowspan="2" style="width: 25%; vertical-align: middle; border-bottom: 0.3px solid #000;">TRN: 104900827700003</td>
-            <td colspan="2" rowspan="2" style="width: 25%; vertical-align: middle; border-bottom: 0.3px solid #000;">Delivery Terms: ' . htmlspecialchars($task['delivery'] ?? '') . '</td>
+            <td colspan="3" style="width: 25%; vertical-align: middle; border-bottom: 0.3px solid #000;">TRN: 104900827700003</td>
+            <td colspan="2" style="width: 25%; vertical-align: middle; border-bottom: 0.3px solid #000;">Delivery Terms: ' . htmlspecialchars($task['delivery'] ?? '') . '</td>
         </tr>
         <tr class="header-row">
             <!-- Empty row to account for rowspan="2" of TRN and Delivery Terms -->
