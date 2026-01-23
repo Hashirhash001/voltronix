@@ -499,8 +499,18 @@ input[type="number"] {
 	min-height: 238px !important;
 }
 
-.form-control:focus {
+/* .form-control:focus {
     background-color: #ffe5e5 !important;
     border-color: #ffe5e5 !important;
     box-shadow: 0 0 0 .25rem #ffe5e5 !important;
+} */
+
+.page-item.active .page-link {
+	background-color: #FF0100 !important;
+	border-color: #FF0100 !important;
+	color:  #fff !important;
+}
+
+.page-link {
+	color: #FF0100 !important;
 }

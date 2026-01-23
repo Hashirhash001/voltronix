@@ -148,87 +148,199 @@
 		const allDeals = <?= json_encode($tasks); ?>;
 
 		$(document).ready(function() {
-			// Handle logout button click
-			$('#logoutButton').click(function(e) {
-				e.preventDefault(); // Prevent the default button action
+		
+			// Track pagination state for each category separately
+			const categoryState = {
+				'Qualification': { page: 1, isLoading: false, hasMore: true }, // Will load page 2 next
+				'Site Visit': { page: 1, isLoading: false, hasMore: true },
+				'Proposal/Price Quote': { page: 1, isLoading: false, hasMore: true },
+				'Closed Won': { page: 1, isLoading: false, hasMore: true },
+				'Closed Lost': { page: 1, isLoading: false, hasMore: true }
+			};
 
-				// Optionally, show a confirmation popup before logout
-				Swal.fire({
-					title: 'Are you sure you want to log out?',
-					icon: 'warning',
-					showCancelButton: true,
-					confirmButtonText: 'Yes, log out!',
-					cancelButtonText: 'Cancel'
-				}).then((result) => {
-					if (result.isConfirmed) {
-						// Show loader while logging out
-						$('#logoutButton').prop('disabled', true).text('Logging out...');
+			// Attach scroll event to each category column
+			$('.card-body-wrapper').each(function(index) {
+				const categoryNames = ['Qualification', 'Site Visit', 'Proposal/Price Quote', 'Closed Won', 'Closed Lost'];
+				const categoryName = categoryNames[index];
+				
+				$(this).on('scroll', function() {
+					const scrollableDiv = $(this);
+					const scrollTop = scrollableDiv.scrollTop();
+					const scrollHeight = scrollableDiv[0].scrollHeight;
+					const clientHeight = scrollableDiv[0].clientHeight;
 
-						// AJAX request to logout the user
-						$.ajax({
-							url: '<?= site_url('web/Login/logout') ?>', // This should be the route for logging out
-							type: 'POST',
-							dataType: 'json',
-							success: function(response) {
-								if (response.success) {
-									Swal.fire({
-										icon: 'success',
-										title: 'Logged Out',
-										text: 'You have been successfully logged out.',
-										showConfirmButton: false,
-										timer: 1500
-									}).then(() => {
-										window.location.href = '<?= site_url('web/Login/index') ?>';
-									});
-								} else {
-									// Handle any errors returned from the logout
-									Swal.fire({
-										icon: 'error',
-										title: 'Logout Failed',
-										text: response.message || 'An unexpected error occurred.',
-										showConfirmButton: true
-									});
-								}
-							},
-							error: function(xhr) {
-								// Hide loader and re-enable button on error
-								$('#logoutButton').prop('disabled', false).text('Logout');
-
-								// Show an error message
-								Swal.fire({
-									icon: 'error',
-									title: 'Error',
-									text: 'An error occurred while logging out. Please try again.',
-									showConfirmButton: true
-								});
-							}
-						});
+					// Check if scrolled to bottom (with 50px threshold)
+					if (scrollTop + clientHeight >= scrollHeight - 50) {
+						loadMoreDealsForCategory(categoryName, scrollableDiv);
 					}
 				});
 			});
 
-			// Trigger search on button click or input enter key
+			function loadMoreDealsForCategory(category, scrollableDiv) {
+				const state = categoryState[category];
+				
+				if (state.isLoading || !state.hasMore) {
+					return;
+				}
+
+				state.isLoading = true;
+				state.page++;
+
+				// Show loading indicator only in this column
+				const cardBody = scrollableDiv.find('.card-body');
+				cardBody.append(`
+					<div class="text-center py-3 loading-indicator">
+						<div class="spinner-border spinner-border-sm text-danger" role="status">
+							<span class="sr-only">Loading...</span>
+						</div>
+						<p class="small text-muted mt-2">Loading more jobs...</p>
+					</div>
+				`);
+
+				$.ajax({
+					url: '<?= site_url('web/deals/paginated'); ?>',
+					type: 'GET',
+					data: { 
+						page: state.page,
+						category: category 
+					},
+					dataType: 'json',
+					success: function(response) {
+						console.log('Loaded page:', state.page, 'for category:', category, response);
+						
+						if (response.success && response.data && response.data.length > 0) {
+							appendDealsToCategory(category, response.data, cardBody);
+							state.hasMore = response.has_more;
+						} else {
+							state.hasMore = false;
+							
+							// Show "No more jobs" message
+							if (response.data && response.data.length === 0 && state.page > 1) {
+								cardBody.find('.loading-indicator').replaceWith(`
+									<div class="text-center py-2">
+										<p class="small text-muted">No more jobs to load</p>
+									</div>
+								`);
+								setTimeout(() => {
+									cardBody.find('.text-muted:contains("No more jobs")').parent().fadeOut(2000, function() {
+										$(this).remove();
+									});
+								}, 1000);
+							}
+						}
+
+						cardBody.find('.loading-indicator').remove();
+						state.isLoading = false;
+					},
+					error: function(xhr, status, error) {
+						console.error('Error loading more deals for', category, ':', error);
+						cardBody.find('.loading-indicator').remove();
+						state.isLoading = false;
+						
+						// Revert page number on error
+						state.page--;
+						
+						// Show error message
+						Swal.fire({
+							icon: 'error',
+							title: 'Error',
+							text: 'Failed to load more jobs. Please try again.',
+							toast: true,
+							position: 'top-end',
+							showConfirmButton: false,
+							timer: 3000
+						});
+					}
+				});
+			}
+
+			function appendDealsToCategory(category, deals, cardBody) {
+				// Remove "No Jobs found" message if it exists
+				cardBody.find('.text-muted:contains("No Jobs found")').parent().remove();
+
+				deals.forEach(task => {
+					const taskHtml = createTaskHtml(task, category);
+					cardBody.append(taskHtml);
+				});
+			}
+
+			function createTaskHtml(task, category) {
+				let stageDealNumber = '';
+				let stageDealDate = '';
+				
+				// Determine which deal number and date to show based on category
+				switch (category) {
+					case 'Qualification':
+						stageDealNumber = task.qual_deal_number || '';
+						stageDealDate = task.qual_deal_date || '';
+						break;
+					case 'Site Visit':
+						stageDealNumber = task.site_deal_number || '';
+						stageDealDate = task.site_deal_date || '';
+						break;
+					case 'Proposal/Price Quote':
+						stageDealNumber = task.quote_deal_number || '';
+						stageDealDate = task.quote_deal_date || '';
+						break;
+					case 'Closed Won':
+						stageDealNumber = task.job_deal_number || '';
+						stageDealDate = task.job_deal_date || '';
+						break;
+					case 'Closed Lost':
+						stageDealNumber = task.lost_deal_number || '';
+						stageDealDate = task.lost_deal_date || '';
+						break;
+				}
+
+				const formattedDate = stageDealDate ? new Date(stageDealDate).toLocaleString('en-GB', {
+					year: 'numeric',
+					month: '2-digit',
+					day: '2-digit',
+					hour: '2-digit',
+					minute: '2-digit',
+					second: '2-digit',
+					hour12: false
+				}).replace(',', '') : '';
+
+				return `
+					<div class="mb-3 border-bottom pb-2" style="max-width: 100% !important; padding: 7px 36px 4px 15px; box-sizing: border-box; margin-bottom: 10px; min-height: 70px; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .1); background: #fff;">
+						<h6 style="font-weight: 600; margin-bottom: 2px; text-wrap: wrap;">${task.deal_name || ''}</h6>
+						<h4 style="color: #ff0000; margin-bottom: 2px; font-size: 1.2rem;">${stageDealNumber}</h4>
+						${formattedDate ? `<p style="margin-bottom: 2px; color: #555; font-size: 0.9rem;">Updated: ${formattedDate}</p>` : ''}
+						<p style="margin-bottom: 2px; text-wrap: wrap;">${task.assign_notes || ''}</p>
+						<p style="margin-bottom: 2px; text-wrap: wrap;">${task.account_name || ''}</p>
+						<p style="margin-bottom: 2px;">${parseFloat(task.service_charge || 0).toFixed(2)}</p>
+						<div class="mt-2">
+							<button onclick="window.location.href='<?= site_url('web/deal/details/'); ?>${task.id}'" class="btn btn-sm btn-danger">
+								<i class="fas fa-eye"></i> View
+							</button>
+						</div>
+					</div>
+				`;
+			}
+
+			// Search functionality
 			$('#searchButton').on('click', searchDeals);
 			$('#searchInput').on('keypress', function(e) {
-				if (e.which === 13) { // Enter key
+				if (e.which === 13) {
 					searchDeals();
 				}
 			});
 
-			// Store initial deals from PHP for reset when query is empty
-			const allDeals = <?php echo json_encode($tasks); ?>;
-
 			function searchDeals() {
 				const query = $('#searchInput').val().trim();
-
-				// Show loading state
 				$('#dealsContainer').html('<div class="text-center"><div class="spinner-border text-danger" role="status"><span class="sr-only">Loading...</span></div></div>');
 
 				if (query === '') {
 					$('#errorMessage').addClass('d-none');
-					renderDeals(allDeals); // Reset to all deals
+					location.reload();
 					return;
 				}
+
+				// Disable pagination during search
+				Object.keys(categoryState).forEach(key => {
+					categoryState[key].hasMore = false;
+				});
 
 				$.ajax({
 					url: '<?= site_url('web/deal/search'); ?>',
@@ -236,7 +348,6 @@
 					data: { query: query },
 					dataType: 'json',
 					success: function(response) {
-						console.log('Search Response:', response);
 						if (response.success && response.data) {
 							$('#errorMessage').addClass('d-none');
 							renderDeals(response.data);
@@ -372,11 +483,64 @@
 				$('#dealsContainer').html(dealsHtml);
 			}
 
-			// Bind search to input (example, adjust based on your HTML)
-			// $('#searchInput').on('keyup', function() {
-			// 	searchDeals();
-			// });
+			// Handle logout button click
+			$('#logoutButton').click(function(e) {
+				e.preventDefault(); // Prevent the default button action
 
+				// Optionally, show a confirmation popup before logout
+				Swal.fire({
+					title: 'Are you sure you want to log out?',
+					icon: 'warning',
+					showCancelButton: true,
+					confirmButtonText: 'Yes, log out!',
+					cancelButtonText: 'Cancel'
+				}).then((result) => {
+					if (result.isConfirmed) {
+						// Show loader while logging out
+						$('#logoutButton').prop('disabled', true).text('Logging out...');
+
+						// AJAX request to logout the user
+						$.ajax({
+							url: '<?= site_url('web/Login/logout') ?>', // This should be the route for logging out
+							type: 'POST',
+							dataType: 'json',
+							success: function(response) {
+								if (response.success) {
+									Swal.fire({
+										icon: 'success',
+										title: 'Logged Out',
+										text: 'You have been successfully logged out.',
+										showConfirmButton: false,
+										timer: 1500
+									}).then(() => {
+										window.location.href = '<?= site_url('web/Login/index') ?>';
+									});
+								} else {
+									// Handle any errors returned from the logout
+									Swal.fire({
+										icon: 'error',
+										title: 'Logout Failed',
+										text: response.message || 'An unexpected error occurred.',
+										showConfirmButton: true
+									});
+								}
+							},
+							error: function(xhr) {
+								// Hide loader and re-enable button on error
+								$('#logoutButton').prop('disabled', false).text('Logout');
+
+								// Show an error message
+								Swal.fire({
+									icon: 'error',
+									title: 'Error',
+									text: 'An error occurred while logging out. Please try again.',
+									showConfirmButton: true
+								});
+							}
+						});
+					}
+				});
+			});
 
 		});
 	</script>

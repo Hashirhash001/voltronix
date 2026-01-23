@@ -1,0 +1,383 @@
+void automation.create_switchgear_books_quote1(String dealId)
+{
+switchgearOrgId = "802911060";
+info "========== Starting Switchgear Books Quote Creation ==========";
+info "Deal ID: " + dealId;
+// ---------------- Deal ----------------
+dealInfo = zoho.crm.getRecordById("Deals",dealId.toLong());
+if(dealInfo == null)
+{
+	info "ERROR: Deal not found with ID: " + dealId;
+	return;
+}
+dealName = dealInfo.get("Deal_Name");
+amount = dealInfo.get("Amount");
+jobNumber = dealInfo.get("JobDealNumber");
+accountInfo = dealInfo.get("Account_Name");
+description = dealInfo.get("Description");
+closingDate = dealInfo.get("Closing_Date");
+info "Deal Name: " + dealName;
+info "Amount: " + amount;
+info "Job Number: " + jobNumber;
+if(accountInfo == null)
+{
+	info "ERROR: No account linked to this deal";
+	return;
+}
+accountName = accountInfo.get("name");
+accountId = accountInfo.get("id");
+info "Account Name: " + accountName;
+// ---------------- Books: Customer ----------------
+searchCustomerUrl = "https://www.zohoapis.com/books/v3/contacts?contact_name=" + encodeUrl(accountName) + "&organization_id=" + switchgearOrgId;
+customerResponse = invokeurl
+[
+	url :searchCustomerUrl
+	type :GET
+	connection:"zohobooks"
+];
+customerId = "";
+contacts = customerResponse.get("contacts");
+if(contacts != null)
+{
+	if(contacts.size() > 0)
+	{
+		customerId = contacts.get(0).get("contact_id");
+		info "Customer exists with ID: " + customerId;
+	}
+}
+if(customerId == "")
+{
+	info "Customer not found. Creating new customer...";
+	accountDetails = zoho.crm.getRecordById("Accounts",accountId.toLong());
+	billingStreet = accountDetails.get("Billing_Street");
+	if(billingStreet == null)
+	{
+		billingStreet = "";
+	}
+	billingCity = accountDetails.get("Billing_City");
+	if(billingCity == null)
+	{
+		billingCity = "";
+	}
+	billingState = accountDetails.get("Billing_State");
+	if(billingState == null)
+	{
+		billingState = "";
+	}
+	billingCode = accountDetails.get("Billing_Code");
+	if(billingCode == null)
+	{
+		billingCode = "";
+	}
+	billingCountry = accountDetails.get("Billing_Country");
+	if(billingCountry == null)
+	{
+		billingCountry = "";
+	}
+	phone = accountDetails.get("Phone");
+	if(phone == null)
+	{
+		phone = "";
+	}
+	email = accountDetails.get("Email");
+	if(email == null)
+	{
+		email = "";
+	}
+	customerData = Map();
+	customerData.put("contact_name",accountName);
+	customerData.put("contact_type","customer");
+	customerData.put("customer_sub_type","business");
+	if(phone != "")
+	{
+		customerData.put("phone",phone);
+	}
+	if(email != "")
+	{
+		customerData.put("email",email);
+	}
+	billingAddress = Map();
+	billingAddress.put("attention",accountName);
+	billingAddress.put("address",billingStreet);
+	billingAddress.put("city",billingCity);
+	billingAddress.put("state",billingState);
+	billingAddress.put("zip",billingCode);
+	billingAddress.put("country",billingCountry);
+	customerData.put("billing_address",billingAddress);
+	createCustomerUrl = "https://www.zohoapis.com/books/v3/contacts?organization_id=" + switchgearOrgId;
+	customerCreateResponse = invokeurl
+	[
+		url :createCustomerUrl
+		type :POST
+		parameters:customerData.toString()
+		connection:"zohobooks"
+	];
+	info "Customer creation response: " + customerCreateResponse;
+	if(customerCreateResponse.get("code") == 0)
+	{
+		customerId = customerCreateResponse.get("contact").get("contact_id");
+		info "✓ Customer created successfully with ID: " + customerId;
+	}
+	else
+	{
+		info "ERROR: Failed to create customer: " + customerCreateResponse.get("message");
+		return;
+	}
+}
+// ---------------- STEP 2: Line Items ----------------
+lineItemsList = List();
+info "========================================";
+info "STEP 2: Extracting Line Items";
+info "========================================";
+quotesInfo = zoho.crm.getRelatedRecords("Quotes","Deals",dealId.toLong());
+productsFound = false;
+quotesCount = 0;
+if(quotesInfo != null)
+{
+	quotesCount = quotesInfo.size();
+}
+info "Quotes found: " + quotesCount;
+if(quotesInfo != null)
+{
+	if(quotesCount > 0)
+	{
+		latestQuote = quotesInfo.get(0);
+		quoteId = latestQuote.get("id");
+		info "Latest Quote ID: " + quoteId;
+		quoteApiUrl = "https://www.zohoapis.com/crm/v2/Quotes/" + quoteId;
+		try 
+		{
+			quoteResponse = invokeurl
+			[
+				url :quoteApiUrl
+				type :GET
+				connection:"zohocrm"
+			];
+			info "✓ Quote API Response received";
+			if(quoteResponse.get("data") != null && quoteResponse.get("data").size() > 0)
+			{
+				quoteDetails = quoteResponse.get("data").get(0);
+				productDetails = quoteDetails.get("Product_Details");
+				if(productDetails != null)
+				{
+					if(productDetails.size() > 0)
+					{
+						info "✓ Found " + productDetails.size() + " products in quote";
+						productsFound = true;
+						for each  productItem in productDetails
+						{
+							productObj = productItem.get("product");
+							productName = "";
+							if(productObj != null && productObj.containsKey("name"))
+							{
+								productName = productObj.get("name");
+							}
+							if(productName == null || productName == "")
+							{
+								continue;
+							}
+							quantity = productItem.get("quantity");
+							if(quantity == null || quantity == 0)
+							{
+								quantity = 1;
+							}
+							listPrice = productItem.get("list_price");
+							if(listPrice == null)
+							{
+								listPrice = 0;
+							}
+							discount = productItem.get("Discount");
+							if(discount == null)
+							{
+								discount = 0;
+							}
+							discountStr = "0%";
+							totalBeforeDiscount = quantity * listPrice;
+							if(totalBeforeDiscount > 0 && discount > 0)
+							{
+								discountPercent = discount / totalBeforeDiscount * 100;
+								discountStr = discountPercent.round(2).toString() + "%";
+							}
+							searchItemUrl = "https://www.zohoapis.com/books/v3/items?name=" + encodeUrl(productName) + "&organization_id=" + switchgearOrgId;
+							itemResponse = invokeurl
+							[
+								url :searchItemUrl
+								type :GET
+								connection:"zohobooks"
+							];
+							items = itemResponse.get("items");
+							lineItem = Map();
+							if(items != null && items.size() > 0)
+							{
+								itemId = items.get(0).get("item_id");
+								lineItem.put("item_id",itemId);
+							}
+							else
+							{
+								lineItem.put("name",productName);
+								lineItem.put("description",productName);
+							}
+							lineItem.put("quantity",quantity);
+							lineItem.put("rate",listPrice);
+							lineItem.put("discount",discountStr);
+							lineItemsList.add(lineItem);
+						}
+					}
+				}
+			}
+		}
+		catch (e)
+		{
+			info "✗ ERROR fetching quote via API: " + e;
+		}
+	}
+}
+// Fallback
+if(productsFound == false)
+{
+	if(lineItemsList.size() == 0)
+	{
+		productsInfo = dealInfo.get("Product_Details");
+		if(productsInfo != null)
+		{
+			if(productsInfo.size() > 0)
+			{
+				for each  product in productsInfo
+				{
+					productNameObj = product.get("product");
+					productName = "";
+					if(productNameObj != null && productNameObj.containsKey("name"))
+					{
+						productName = productNameObj.get("name");
+					}
+					if(productName == null || productName == "")
+					{
+						continue;
+					}
+					quantity = product.get("quantity");
+					if(quantity == null || quantity == 0)
+					{
+						quantity = 1;
+					}
+					listPrice = product.get("list_price");
+					if(listPrice == null)
+					{
+						listPrice = 0;
+					}
+					lineItem = Map();
+					lineItem.put("name",productName);
+					lineItem.put("description",productName);
+					lineItem.put("quantity",quantity);
+					lineItem.put("rate",listPrice);
+					lineItem.put("discount","0%");
+					lineItemsList.add(lineItem);
+				}
+			}
+		}
+	}
+}
+if(lineItemsList.size() == 0)
+{
+	lineItem = Map();
+	lineItem.put("name",dealName);
+	lineItem.put("description","As per quotation for " + dealName);
+	lineItem.put("quantity",1);
+	lineItem.put("rate",amount);
+	lineItem.put("discount","0%");
+	lineItemsList.add(lineItem);
+}
+info "✓ TOTAL LINE ITEMS: " + lineItemsList.size();
+// ============ STEP 3: Unique Estimate Number ============
+getSettingsUrl = "https://www.zohoapis.com/books/v3/settings/estimates?organization_id=" + switchgearOrgId;
+settingsResponse = invokeurl
+[
+	url :getSettingsUrl
+	type :GET
+	connection:"zohobooks"
+];
+prefix = "";
+nextNumberStr = "";
+if(settingsResponse.get("code") == 0)
+{
+	estimateSettings = settingsResponse.get("estimate_settings");
+	prefix = estimateSettings.get("prefix_string");
+	nextNumberStr = estimateSettings.get("next_number");
+}
+else
+{
+	prefix = "EST-";
+	nextNumberStr = "1";
+}
+nextNumber = nextNumberStr.toLong();
+estimateNumber = "";
+for each  attempt in {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19}
+{
+	estimateNumber = prefix + nextNumber.toString();
+	searchEstimateUrl = "https://www.zohoapis.com/books/v3/estimates?estimate_number=" + encodeUrl(estimateNumber) + "&organization_id=" + switchgearOrgId;
+	searchResp = invokeurl
+	[
+		url :searchEstimateUrl
+		type :GET
+		connection:"zohobooks"
+	];
+	existing = searchResp.get("estimates");
+	if(existing == null || existing.size() == 0)
+	{
+		break;
+	}
+	nextNumber = nextNumber + 1;
+}
+info "Using Estimate Number: " + estimateNumber;
+// ============ STEP 4: Create Estimate ============
+estimateData = Map();
+estimateData.put("customer_id",customerId);
+estimateData.put("estimate_number",estimateNumber);
+// mandatory in your org
+estimateData.put("reference_number",dealName);
+estimateData.put("date",today.toString("yyyy-MM-dd"));
+expiryDateToUse = today.addDay(30);
+if(closingDate != null && closingDate != "")
+{
+	if(closingDate > today)
+	{
+		expiryDateToUse = closingDate;
+	}
+}
+estimateData.put("expiry_date",expiryDateToUse.toString("yyyy-MM-dd"));
+if(description != null && description != "")
+{
+	estimateData.put("notes",description);
+}
+estimateData.put("line_items",lineItemsList);
+if(jobNumber != null && jobNumber != "")
+{
+	customFields = List();
+	jobField = Map();
+	jobField.put("label","Job Number");
+	jobField.put("value",jobNumber);
+	customFields.add(jobField);
+	estimateData.put("custom_fields",customFields);
+}
+createEstimateUrl = "https://www.zohoapis.com/books/v3/estimates?organization_id=" + switchgearOrgId;
+estimateResponse = invokeurl
+[
+	url :createEstimateUrl
+	type :POST
+	parameters:estimateData.toString()
+	connection:"zohobooks"
+];
+info "Estimate creation response: " + estimateResponse;
+if(estimateResponse.get("code") == 0)
+{
+	estimateNumberCreated = estimateResponse.get("estimate").get("estimate_number");
+	updateDeal = Map();
+	updateDeal.put("Quote_No",estimateNumberCreated);
+	zoho.crm.updateRecord("Deals",dealId.toLong(),updateDeal);
+	info "✓ SUCCESS: Updated Deal Quote_No: " + estimateNumberCreated;
+}
+else
+{
+	info "ERROR: Failed to create estimate: " + estimateResponse.get("message");
+}
+info "========== Process Completed ==========";
+}

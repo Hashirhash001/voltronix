@@ -4,10 +4,16 @@
 	<div class="container p-5" style="margin-top: 50px;">
 		<!-- <h1>Job Details</h1> -->
 		<div class="card shadow-sm mt-4">
-			<div class="card-header text-white d-flex align-items-center gap-2" style="font-size: 1.5rem; font-weight: bold; border-radius: 0.25rem; background-color: #e71919fc; padding: 12px !important; background-color: rgba(0, 0, 0, .03); color: #000 !important;">
-				<i class="bi bi-file-text"></i>
-				Job Details
+			<div class="card-header text-white d-flex align-items-center justify-content-between gap-2" style="font-size: 1.5rem; font-weight: bold; border-radius: 0.25rem; background-color: #e71919fc; padding: 12px !important; background-color: rgba(0, 0, 0, .03); color: #000 !important;">
+				<div class="d-flex align-items-center gap-2">
+					<i class="bi bi-file-text"></i>
+					Job Details
+				</div>
+				<button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editDealModal" style="background-color: #dc3545; border: none;">
+					<i class="bi bi-pencil-square"></i> Edit Deal
+				</button>
 			</div>
+
 			<div class="card-body custom-card">
 				<div class="row">
 					<div class="col-md-6">
@@ -234,6 +240,73 @@
 			<div class="card-body">
 				<div id="notesDisplay" class="p-3">
 					<p style="text-align: center;">No Notes</p>
+				</div>
+			</div>
+		</div>
+
+		<!-- Edit Deal Modal -->
+		<div class="modal fade" id="editDealModal" tabindex="-1" aria-labelledby="editDealModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="editDealModalLabel">Edit Deal Details</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<form id="editDealForm">
+							<input type="hidden" id="taskId" value="<?= $task['id']; ?>">
+							
+							<div class="row">
+								<div class="col-md-6">
+									<div class="mb-3">
+										<label for="editDealName" class="form-label">Deal Name</label>
+										<input type="text" class="form-control" id="editDealName" name="deal_name" value="<?= htmlspecialchars($task['deal_name'] ?? ''); ?>" required>
+									</div>
+								</div>
+								
+								<div class="col-md-6">
+									<div class="mb-3">
+										<label for="editAccountName" class="form-label">Account Name</label>
+										<input type="text" class="form-control" id="editAccountName" name="account_name" value="<?= htmlspecialchars($task['account_name'] ?? ''); ?>">
+									</div>
+								</div>
+							</div>
+							
+							<div class="row">
+								<div class="col-md-6">
+									<div class="mb-3">
+										<label for="editAmount" class="form-label">Amount (AED)</label>
+										<input type="number" class="form-control" id="editAmount" name="amount" step="0.01" value="<?= $task['service_charge'] ?? 0; ?>">
+									</div>
+								</div>
+								
+								<div class="col-md-6">
+									<div class="mb-3">
+										<label for="editCustomerEmail" class="form-label">Email</label>
+										<input type="email" class="form-control" id="editCustomerEmail" name="customer_email" value="<?= htmlspecialchars($task['customer_email'] ?? ''); ?>">
+									</div>
+								</div>
+							</div>
+							
+							<div class="row">
+								<div class="col-md-6">
+									<div class="mb-3">
+										<label for="editCustomerContact" class="form-label">Contact</label>
+										<input type="text" class="form-control" id="editCustomerContact" name="customer_contact" value="<?= htmlspecialchars($task['customer_contact'] ?? ''); ?>">
+									</div>
+								</div>
+							</div>
+							
+							<div class="mb-3">
+								<label for="editDescription" class="form-label">Description</label>
+								<textarea class="form-control" id="editDescription" name="description" rows="3"><?= htmlspecialchars($task['complaint_info'] ?? ''); ?></textarea>
+							</div>
+						</form>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+						<button type="button" class="btn btn-danger" id="saveDealBtn">Save Changes</button>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -985,7 +1058,6 @@
 			});
 		});
 
-
 		// Function to toggle the submit button and clear button visibility
 		const toggleSubmitButton = () => {
 			const selectedStatus = $('#status').val();
@@ -1109,6 +1181,71 @@
 								text: 'An error occurred while updating the status. Please try again.',
 								showConfirmButton: true
 							});
+						}
+					});
+				}
+			});
+		});
+
+		// Handle edit deal form submission
+		$('#saveDealBtn').click(function() {
+			const taskId = $('#taskId').val();
+			const formData = {
+				deal_name: $('#editDealName').val(),
+				account_name: $('#editAccountName').val(),
+				amount: $('#editAmount').val(),
+				customer_email: $('#editCustomerEmail').val(),
+				customer_contact: $('#editCustomerContact').val(),
+				description: $('#editDescription').val()
+			};
+			
+			// Validate required fields
+			if (!formData.deal_name) {
+				Swal.fire('Validation Error', 'Deal Name is required', 'error');
+				return;
+			}
+			
+			// Confirm before updating
+			Swal.fire({
+				title: 'Are you sure?',
+				text: 'Do you want to update this deal?',
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#dc3545',
+				cancelButtonColor: '#6c757d',
+				confirmButtonText: 'Yes, update it!'
+			}).then((result) => {
+				if (result.isConfirmed) {
+					// Show loading state
+					$('#saveDealBtn').prop('disabled', true).html('<i class="spinner-border spinner-border-sm"></i> Updating...');
+					
+					$.ajax({
+						url: `<?= site_url('web/deal/update/') ?>${taskId}`,
+						type: 'POST',
+						contentType: 'application/json',
+						data: JSON.stringify(formData),
+						dataType: 'json',
+						success: function(response) {
+							if (response.success) {
+								Swal.fire({
+									icon: 'success',
+									title: 'Success',
+									text: 'Deal updated successfully!',
+									showConfirmButton: false,
+									timer: 1500
+								}).then(() => {
+									location.reload(); // Reload to show updated data
+								});
+							} else {
+								Swal.fire('Error', response.error || 'Failed to update deal', 'error');
+							}
+						},
+						error: function(xhr) {
+							console.error('Error:', xhr.responseText);
+							Swal.fire('Error', 'An error occurred while updating the deal', 'error');
+						},
+						complete: function() {
+							$('#saveDealBtn').prop('disabled', false).html('Save Changes');
 						}
 					});
 				}
