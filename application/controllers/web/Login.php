@@ -80,7 +80,6 @@ class Login extends CI_Controller {
 		return $this->access_token;
 	}
 
-
 	public function check_logged_in() {
 		if (!$this->session->userdata('logged_in')) {
 			// If not logged in, redirect to login page

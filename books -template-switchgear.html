@@ -1,0 +1,246 @@
+<meta content="text/html; charset=utf-8" http-equiv="content-type">
+<meta charset="UTF-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Sales Invoice - Voltronix Switchgear LLC</title>
+<style media="all" type="text/css">
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+    .wrapper {
+		height: 1050px;
+        padding: 28px;
+        background-image: url('https://app.voltronix.ae/voltronix/assets/photos/logo/switchgear_bg4_new.png');
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
+        background-position: top left;
+    }
+    .invoice-title {
+        padding-top: 125px;
+        text-align: center;
+        font-size: 22px;
+        font-weight: bold;
+        margin: 3px 0;
+    }
+    .invoice-info {
+        width: 100%;
+        border-collapse: collapse;
+        border-spacing: 0;
+        margin: 0;
+        padding: 0;
+    }
+    .invoice-info td,
+    .invoice-info th {
+        padding: 3px 5px;
+        font-size: 12px;
+        vertical-align: top;
+    }
+    .invoice-info tbody {
+        margin: 0;
+        padding: 0;
+        border-spacing: 0;
+    }
+    .bank-details {
+        width: 100%;
+        border-collapse: collapse;
+        border-spacing: 0;
+        margin: 0;
+        table-layout: fixed;
+    }
+    .bank-details td {
+        padding: 5px;
+        font-size: 12px;
+        vertical-align: top;
+    }
+    table { border-spacing: 0; }
+    tbody { margin: 0; padding: 0; }
+    tr { page-break-inside: avoid; }
+    .header-row { page-break-inside: avoid; }
+    .description {
+        text-align: left;
+        padding-left: 10px;
+        max-width: 300px;
+        word-wrap: break-word;
+    }
+    .spacer-row td {
+        border-left: 0.3px solid #000;
+        padding: 0;
+        height: 25px;
+    }
+    .spacer-row td:last-child {
+        border-right: 0.3px solid #000;
+    }
+    .no-border    { border: none; }
+    .border-left  { border-left: 0.3px solid #000; }
+    .border-right { border-right: 0.3px solid #000; }
+    .border-top   { border-top: 0.3px solid #000; }
+    .border-bottom{ border-bottom: 0.3px solid #000; }
+</style>
+
+<div class="wrapper">
+    <table class="invoice-info">
+
+        <!-- ── HEADER ── -->
+        <tbody>
+            <tr class="header-row">
+                <th class="no-border" colspan="7">
+                    <h2 class="invoice-title">SALES INVOICE</h2>
+                </th>
+            </tr>
+            <tr class="header-row">
+                <td class="border-left border-top" style="width: 50%;" colspan="2">To: <br></td>
+                <td class="border-left border-top border-right border-bottom" style="width: 25%;" colspan="3">Invoice Ref: %InvoiceNumber%</td>
+                <td class="border-left border-top border-right border-bottom" style="width: 25%;" colspan="2">Date: %InvoiceDate%</td>
+            </tr>
+            <tr class="header-row">
+                <td class="border-left" style="width: 50%;" colspan="2">
+                    <strong>Contact:</strong> %CustomerName%<br>
+                    <strong>Customer:</strong> %ContactCompanyName%
+                </td>
+                <td class="border-left border-top border-right border-bottom" style="width: 25%; vertical-align: middle;" colspan="3">Due Date: %DueDate%</td>
+                <td class="border-left border-top border-right border-bottom" style="width: 25%; vertical-align: middle;" colspan="2">Currency: AED</td>
+            </tr>
+            <tr class="header-row">
+                <td class="border-left" style="width: 50%;" colspan="2">
+                    <strong>Address:</strong> %CustomerBAddress%<br>
+                    %CustomerBState%<br>
+                    %CustomerBCountry%
+                </td>
+                <td class="border-left border-top border-right border-bottom" style="width: 25%;" colspan="3">Payment: CDC/CASH</td>
+                <td class="border-left border-top border-right border-bottom" style="width: 25%;" colspan="2">Sales By: %SalesPerson%</td>
+            </tr>
+            <tr class="header-row">
+                <td class="border-left" style="width: 49%; padding: 0;" colspan="2">
+                    <table style="width: 100%; padding: 0; border-spacing: 0;">
+                        <tbody>
+                            <tr>
+                                <td class="no-border" style="width: 50%;"><strong>P.O Box:</strong> %P.O.Number%</td>
+                                <td class="no-border" style="width: 50%;"><strong>TRN:</strong> %ContactTRN%</td>
+                            </tr>
+                            <tr>
+                                <td class="no-border" style="width: 50%;"><strong>TEL:</strong> %CustomerPhoneNumber%</td>
+                                <td class="no-border" style="width: 50%;"><strong>Email:</strong> %ContactEMailIds%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </td>
+                <td class="border-left border-top border-right border-bottom" style="width: 25%; vertical-align: middle;" colspan="3" rowspan="2">TRN: 104900827700003</td>
+                <td class="border-left border-top border-right border-bottom" style="width: 25%; vertical-align: middle;" colspan="2" rowspan="2">Delivery Terms: %TermsAndCondition%</td>
+            </tr>
+            <tr class="header-row">
+                <td class="border-left" colspan="2"></td>
+            </tr>
+
+            <!-- ── COLUMN HEADERS ── -->
+            <tr class="header-row">
+                <th class="border-left border-top border-right border-bottom" style="width: 3%;">S.No.</th>
+                <th class="border-left border-top border-right border-bottom" style="width: 55%;">Description</th>
+                <th class="border-left border-top border-right border-bottom" style="width: 10%; text-align: right;">Quantity</th>
+                <th class="border-left border-top border-right border-bottom" style="width: 9%; text-align: right;">Rate</th>
+                <th class="border-left border-top border-right border-bottom" style="width: 5%; text-align: center;">Tax%</th>
+                <th class="border-left border-top border-right border-bottom" style="width: 6%; text-align: center;">Disc.%</th>
+                <th class="border-left border-top border-right border-bottom" style="width: 12%; text-align: right;">Amount</th>
+            </tr>
+        </tbody>
+
+        <!-- ── REPEATING LINE ITEMS ── -->
+        <tbody id="lineitem">
+            <tr>
+                <td class="border-left border-top border-bottom" style="text-align: center; font-size: 12px;">%SiNo%</td>
+                <td class="border-left border-top border-bottom description"><b style="font-size: 12px;">%ItemDescription%</b></td>
+                <td class="border-left border-top border-bottom" style="text-align: right; font-size: 12px;">%ItemQty% %UsageUnit%</td>
+                <td class="border-left border-top border-bottom" style="text-align: right; font-size: 12px;">%ItemRate%</td>
+                <td class="border-left border-top border-bottom" style="text-align: center; font-size: 12px;">%ItemTaxPercent%</td>
+                <td class="border-left border-top border-bottom" style="text-align: center; font-size: 12px;">%ItemDiscount%</td>
+                <td class="border-left border-right border-top border-bottom" style="text-align: right; font-size: 12px;">%ItemAmount%</td>
+            </tr>
+        </tbody>
+
+        <!-- ── EMPTY SPACER ROWS (between products and totals) ── -->
+        <tbody>
+            <tr class="spacer-row">
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr class="spacer-row">
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr class="spacer-row">
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr class="spacer-row">
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr class="spacer-row">
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr class="spacer-row">
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr class="spacer-row">
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr class="spacer-row">
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr class="spacer-row">
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr class="spacer-row">
+                <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+        </tbody>
+
+        <!-- ── TOTALS ── -->
+        <tbody>
+            <tr>
+                <td class="border-left border-right" style="text-align: right; font-size: 12px; border-top: 0.3px solid #000;" colspan="6">Total Amount</td>
+                <td class="border-left border-right" style="text-align: right; font-size: 12px; border-top: 0.3px solid #000;">%InvoiceSubTotal%</td>
+            </tr>
+            <tr>
+                <td class="border-left" style="text-align: right; font-size: 12px;" colspan="6">Vat 5%</td>
+                <td class="border-left border-right" style="text-align: right; font-size: 12px;">%BCYTaxTotal%</td>
+            </tr>
+            <tr>
+                <td class="border-left" style="text-align: right; font-size: 12px;" colspan="6">Grand Total Amount Included VAT</td>
+                <td class="border-left border-right" style="text-align: right; font-size: 12px;">%InvoiceTotal%</td>
+            </tr>
+            <tr>
+                <td class="border-left border-top" style="vertical-align: bottom; font-size: 12px;" colspan="6">%TotalInWords% ONLY</td>
+                <td class="border-top border-right" style="text-align: right; vertical-align: top; font-size: 12px;">E.&amp;O.E</td>
+            </tr>
+            <tr>
+                <td class="border-left border-bottom" style="vertical-align: bottom; font-size: 12px;" colspan="6">Amount (In words)</td>
+                <td class="border-right border-bottom" style="font-size: 12px;"></td>
+            </tr>
+        </tbody>
+
+    </table>
+
+    <!-- ── SIGNATURE TABLE ── -->
+    <table class="bank-details">
+        <tbody>
+            <tr>
+                <td class="border-left border-top border-bottom" rowspan="4" style="width: 22%;">
+                    Note if any: %Notes%
+                </td>
+                <td class="border-left border-top" style="width: 40%;"></td>
+                <td class="border-right border-top" style="width: 38%; text-align: right;">
+                    for <strong>Voltronix Switchgear LLC</strong>
+                </td>
+            </tr>
+            <tr>
+                <td class="border-left"></td>
+                <td class="border-right"></td>
+            </tr>
+            <tr>
+                <td class="border-left"></td>
+                <td class="border-right"></td>
+            </tr>
+            <tr>
+                <td class="border-left border-bottom">Received By:</td>
+                <td class="border-right border-bottom" style="text-align: right;">Authorized Signatory</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
